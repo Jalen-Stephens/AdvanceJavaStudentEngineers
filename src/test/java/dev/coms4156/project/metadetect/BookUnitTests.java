@@ -1,4 +1,4 @@
-package dev.coms4156.project.individualproject;
+package dev.coms4156.project.metadetect;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;

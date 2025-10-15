@@ -1,4 +1,4 @@
-package dev.coms4156.project.individualproject;
+package dev.coms4156.project.metadetect;
 
 import static org.hamcrest.Matchers.containsString;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
