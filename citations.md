@@ -197,3 +197,70 @@ Specifically, assistance covered:
 * No runtime or dependency errors observed; ready for future feature development.
 
 ---
+
+### **Commit / Ticket Reference**
+
+* **Commit:** `chore(init): finalize MetaDetect controllers/services + single-file DTOs and fix imports (#2)`
+* **Ticket:** `#2 — Initialize Project Skeleton`
+* **Date:** October 15, 2025
+* **Team Member:** Jalen Stephens
+
+---
+
+### **AI Tool Information**
+
+* **Tool Used:** OpenAI ChatGPT (GPT-5)
+* **Access Method:** ChatGPT Web (.edu academic access)
+* **Configuration:** Default model settings
+* **Cost:** $0 (no paid API calls)
+
+---
+
+### **Purpose of AI Assistance**
+
+ChatGPT was used to:
+
+* Generate bare-bones skeleton code for controllers (`AnalyzeController`, `AuthController`, `ImageController`) and services (`AnalyzeService`, `AuthService`, `ImageService`) based on the MetaDetect project proposal.
+* Create a consolidated `Dtos.java` file defining all request/response records for analysis, image, and authentication endpoints.
+* Refactor import statements and fix Checkstyle indentation issues.
+* Resolve `cannot find symbol` compilation errors related to nested DTO usage and improve package structure consistency.
+* Suggest best-practice commit message conventions and project renaming alignment (from “IndividualProject” → “MetaDetect”).
+
+---
+
+### **Prompts / Interaction Summary**
+
+* “Can you make a controller, model, service files for us to use and make them very bare with skeleton code and TODO’s based on our project proposal?”
+* “Should I put all DTOs in one file or separate files?”
+* “Fix Checkstyle indentation errors and capitalization warnings.”
+* “Maven compile failed — can you help fix missing symbol errors for DTOs?”
+* “Give me a commit message for final skeleton setup.”
+
+---
+
+### **Resulting Artifacts**
+
+* `src/main/java/dev/coms4156/project/metadetect/controller/AnalyzeController.java`
+* `src/main/java/dev/coms4156/project/metadetect/controller/AuthController.java`
+* `src/main/java/dev/coms4156/project/metadetect/controller/ImageController.java`
+* `src/main/java/dev/coms4156/project/metadetect/service/AnalyzeService.java`
+* `src/main/java/dev/coms4156/project/metadetect/service/AuthService.java`
+* `src/main/java/dev/coms4156/project/metadetect/service/ImageService.java`
+* `src/main/java/dev/coms4156/project/metadetect/dto/Dtos.java`
+* Updated `pom.xml` and fixed `application.properties` naming consistency.
+
+---
+
+### **Verification**
+
+* Verified compilation with:
+
+  ```bash
+  mvn -q -DskipTests compile
+  ```
+
+  Build successful (no compilation or Checkstyle errors).
+* Confirmed successful Spring Boot startup via `mvn spring-boot:run` (Tomcat initialized on port 8080).
+* Reviewed file structure and imports in IntelliJ to ensure no duplicate or unused imports remained.
+
+---
