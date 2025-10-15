@@ -6,17 +6,19 @@ import org.springframework.web.bind.annotation.RestController;
 
 import java.util.Map;
 
-/** Basic health/version for Iteration 1. */
+/**
+ * Basic health/version for Iteration 1.
+ */
 @RestController
 public class HealthController {
 
-    @GetMapping("/health")
-    public ResponseEntity<Map<String, String>> health() {
-        return ResponseEntity.ok(Map.of("status", "ok", "service", "metadetect-service"));
-    }
+  @GetMapping("/health")
+  public ResponseEntity<Map<String, String>> health() {
+    return ResponseEntity.ok(Map.of("status", "ok", "service", "metadetect-service"));
+  }
 
-    @GetMapping("/version")
-    public ResponseEntity<Map<String, String>> version() {
-        return ResponseEntity.ok(Map.of("service", "metadetect-service", "version", "0.1.0"));
-    }
+  @GetMapping("/version")
+  public ResponseEntity<Map<String, String>> version() {
+    return ResponseEntity.ok(Map.of("service", "metadetect-service", "version", "0.1.0"));
+  }
 }
