@@ -23,21 +23,21 @@ public final class Dtos {
    * Optional flags for controlling analysis modules.
    */
   public record AnalyzeOptions(
-    Boolean runMetadata,
-    Boolean runPrnu,
-    Boolean runGan,
-    Boolean runCompression) {
+      Boolean runMetadata,
+      Boolean runPrnu,
+      Boolean runGan,
+      Boolean runCompression) {
   }
 
   /**
    * Response returned after submitting an analysis job.
    */
   public record AnalyzeResponse(
-    String id,
-    Double confidence,
-    String status,
-    Instant createdAt,
-    Map<String, Object> details) {
+      String id,
+      Double confidence,
+      String status,
+      Instant createdAt,
+      Map<String, Object> details) {
   }
 
   /**

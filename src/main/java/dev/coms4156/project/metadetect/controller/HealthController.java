@@ -1,10 +1,9 @@
 package dev.coms4156.project.metadetect.controller;
 
+import java.util.Map;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RestController;
-
-import java.util.Map;
 
 /**
  * Basic health/version for Iteration 1.
