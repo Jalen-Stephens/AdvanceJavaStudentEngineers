@@ -46,7 +46,7 @@ public class AnalyzeController {
       @RequestPart(value = "options", required = false) Dtos.AnalyzeOptions options) {
     // TODO: validate mime/size; persist; enqueue/compute; return id + status
     Dtos.AnalyzeResponse stub =
-      new Dtos.AnalyzeResponse("stub-id", 0.42, "PENDING", Instant.now(), null);
+        new Dtos.AnalyzeResponse("stub-id", 0.42, "PENDING", Instant.now(), null);
     return ResponseEntity.status(HttpStatus.ACCEPTED).body(stub);
   }
 
