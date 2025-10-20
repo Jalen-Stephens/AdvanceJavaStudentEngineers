@@ -264,3 +264,63 @@ ChatGPT was used to:
 * Reviewed file structure and imports in IntelliJ to ensure no duplicate or unused imports remained.
 
 ---
+
+### **Commit / Ticket Reference**
+
+* **Commit:** `feat(db): finalize Supabase integration and Flyway schema setup (closes #4)`
+* **Ticket:** `#4 — [DB] Integrate Supabase as the primary backend database`
+* **Date:** October 15, 2025
+* **Team Member:** Jalen Stephens
+
+---
+
+### **AI Tool Information**
+
+* **Tool Used:** OpenAI ChatGPT (GPT-5)
+* **Access Method:** ChatGPT Web (Columbia University .edu academic access)
+* **Configuration:** Default model settings
+* **Cost:** $0 (no paid API calls)
+
+---
+
+### **Purpose of AI Assistance**
+
+The AI assistant helped draft environment configuration steps, database integration instructions, Flyway migration structure, and JDBC repository templates to establish a working Supabase connection in the Spring Boot backend. It also assisted with writing Javadoc comments, resolving PMD and Checkstyle issues, and creating the final commit message and PR summary for Iteration 1.
+
+---
+
+### **Prompts / Interaction Summary**
+
+* Guidance on connecting Spring Boot to Supabase via environment variables.
+* Creating the `V1__init.sql` Flyway migration and verifying database schema.
+* Writing Javadoc for `BootSmoke.java`, `UserRepository.java`, and `ImageRepository.java`.
+* Fixing PMD violations (`EmptyCatchBlock`, `UselessParentheses`).
+* Generating the final commit message for Iteration 1.
+* Clarifying how to produce PMD HTML reports via Maven configuration.
+
+---
+
+### **Resulting Artifacts**
+
+* `src/main/java/dev/coms4156/project/metadetect/BootSmoke.java`
+* `src/main/java/dev/coms4156/project/metadetect/repo/UserRepository.java`
+* `src/main/java/dev/coms4156/project/metadetect/repo/ImageRepository.java`
+* `src/main/resources/db/migration/V1__init.sql`
+* Updated `pom.xml` (PMD plugin configuration)
+* Final commit message for Iteration 1
+
+---
+
+### **Verification**
+
+* Verified successful build using `mvn clean verify -DskipTests`.
+* Confirmed Flyway migration ran and created schema tables in Supabase (`users`, `images`, `analysis_reports`, `flyway_schema_history`).
+* Validated `/db/health` endpoint returns “UP”.
+* Confirmed PMD and Checkstyle pass with 0 violations.
+* Manually inspected generated HTML PMD report.
+
+---
+
+### **Attribution Statement**
+
+> Portions of this commit and configuration were generated with assistance from OpenAI ChatGPT (GPT-5) on October 15, 2025. All AI-generated content was reviewed, verified, and finalized by the development team.

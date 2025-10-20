@@ -1,16 +1,17 @@
 package dev.coms4156.project.metadetect.controller;
 
 import dev.coms4156.project.metadetect.dto.Dtos;
-import dev.coms4156.project.metadetect.dto.Dtos.ImageDto;
-import dev.coms4156.project.metadetect.dto.Dtos.UpdateImageRequest;
-
-import java.util.List;
-
 import dev.coms4156.project.metadetect.service.ImageService;
-import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.*;
-
 import java.util.List;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.DeleteMapping;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PutMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.RestController;
 
 /**
  * CRUD around user images (records, not binary).
@@ -35,14 +36,14 @@ public class ImageController {
   @GetMapping("/{id}")
   public ResponseEntity<Dtos.ImageDto> get(@PathVariable String id) {
     // TODO: fetch by id + ownership
-    return ResponseEntity.ok(new ImageDto(id, "original.jpg", "owner-uid", null));
+    return ResponseEntity.ok(new Dtos.ImageDto(id, "original.jpg", "owner-uid", null));
   }
 
   @PutMapping("/{id}")
   public ResponseEntity<Dtos.ImageDto> update(@PathVariable String id,
                                               @RequestBody Dtos.UpdateImageRequest req) {
     // TODO: update mutable fields (labels, note)
-    return ResponseEntity.ok(new ImageDto(id, "original.jpg", "owner-uid", null));
+    return ResponseEntity.ok(new Dtos.ImageDto(id, "original.jpg", "owner-uid", null));
   }
 
   @DeleteMapping("/{id}")
