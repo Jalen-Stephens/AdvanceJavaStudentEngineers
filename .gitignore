@@ -35,3 +35,6 @@ build/
 ### Enviroment Variables ###
 .env
 env.local.sh
+
+### C2PA and Tools ###
+/tools/
