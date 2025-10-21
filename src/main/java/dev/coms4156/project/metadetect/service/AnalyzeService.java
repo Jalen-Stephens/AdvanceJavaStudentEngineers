@@ -43,47 +43,11 @@ public class AnalyzeService {
      */
     
     // TODO: methods to fetch metadata, confidence, compare, etc.
-    public String fetchMetadata(InputStream in) throws Exception {
-      Metadata metadata = ImageMetadataReader.readMetadata(in);
-
-      // Build JSON-ready map structure
-      Map<String, Object> root = new LinkedHashMap<>();
-      List<Map<String, Object>> directoriesJson = new ArrayList<>();
-
-      for (Directory dir : metadata.getDirectories()) {
-          Map<String, Object> dirJson = new LinkedHashMap<>();
-          dirJson.put("name", dir.getName());
-          dirJson.put("type", dir.getClass().getName());
-
-          List<Map<String, Object>> tagsJson = new ArrayList<>();
-          for (Tag tag : dir.getTags()) {
-              Map<String, Object> tagJson = new LinkedHashMap<>();
-              tagJson.put("tagType", tag.getTagType());
-              tagJson.put("tagName", tag.getTagName());
-              tagJson.put("description", tag.getDescription());
-
-              Object raw = dir.getObject(tag.getTagType());
-              tagJson.put("rawValue", raw != null ? raw.toString() : tag.getDescription());
-
-              tagsJson.add(tagJson);
-          }
-
-          dirJson.put("tags", tagsJson);
-          //TODO: .getErrors() method in Directory class
-          directoriesJson.add(dirJson);
-      }
-
-      root.put("directories", directoriesJson);
-
-      // Convert the map to JSON string using Jackson
-      ObjectMapper mapper = new ObjectMapper();
-      return mapper.writerWithDefaultPrettyPrinter().writeValueAsString(root);
+   
+    public String fetchC2pa(InputStream in) throws Exception {
+      
+      return "c2pa-metadata-placeholder";
     }
-
-    
-    //Fetch metadata
-    
-
 
 
   //Fetch confidence score

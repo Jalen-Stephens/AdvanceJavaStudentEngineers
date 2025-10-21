@@ -60,7 +60,7 @@ public class AnalyzeController {
     public String extract(@RequestParam("file") MultipartFile file) throws Exception {
       try {
         InputStream in = file.getInputStream();
-        return analyzeService.fetchMetadata(in);
+        return analyzeService.fetchC2pa(in);
       } catch (IOException e) {
         throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Invalid file input", e);
       }

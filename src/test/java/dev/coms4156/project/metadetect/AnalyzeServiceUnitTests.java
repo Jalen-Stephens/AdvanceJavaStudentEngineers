@@ -39,7 +39,7 @@ class AnalyzeServiceTest {
     void testMetadataExtraction() throws Exception {
         // fetchMetadata should return a JSON String
         analyzeService = new AnalyzeService();
-        String json = analyzeService.fetchMetadata(in);
+        String json = analyzeService.fetchC2pa(in);
 
         assertNotNull(json, "fetchMetadata returned null");
 
