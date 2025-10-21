@@ -496,3 +496,124 @@ Assisted in drafting a unit test suite for the `UserService` to validate identit
 > Portions of this test suite and build configuration were generated with assistance from OpenAI ChatGPT (GPT-5) on February 27, 2025. All AI-generated content was reviewed, verified, and finalized by the development team.
 
 ---
+
+### **Commit / Ticket Reference**
+
+* **Commit:** `feat(auth): add Supabase auth proxy + /auth endpoints + JWKS resource server config (refs #7)`
+* **Ticket:** `#7 — Implement Supabase-backed authentication`
+* **Date:** October 21, 2025
+* **Team Member:** Jalen Stephens
+
+---
+
+### **AI Tool Information**
+
+* **Tool Used:** OpenAI ChatGPT (GPT-5)
+* **Access Method:** ChatGPT Web (.edu academic access)
+* **Configuration:** Default model settings
+* **Cost:** $0 (no paid API calls)
+
+---
+
+### **Purpose of AI Assistance**
+
+The AI assisted in designing and scaffolding the Supabase authentication proxy integration. This included creating the `AuthProxyService`, generating a preconfigured `WebClient` for Supabase Auth endpoints, adding `/auth` controller routes, wiring JWT validation through Supabase’s JWKS, and ensuring all components passed Checkstyle and compilation checks. The AI also provided setup guidance for environment variables and secure configuration management.
+
+---
+
+### **Prompts / Interaction Summary**
+
+* Repeat full proxy wiring code block for AuthController and SupabaseClientConfig
+* Add missing Javadoc comments for Checkstyle compliance
+* Resolve `HttpStatus` vs `HttpStatusCode` compilation mismatch
+* Provide environment variable export commands using `set -a` and `.env.local`
+* Validate correct JWKS configuration in Spring Boot (`spring.security.oauth2.resourceserver.jwt.jwk-set-uri`)
+* Generate `AuthControllerTest` for endpoint validation
+
+---
+
+### **Resulting Artifacts**
+
+* **New:** `SupabaseClientConfig.java`
+* **New:** `AuthProxyService.java`
+* **Modified:** `AuthController.java` (added `/auth/signup`, `/auth/login`, `/auth/refresh`, `/auth/me`)
+* **Modified:** `Dtos.java` (added `RefreshRequest` record)
+* **Modified:** `application.properties` (added Supabase env-based config and JWKS endpoint)
+* **Modified:** `pom.xml` (added WebFlux dependency)
+* **Moved:** `UserServiceTest.java` (to `service/` directory)
+
+---
+
+### **Verification**
+
+* Verified build using `mvn checkstyle:check` (0 violations)
+* Successfully compiled with `mvn -DskipTests compile` after resolving HttpStatusCode changes
+* Confirmed application startup with valid Supabase URL and key configuration
+* Manual test planned for `/auth/signup` and `/auth/me` endpoints once live Supabase credentials are applied
+
+---
+
+### **Attribution Statement**
+
+> Portions of this commit and configuration were generated with assistance from OpenAI ChatGPT (GPT-5) on October 21, 2025. All AI-generated content was reviewed, verified, and finalized by the development team.
+
+---
+
+### **Commit / Ticket Reference**
+
+* **Commit:** `test(auth): add controller slice tests + security test config for Supabase proxy (refs #7)`
+* **Ticket:** `#7 — Integrate Supabase Auth Proxy + Resource Server`
+* **Date:** October 21, 2025
+* **Team Member:** Jalen Stephens
+
+---
+
+### **AI Tool Information**
+
+* **Tool Used:** OpenAI ChatGPT (GPT-5)
+* **Access Method:** ChatGPT Web (.edu academic access)
+* **Configuration:** Default model settings
+* **Cost:** $0 (no paid API calls)
+
+---
+
+### **Purpose of AI Assistance**
+
+The AI assisted in designing and drafting controller-slice tests for the `/auth/*` endpoints, as well as creating a dedicated Spring Security test configuration to allow unauthenticated access for the proxy tests. It also helped refine the JSON content-type enforcement in the proxy response so the controller tests aligned with expected client behavior.
+
+---
+
+### **Prompts / Interaction Summary**
+
+* Requested a controller-level test suite for `AuthController`.
+* Noticed 403 and 401 blocking proxy tests → requested correction for security config.
+* Asked for `SecurityTestConfig` to disable CSRF and allow passthrough behavior.
+* AI provided corrections to enable `application/json` for returned `ResponseEntity`.
+
+---
+
+### **Resulting Artifacts**
+
+* Updated logic in `AuthController.java` (exception handler → JSON passthrough)
+* Updated `AuthProxyService.java` (explicit JSON content type)
+* Added `SecurityTestConfig.java` for test slice security
+* Added `AuthControllerTest.java`, covering success and error paths
+
+---
+
+### **Verification**
+
+Changes were validated by:
+
+* Running `mvn clean test` to ensure all tests passed successfully
+* Confirming Spring Security configuration allowed test access to `/auth/*`
+* Inspecting JaCoCo coverage increase in controller and service layers
+* Manual code review for final consistency
+
+---
+
+### **Attribution Statement**
+
+> Portions of this commit or configuration were generated with assistance from OpenAI ChatGPT (GPT-5) on October 21, 2025. All AI-generated content was reviewed, verified, and finalized by the development team.
+
+---

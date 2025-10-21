@@ -4,6 +4,7 @@ import dev.coms4156.project.metadetect.dto.Dtos;
 import dev.coms4156.project.metadetect.service.AuthProxyService;
 import dev.coms4156.project.metadetect.service.UserService;
 import java.util.Map;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -61,10 +62,17 @@ public class AuthController {
     return ResponseEntity.ok(Map.of("id", id.toString(), "email", email));
   }
 
-  // --- Error mapping for proxy failures ---
-
+  /**
+   * Handles errors bubbled up from the Supabase proxy layer,
+   * preserving the original HTTP status and raw JSON body.
+   *
+   * @param ex the proxy exception containing status and body
+   * @return ResponseEntity with Supabase's status and JSON body
+   */
   @ExceptionHandler(AuthProxyService.ProxyException.class)
   public ResponseEntity<String> handleProxyError(AuthProxyService.ProxyException ex) {
-    return ResponseEntity.status(ex.getStatus()).body(ex.getBody());
+    return ResponseEntity.status(ex.getStatus())
+      .contentType(MediaType.APPLICATION_JSON)
+      .body(ex.getBody());
   }
 }

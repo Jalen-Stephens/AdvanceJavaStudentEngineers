@@ -2,6 +2,7 @@ package dev.coms4156.project.metadetect.service;
 
 import org.springframework.http.HttpStatus;
 import org.springframework.http.HttpStatusCode;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.web.reactive.function.client.WebClient;
@@ -74,7 +75,10 @@ public class AuthProxyService {
         .bodyToMono(String.class)
         .block();
 
-    return ResponseEntity.ok(body);
+    // Force JSON content type so tests (and clients) see application/json
+    return ResponseEntity.ok()
+      .contentType(MediaType.APPLICATION_JSON)
+      .body(body);
   }
 
   /**
