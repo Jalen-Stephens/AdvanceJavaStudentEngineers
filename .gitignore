@@ -35,10 +35,9 @@ build/
 ### Enviroment Variables ###
 .env
 env.local.sh
-<<<<<<< HEAD
 
 ### C2PA and Tools ###
 /tools/
-=======
+
+
 env.pooler.sh
->>>>>>> origin
