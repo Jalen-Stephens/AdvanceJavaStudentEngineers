@@ -35,3 +35,4 @@ build/
 ### Enviroment Variables ###
 .env
 env.local.sh
+env.pooler.sh
