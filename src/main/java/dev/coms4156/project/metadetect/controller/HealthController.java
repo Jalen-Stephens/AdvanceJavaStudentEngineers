@@ -18,6 +18,11 @@ public class HealthController {
     this.jdbc = jdbc;
   }
 
+  /**
+   * Simple liveness endpoint for health checks.
+   *
+   * @return static JSON confirming the service is reachable
+   */
   @GetMapping("/db/health")
   public String dbHealth() {
     Integer one = jdbc.queryForObject("select 1", Integer.class);
