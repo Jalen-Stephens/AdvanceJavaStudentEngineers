@@ -324,3 +324,175 @@ The AI assistant helped draft environment configuration steps, database integrat
 ### **Attribution Statement**
 
 > Portions of this commit and configuration were generated with assistance from OpenAI ChatGPT (GPT-5) on October 15, 2025. All AI-generated content was reviewed, verified, and finalized by the development team.
+
+---
+
+### **Commit / Ticket Reference**
+
+* **Commit:** `feat(db): replace users table with auth.users and add RLS (refs #10)`
+* **Ticket:** `#10 — Service: Implement UserService core logic (Iteration 1)`
+* **Date:** February 27, 2025
+* **Team Member:** Jalen Stephens
+
+---
+
+### **AI Tool Information**
+
+* **Tool Used:** OpenAI ChatGPT (GPT-5)
+* **Access Method:** ChatGPT Web (.edu academic access)
+* **Configuration:** Default model settings
+* **Cost:** $0 (no paid API calls)
+
+---
+
+### **Purpose of AI Assistance**
+
+The AI assisted in designing the revised database schema to align authentication with Supabase Auth, removing the local `users` table, and drafting RLS policies that enforce row-level ownership based on `auth.uid()`.
+
+---
+
+### **Prompts / Interaction Summary**
+
+* Requested guidance on replacing the local users table with Supabase Auth.
+* Asked for full `V1__init.sql` Flyway migration compatible with new architecture.
+* Asked for commit message formatting in conventional commit style.
+* Asked for linking commit to Kanban ticket.
+
+---
+
+### **Resulting Artifacts**
+
+* `db/migration/V1__init.sql` (new baseline schema)
+* Removal of local `users` table
+* `images.user_id → references auth.users(id)`
+* `analysis_reports` updated to inherit cascading delete through images
+* RLS policy definitions for per-user isolation
+
+---
+
+### **Verification**
+
+* Manual review of schema structure
+* Confirmed no existing data required migration
+* Verified Flyway migration builds successfully via `mvn clean verify`
+* Confirmed alignment with Supabase JWT-based identity model
+
+---
+
+### **Attribution Statement**
+
+> Portions of this schema and RLS design were generated with assistance from OpenAI ChatGPT (GPT-5) on February 27, 2025. All AI-generated content was reviewed, validated, and finalized by the development team.
+
+---
+
+### **Commit / Ticket Reference**
+
+* **Commit:** `feat(security): enable JWT resource server and implement identity resolution from Supabase tokens (refs #10)`
+* **Ticket:** `#10 — Service: Implement UserService core logic (Iteration 1)`
+* **Date:** February 27, 2025
+* **Team Member:** Jalen Stephens
+
+---
+
+### **AI Tool Information**
+
+* **Tool Used:** OpenAI ChatGPT (GPT-5)
+* **Access Method:** ChatGPT Web (.edu academic access)
+* **Configuration:** Default model settings
+* **Cost:** $0 (no paid API calls)
+
+---
+
+### **Purpose of AI Assistance**
+
+Assisted with correctly configuring Spring Security as an OAuth2 Resource Server to validate Supabase JWTs, designing the identity resolution logic for extracting the authenticated user from the SecurityContext, and drafting correct Javadoc documentation required by Checkstyle.
+
+---
+
+### **Prompts / Interaction Summary**
+
+* Asked how to correctly integrate Supabase Auth using Spring Security (Option A).
+* Requested support writing the initial `UserService` identity methods.
+* Asked how to configure `application.properties` with Supabase JWKS.
+* Requested Checkstyle-compliant fixes and class-level/method-level docs.
+* Asked whether to commit changes in `pom.xml`, and for a proper commit message.
+
+---
+
+### **Resulting Artifacts**
+
+* `pom.xml` — added Spring Security + OAuth2 Resource Server dependencies
+* `SecurityConfig.java` — new JWT resource server configuration
+* `UserService.java` — implemented identity extraction from validated JWT
+* Updated Javadocs to pass Checkstyle
+* Updated `application.properties` to point to Supabase JWKS
+
+---
+
+### **Verification**
+
+* `mvn clean compile -DskipTests` executed successfully
+* Checkstyle warnings resolved after adding missing class-level Javadocs
+* Verified that configuration compiles and is ready for Postman JWT testing
+
+---
+
+### **Attribution Statement**
+
+> Portions of this commit or configuration were generated with assistance from OpenAI ChatGPT (GPT-5) on February 27, 2025. All AI-generated content was reviewed, verified, and finalized by the development team.
+
+---
+
+### **Commit / Ticket Reference**
+
+* **Commit:** `feat(test): add initial UserService unit tests and configure JaCoCo for project-only instrumentation (refs #10)`
+* **Ticket:** `#10 — Service: Implement UserService core logic (Iteration 1)`
+* **Date:** February 27, 2025
+* **Team Member:** Jalen Stephens
+
+---
+
+### **AI Tool Information**
+
+* **Tool Used:** OpenAI ChatGPT (GPT-5)
+* **Access Method:** ChatGPT Web (.edu academic access)
+* **Configuration:** Default model settings
+* **Cost:** $0 (no paid API calls)
+
+---
+
+### **Purpose of AI Assistance**
+
+Assisted in drafting a unit test suite for the `UserService` to validate identity extraction from a Supabase JWT inside the Spring `SecurityContext`, and in refining JaCoCo configuration to limit instrumentation to application code only (avoiding JDK/Spring packages).
+
+---
+
+### **Prompts / Interaction Summary**
+
+* Asked for a UserService test implementation without needing a Spring context.
+* Requested guidance on mocking authenticated vs unauthenticated identities.
+* Troubleshot JaCoCo instrumentation errors on JDK 24.
+* Requested proper `feat(test)` style commit message referencing the ticket.
+
+---
+
+### **Resulting Artifacts**
+
+* `pom.xml` updated to adjust JaCoCo instrumentation scope.
+* `src/test/java/dev/coms4156/project/metadetect/UserServiceTest.java` created with 6 initial tests.
+
+---
+
+### **Verification**
+
+* Ran `mvn clean test` successfully.
+* Confirmed all unit tests pass.
+* Confirmed Jacoco report generation succeeded and no longer attempts to instrument JDK classes.
+
+---
+
+### **Attribution Statement**
+
+> Portions of this test suite and build configuration were generated with assistance from OpenAI ChatGPT (GPT-5) on February 27, 2025. All AI-generated content was reviewed, verified, and finalized by the development team.
+
+---
