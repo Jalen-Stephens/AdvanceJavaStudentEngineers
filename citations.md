@@ -442,3 +442,57 @@ Assisted with correctly configuring Spring Security as an OAuth2 Resource Server
 > Portions of this commit or configuration were generated with assistance from OpenAI ChatGPT (GPT-5) on February 27, 2025. All AI-generated content was reviewed, verified, and finalized by the development team.
 
 ---
+
+### **Commit / Ticket Reference**
+
+* **Commit:** `feat(test): add initial UserService unit tests and configure JaCoCo for project-only instrumentation (refs #10)`
+* **Ticket:** `#10 — Service: Implement UserService core logic (Iteration 1)`
+* **Date:** February 27, 2025
+* **Team Member:** Jalen Stephens
+
+---
+
+### **AI Tool Information**
+
+* **Tool Used:** OpenAI ChatGPT (GPT-5)
+* **Access Method:** ChatGPT Web (.edu academic access)
+* **Configuration:** Default model settings
+* **Cost:** $0 (no paid API calls)
+
+---
+
+### **Purpose of AI Assistance**
+
+Assisted in drafting a unit test suite for the `UserService` to validate identity extraction from a Supabase JWT inside the Spring `SecurityContext`, and in refining JaCoCo configuration to limit instrumentation to application code only (avoiding JDK/Spring packages).
+
+---
+
+### **Prompts / Interaction Summary**
+
+* Asked for a UserService test implementation without needing a Spring context.
+* Requested guidance on mocking authenticated vs unauthenticated identities.
+* Troubleshot JaCoCo instrumentation errors on JDK 24.
+* Requested proper `feat(test)` style commit message referencing the ticket.
+
+---
+
+### **Resulting Artifacts**
+
+* `pom.xml` updated to adjust JaCoCo instrumentation scope.
+* `src/test/java/dev/coms4156/project/metadetect/UserServiceTest.java` created with 6 initial tests.
+
+---
+
+### **Verification**
+
+* Ran `mvn clean test` successfully.
+* Confirmed all unit tests pass.
+* Confirmed Jacoco report generation succeeded and no longer attempts to instrument JDK classes.
+
+---
+
+### **Attribution Statement**
+
+> Portions of this test suite and build configuration were generated with assistance from OpenAI ChatGPT (GPT-5) on February 27, 2025. All AI-generated content was reviewed, verified, and finalized by the development team.
+
+---
