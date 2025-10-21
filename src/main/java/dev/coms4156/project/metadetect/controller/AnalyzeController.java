@@ -2,8 +2,12 @@ package dev.coms4156.project.metadetect.controller;
 
 import dev.coms4156.project.metadetect.dto.Dtos;
 import dev.coms4156.project.metadetect.service.AnalyzeService;
+
+import java.io.IOException;
 import java.time.Instant;
 import java.util.Map;
+import java.io.InputStream;
+
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -11,9 +15,11 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RequestPart;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
+import org.springframework.web.server.ResponseStatusException;
 
 /**
  * Endpoints for analysis, metadata, confidence, compare.
@@ -49,6 +55,18 @@ public class AnalyzeController {
         new Dtos.AnalyzeResponse("stub-id", 0.42, "PENDING", Instant.now(), null);
     return ResponseEntity.status(HttpStatus.ACCEPTED).body(stub);
   }
+
+    @PostMapping(value = "/extract", consumes = "multipart/form-data")
+    public String extract(@RequestParam("file") MultipartFile file) throws Exception {
+      try {
+        InputStream in = file.getInputStream();
+        return analyzeService.fetchMetadata(in);
+      } catch (IOException e) {
+        throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Invalid file input", e);
+      }
+    }
+
+
 
   @GetMapping("/metadata/{id}")
   public ResponseEntity<Dtos.MetadataResponse> metadata(@PathVariable String id) {
