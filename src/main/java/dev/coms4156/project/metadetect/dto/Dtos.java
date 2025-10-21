@@ -101,4 +101,9 @@ public final class Dtos {
    */
   public record AuthResponse(String userId, String token) {
   }
+
+  /**
+   * Request body for refreshing token.
+   */
+  public record RefreshRequest(String refreshToken) {}
 }
