@@ -68,6 +68,12 @@
 			<groupId>org.springframework.boot</groupId>
 			<artifactId>spring-boot-starter-test</artifactId>
 			<scope>test</scope>
+			<exclusions>
+				<exclusion>
+					<groupId>org.mockito</groupId>
+					<artifactId>mockito-core</artifactId>
+				</exclusion>				
+			</exclusions>
 		</dependency>
 
 		<!-- API tests (optional but nice for iteration 1) -->
@@ -117,14 +123,26 @@
   			<artifactId>metadata-extractor</artifactId>
  			<version>2.18.0</version>
 		</dependency>
-
-		
+	
 		<dependency>
   			<groupId>com.fasterxml.jackson.core</groupId>
   			<artifactId>jackson-databind</artifactId>
   			<version>2.17.1</version>
 		</dependency>
 
+		<!-- Mockito core (re-added with specific version) -->
+		<dependency>
+    		<groupId>org.mockito</groupId>
+			<artifactId>mockito-core</artifactId>
+			<scope>test</scope>
+		</dependency>
+
+		<dependency>
+    		<groupId>org.mockito</groupId>
+   			<artifactId>mockito-inline</artifactId>
+    		<version>5.2.0</version> <!-- Use the latest version -->
+   			<scope>test</scope>
+		</dependency>
 
 	</dependencies>
 
@@ -211,75 +229,7 @@
 				</executions>
 			</plugin>
 
-			<!-- 1) Download & unzip the macOS universal binary into tools/ -->
-			<plugin>
-			<groupId>com.googlecode.maven-download-plugin</groupId>
-			<artifactId>download-maven-plugin</artifactId>
-			<version>1.7.1</version>
-			<executions>
-				<execution>
-				<id>fetch-c2patool</id>
-				<phase>generate-resources</phase>
-				<goals><goal>wget</goal></goals>
-				<configuration>
-					<!-- v0.9.12 macOS universal ZIP -->
-					<url>https://github.com/contentauth/c2patool/releases/download/v0.9.12/c2patool-v0.9.12-universal-apple-darwin.zip</url>
-					<outputDirectory>${project.basedir}/tools</outputDirectory>
-					<outputFileName>c2patool.zip</outputFileName>
-					<unpack>true</unpack>      <!-- unzip into tools/ -->
-					<overwrite>true</overwrite>
-					<skipCache>true</skipCache>
-					<headers>
-					<header>
-						<name>User-Agent</name>
-						<value>maven-download-plugin</value>
-					</header>
-					</headers>
-				</configuration>
-				</execution>
-			</executions>
-			</plugin>
-
-			<!-- 2) Locate the binary, copy to tools/c2patool, chmod +x, and show listings -->
-			<plugin>
-			<groupId>org.apache.maven.plugins</groupId>
-			<artifactId>maven-antrun-plugin</artifactId>
-			<version>3.1.0</version>
-			<executions>
-				<execution>
-				<id>prepare-c2patool</id>
-				<phase>generate-resources</phase>
-				<configuration>
-					<target>
-					<!-- Show what got unzipped -->
-					<echo message="== After unzip, contents of tools/: ==" />
-					<exec executable="ls">
-						<arg value="-la"/>
-						<arg value="${project.basedir}/tools"/>
-					</exec>
-
-					<!-- Copy any file named 'c2patool' from under tools/ to tools/ (flatten to filename) -->
-					<copy todir="${project.basedir}/tools" overwrite="true" failonerror="false">
-						<fileset dir="${project.basedir}/tools" includes="**/c2patool"/>
-						<flattenmapper/>
-					</copy>
-
-					<!-- If the binary ended up directly in tools/ already, that's fine; just chmod -->
-					<chmod file="${project.basedir}/tools/c2patool" perm="755" failonerror="false"/>
-
-					<!-- Show final state -->
-					<echo message="== Final contents of tools/: ==" />
-					<exec executable="ls">
-						<arg value="-la"/>
-						<arg value="${project.basedir}/tools"/>
-					</exec>
-
-					</target>
-				</configuration>
-				<goals><goal>run</goal></goals>
-				</execution>
-			</executions>
-			</plugin>
+			
 		</plugins>
 	</build>
 </project>
