@@ -784,3 +784,56 @@ The AI provided guidance and implementation help for creating the `ImageReposito
 
 ---
 
+### **Commit / Ticket Reference**
+
+* **Commit:** `test(#9): add ImageService unit tests and update pom to run under Java 17`
+* **Ticket:** `#9 — Implement ImageService core logic`
+* **Date:** October 22, 2025
+* **Team Member:** Jalen Stephens
+
+---
+
+### **AI Tool Information**
+
+* **Tool Used:** OpenAI ChatGPT (GPT-5)
+* **Access Method:** ChatGPT Web (.edu academic access)
+* **Configuration:** Default model settings
+* **Cost:** $0 (no paid API calls)
+
+---
+
+### **Purpose of AI Assistance**
+
+Assistance was used to design and implement comprehensive branch-coverage unit tests for `ImageService`, including mocking strategies, repository interaction expectations, and handling JDK/Jacoco compatibility issues for coverage instrumentation.
+
+---
+
+### **Prompts / Interaction Summary**
+
+* “Can we create unit test now on the code we just added…”
+* Debugging JaCoCo crash and version mismatch
+* Fixing Mockito inline instrumentation conflict
+* Request for one-line commit message referencing #9
+
+---
+
+### **Resulting Artifacts**
+
+* `src/test/java/dev/coms4156/project/metadetect/service/ImageServiceTest.java`
+* Updated `pom.xml` (ensuring Java 17 execution for tests/coverage)
+
+---
+
+### **Verification**
+
+* Successfully executed `mvn clean test` under Java 17
+* Verified branch coverage logic (success + failure paths)
+* Confirmed green test suite and valid JaCoCo run
+
+---
+
+### **Attribution Statement**
+
+> Portions of this commit or configuration were generated with assistance from OpenAI ChatGPT (GPT-5) on October 22, 2025. All AI-generated content was reviewed, verified, and finalized by the development team.
+
+---
