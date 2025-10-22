@@ -670,3 +670,59 @@ Changes were validated via:
 ### Attribution Statement
 > Portions of this commit or configuration were generated with assistance from OpenAI ChatGPT (GPT-5) on October 21, 2025. All AI-generated content was reviewed, verified, and finalized by the development team.
 ---
+
+### **Commit / Ticket Reference**
+
+* **Commit:** `chore(security): clean SecurityConfig imports and finalize JWKS config for prod (refs #7)`
+* **Ticket:** `#7 — Supabase Auth Integration`
+* **Date:** October 21, 2025
+* **Team Member:** Jalen Stephens
+
+---
+
+### **AI Tool Information**
+
+* **Tool Used:** OpenAI ChatGPT (GPT-5)
+* **Access Method:** ChatGPT Web (.edu academic access)
+* **Configuration:** Default model settings
+* **Cost:** $0 (no paid API calls)
+
+---
+
+### **Purpose of AI Assistance**
+
+Guidance on finalizing Spring Security JWT resource server configuration for Supabase, correcting JWKS endpoint wiring, and addressing Checkstyle star-import violations in `SecurityConfig.java`.
+
+---
+
+### **Prompts / Interaction Summary**
+
+* Asked how to allow unauthenticated signup/login while keeping `/auth/me` secured.
+* Verified JWKS vs. local symmetric-signature mode for development.
+* Asked for recommended commit message and proper citation entry wording.
+* Requested guidance on Checkstyle warnings and star-import cleanup.
+
+---
+
+### **Resulting Artifacts**
+
+* Adjusted `SecurityConfig.java` (import cleanup and JWKS logic finalized).
+* Updated `application.properties` to cleanly reference `spring.security.oauth2.resourceserver.jwt.jwk-set-uri`.
+* Updated `citations.md` with this entry.
+
+---
+
+### **Verification**
+
+* Local manual authentication test via curl using Supabase-issued token.
+* Confirmed access to `POST /auth/signup` and `POST /auth/login` without JWT.
+* Confirmed `GET /auth/me` returns 200 with valid JWT and 401 without.
+* Re-ran Checkstyle and confirmed zero violations.
+
+---
+
+### **Attribution Statement**
+
+> Portions of this commit or configuration were generated with assistance from OpenAI ChatGPT (GPT-5) on October 21, 2025. All AI-generated content was reviewed, verified, and finalized by the development team.
+
+---
