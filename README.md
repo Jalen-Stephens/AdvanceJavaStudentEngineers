@@ -118,6 +118,26 @@ This repository using GitHub Actions to perform continous integration, to view t
 
 Click on the latest job on the top under "X workflow runs" then Click 'build' under jobs finally click the drop down next to all the action items to read the logs made during their execution.
 
+## CI Reports (JaCoCo + PMD)
+This project generates automated code coverage (JaCoCo) and static analysis (PMD) reports as part of the CI pipeline. To run these reports locally:
+
+```bash
+# Run unit tests
+mvn clean test
+
+# Generate JaCoCo coverage and PMD analysis reports
+mvn jacoco:report pmd:pmd pmd:check
+
+# Convert HTML reports to PNG snapshots
+bash scripts/html_to_png.sh
+```
+
+The generated PNG reports will be saved to:
+- `/reports/jacoco.png` - JaCoCo code coverage report
+- `/reports/pmd.png` - PMD static analysis report
+
+These reports are automatically uploaded as GitHub Actions artifacts named "ci-reports" on every push and pull request.
+
 ## Tools used 
 This section includes notes on tools and technologies used in building this project, as well as any additional details if applicable.
 
