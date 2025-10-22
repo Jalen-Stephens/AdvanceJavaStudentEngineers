@@ -45,15 +45,6 @@
 	</dependencyManagement>
 
 	<dependencies>
-		<!-- macOS native DNS resolver -->
-		<dependency>
-			<groupId>io.netty</groupId>
-			<artifactId>netty-resolver-dns-native-macos</artifactId>
-			<version>4.1.119.Final</version>
-			<classifier>${os.detected.name}-${os.detected.arch}</classifier>
-			<scope>runtime</scope>
-		</dependency>
-
 		<!-- Spring Security core -->
 		<dependency>
 			<groupId>org.springframework.boot</groupId>
@@ -328,4 +319,59 @@
 			</plugin>
 		</plugins>
 	</reporting>
+
+	<profiles>
+		<!-- Platform-specific native dependencies -->
+		<profile>
+			<id>macos</id>
+			<activation>
+				<os>
+					<family>mac</family>
+				</os>
+			</activation>
+			<dependencies>
+				<!-- macOS native DNS resolver -->
+				<dependency>
+					<groupId>io.netty</groupId>
+					<artifactId>netty-resolver-dns-native-macos</artifactId>
+					<version>4.1.119.Final</version>
+					<classifier>${os.detected.name}-${os.detected.arch}</classifier>
+					<scope>runtime</scope>
+				</dependency>
+			</dependencies>
+		</profile>
+		
+		<profile>
+			<id>linux</id>
+			<activation>
+				<os>
+					<family>unix</family>
+					<name>linux</name>
+				</os>
+			</activation>
+			<dependencies>
+				<!-- Linux native DNS resolver -->
+				<dependency>
+					<groupId>io.netty</groupId>
+					<artifactId>netty-resolver-dns-native-linux</artifactId>
+					<version>4.1.119.Final</version>
+					<classifier>${os.detected.name}-${os.detected.arch}</classifier>
+					<scope>runtime</scope>
+				</dependency>
+			</dependencies>
+		</profile>
+		
+		<profile>
+			<id>windows</id>
+			<activation>
+				<os>
+					<family>windows</family>
+				</os>
+			</activation>
+			<dependencies>
+				<!-- Windows uses the default Netty DNS resolver -->
+				<!-- No native dependency needed for Windows -->
+			</dependencies>
+		</profile>
+	</profiles>
 </project>
