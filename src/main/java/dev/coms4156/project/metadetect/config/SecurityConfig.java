@@ -1,16 +1,20 @@
-// src/main/java/dev/coms4156/project/metadetect/config/SecurityConfig.java
-
 package dev.coms4156.project.metadetect.config;
 
-import java.util.Collection;
-import java.util.Collections;
+import java.nio.charset.StandardCharsets;
+import javax.crypto.spec.SecretKeySpec;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.config.Customizer;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
-import org.springframework.security.core.GrantedAuthority;
+import org.springframework.security.oauth2.core.DelegatingOAuth2TokenValidator;
+import org.springframework.security.oauth2.core.OAuth2TokenValidator;
+import org.springframework.security.oauth2.jose.jws.MacAlgorithm;
 import org.springframework.security.oauth2.jwt.Jwt;
-import org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationConverter;
+import org.springframework.security.oauth2.jwt.JwtDecoder;
+import org.springframework.security.oauth2.jwt.JwtException;
+import org.springframework.security.oauth2.jwt.JwtValidators;
+import org.springframework.security.oauth2.jwt.NimbusJwtDecoder;
 import org.springframework.security.web.SecurityFilterChain;
 
 /**
@@ -24,26 +28,32 @@ public class SecurityConfig {
   @Bean
   SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
     http
-        .csrf(csrf -> csrf.disable())
-        .authorizeHttpRequests(auth -> auth
-        .requestMatchers("/health", "/actuator/**").permitAll()
+      .csrf(csrf -> csrf.disable())
+      .authorizeHttpRequests(auth -> auth
+        .requestMatchers("/health", "/actuator/**", "/auth/signup", "/auth/login", "/auth/refresh")
+        .permitAll()
         .anyRequest().authenticated()
       )
-        .oauth2ResourceServer(oauth2 -> oauth2
-        .jwt(jwt -> jwt.jwtAuthenticationConverter(jwtAuthenticationConverter()))
-        );
+        .oauth2ResourceServer(oauth2 -> oauth2.jwt(Customizer.withDefaults()));
     return http.build();
   }
 
   @Bean
-  JwtAuthenticationConverter jwtAuthenticationConverter() {
-    // Keep authorities empty for now; we only need claims (sub, email).
-    JwtAuthenticationConverter conv = new JwtAuthenticationConverter();
-    conv.setJwtGrantedAuthoritiesConverter(SecurityConfig::emptyAuthorities);
-    return conv;
-  }
+  JwtDecoder jwtDecoder(
+      @Value("${metadetect.supabase.jwtSecret}") String jwtSecret,
+      @Value("${metadetect.supabase.url}") String issuer
+  ) {
+    var key = new SecretKeySpec(jwtSecret.getBytes(StandardCharsets.UTF_8), "HmacSHA256");
+    var decoder = NimbusJwtDecoder.withSecretKey(key)
+        .macAlgorithm(MacAlgorithm.HS256)
+        .build();
 
-  private static Collection<GrantedAuthority> emptyAuthorities(Jwt jwt) {
-    return Collections.emptyList();
+    // Validate issuer + standard claims; audience in Supabase is "authenticated"
+    OAuth2TokenValidator<Jwt> withIssuer = JwtValidators.createDefaultWithIssuer(
+        issuer + "/auth/v1");
+    OAuth2TokenValidator<Jwt> validator = new DelegatingOAuth2TokenValidator<>(withIssuer);
+    decoder.setJwtValidator(validator);
+
+    return decoder;
   }
 }
