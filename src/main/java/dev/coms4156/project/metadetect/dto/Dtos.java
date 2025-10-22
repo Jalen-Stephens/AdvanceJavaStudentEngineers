@@ -71,8 +71,14 @@ public final class Dtos {
   /**
    * Simplified view of an image record.
    */
-  public record ImageDto(String id, String filename, String ownerUserId, Instant uploadedAt) {
-  }
+  public record ImageDto(
+      String id,
+      String filename,
+      String ownerUserId,
+      Instant uploadedAt,
+      List<String> labels,
+      String note
+  ) {}
 
   /**
    * Request body for updating image metadata (labels, note).
@@ -101,4 +107,9 @@ public final class Dtos {
    */
   public record AuthResponse(String userId, String token) {
   }
+
+  /**
+   * Request body for refreshing token.
+   */
+  public record RefreshRequest(String refreshToken) {}
 }

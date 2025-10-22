@@ -20,11 +20,40 @@
 
 	<properties>
 		<java.version>17</java.version>
-		<!-- makes the built jar name nice -->
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+
+		<!-- C2PA tool download configuration (macOS universal ZIP) -->
+    	<c2pa.version>v0.23.4</c2pa.version>
+    	<c2pa.url>https://github.com/contentauth/c2pa-rs/releases/download/c2patool-{c2pa.version}/c2patool-{c2pa.version}-universal-apple-darwin.zip</c2pa.url>
+   		<c2pa.unpack.dir>${project.basedir}/tools</c2pa.unpack.dir>
+    	<c2pa.unpack.archive>${c2pa.unpack.dir}/c2patool.zip</c2pa.unpack.archive>
+    	<!-- Folder name created by the ZIP for v0.23.4 (contains the binary named "c2patool") -->
+    	<c2pa.unzipped.folder>c2patool-${c2pa.version}-universal-apple-darwin</c2pa.unzipped.folder>
 	</properties>
 
+	<dependencyManagement>
+		<dependencies>
+			<!-- Keep Netty versions consistent -->
+			<dependency>
+				<groupId>io.netty</groupId>
+				<artifactId>netty-bom</artifactId>
+				<version>4.1.119.Final</version>
+				<type>pom</type>
+				<scope>import</scope>
+			</dependency>
+		</dependencies>
+	</dependencyManagement>
+
 	<dependencies>
+		<!-- macOS native DNS resolver -->
+		<dependency>
+			<groupId>io.netty</groupId>
+			<artifactId>netty-resolver-dns-native-macos</artifactId>
+			<version>4.1.119.Final</version>
+			<classifier>${os.detected.name}-${os.detected.arch}</classifier>
+			<scope>runtime</scope>
+		</dependency>
+
 		<!-- Spring Security core -->
 		<dependency>
 			<groupId>org.springframework.boot</groupId>
@@ -60,6 +89,12 @@
 			<groupId>org.springframework.boot</groupId>
 			<artifactId>spring-boot-starter-test</artifactId>
 			<scope>test</scope>
+			<exclusions>
+				<exclusion>
+					<groupId>org.mockito</groupId>
+					<artifactId>mockito-core</artifactId>
+				</exclusion>				
+			</exclusions>
 		</dependency>
 
 		<!-- API tests (optional but nice for iteration 1) -->
@@ -103,17 +138,74 @@
 			<version>11.14.0</version>
 		</dependency>
 
+		<dependency>
+			<groupId>org.springframework.boot</groupId>
+			<artifactId>spring-boot-starter-webflux</artifactId>
+		</dependency>
+
+		<dependency>
+			<groupId>com.squareup.okhttp3</groupId>
+			<artifactId>mockwebserver</artifactId>
+			<version>4.12.0</version>
+			<scope>test</scope>
+		</dependency>
+		<!-- Metadata Extractor library -->
+		<dependency>
+  			<groupId>com.drewnoakes</groupId>
+  			<artifactId>metadata-extractor</artifactId>
+ 			<version>2.18.0</version>
+		</dependency>
+	
+		<dependency>
+  			<groupId>com.fasterxml.jackson.core</groupId>
+  			<artifactId>jackson-databind</artifactId>
+  			<version>2.17.1</version>
+		</dependency>
+
+		<!-- Mockito core (re-added with specific version) -->
+		<dependency>
+    		<groupId>org.mockito</groupId>
+			<artifactId>mockito-core</artifactId>
+			<scope>test</scope>
+		</dependency>
+
+		<dependency>
+    		<groupId>org.mockito</groupId>
+   			<artifactId>mockito-inline</artifactId>
+    		<version>5.2.0</version> <!-- Use the latest version -->
+   			<scope>test</scope>
+		</dependency>
+
 	</dependencies>
 
 	<build>
+		<extensions>
+			<extension>
+				<groupId>kr.motd.maven</groupId>
+				<artifactId>os-maven-plugin</artifactId>
+				<version>1.7.1</version>
+			</extension>
+		</extensions>
 		<finalName>${project.artifactId}-${project.version}</finalName>
+
 		<plugins>
+			<!-- Spring Boot (single declaration) -->
 			<plugin>
 				<groupId>org.springframework.boot</groupId>
 				<artifactId>spring-boot-maven-plugin</artifactId>
+				<configuration>
+					<jvmArguments>--enable-native-access=ALL-UNNAMED</jvmArguments>
+				</configuration>
+				<executions>
+					<execution>
+						<goals>
+							<goal>repackage</goal>
+						</goals>
+					</execution>
+				</executions>
 			</plugin>
 
-			<!-- Checkstyle (already configured to run at validate) -->
+			<!-- Checkstyle -->
 			<plugin>
 				<groupId>org.apache.maven.plugins</groupId>
 				<artifactId>maven-checkstyle-plugin</artifactId>
@@ -129,12 +221,14 @@
 					<execution>
 						<id>validate</id>
 						<phase>validate</phase>
-						<goals><goal>check</goal></goals>
+						<goals>
+							<goal>check</goal>
+						</goals>
 					</execution>
 				</executions>
 			</plugin>
 
-			<!-- PMD static analysis -->
+			<!-- PMD -->
 			<plugin>
 				<groupId>org.apache.maven.plugins</groupId>
 				<artifactId>maven-pmd-plugin</artifactId>
@@ -159,7 +253,7 @@
 				</executions>
 			</plugin>
 
-			<!-- JaCoCo coverage -->
+			<!-- JaCoCo -->
 			<plugin>
 				<groupId>org.jacoco</groupId>
 				<artifactId>jacoco-maven-plugin</artifactId>
@@ -170,12 +264,9 @@
 							<goal>prepare-agent</goal>
 						</goals>
 						<configuration>
-							<!-- Instrument ONLY our code -->
 							<includes>
-								<include>dev/coms4156/project/metadetect/*</include>
 								<include>dev/coms4156/project/metadetect/**</include>
 							</includes>
-							<!-- Make sure we don't try to touch JDK or Spring classes -->
 							<excludes>
 								<exclude>java/**</exclude>
 								<exclude>jdk/**</exclude>
@@ -184,7 +275,6 @@
 							</excludes>
 						</configuration>
 					</execution>
-
 					<execution>
 						<id>report</id>
 						<phase>verify</phase>
