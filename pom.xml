@@ -253,6 +253,16 @@
 				</executions>
 			</plugin>
 
+			<!-- Maven Site Plugin -->
+			<plugin>
+				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-site-plugin</artifactId>
+				<version>4.0.0-M13</version>
+				<configuration>
+					<locales>en</locales>
+				</configuration>
+			</plugin>
+
 			<!-- JaCoCo -->
 			<plugin>
 				<groupId>org.jacoco</groupId>
