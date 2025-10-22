@@ -1051,3 +1051,60 @@ Helped implement the controller logic integrating with the `ImageService`, updat
 > Portions of this commit or configuration were generated with assistance from OpenAI ChatGPT (GPT-5) on October 22, 2025. All AI-generated content was reviewed, verified, and finalized by the development team.
 
 ---
+
+### **Commit / Ticket Reference**
+
+* **Commit:** `feat(#26): add SupabaseStorageService and wire upload/signed URL endpoints in ImageController`
+* **Ticket:** `#26 — Implement Binary Upload & Signed URL for Images`
+* **Date:** October 22, 2025
+* **Team Member:** Jalen Stephens
+
+---
+
+### **AI Tool Information**
+
+* **Tool Used:** OpenAI ChatGPT (GPT-5)
+* **Access Method:** ChatGPT Web (.edu academic access)
+* **Configuration:** Default model settings
+* **Cost:** $0 (no paid API calls)
+
+---
+
+### **Purpose of AI Assistance**
+
+Helped scaffold the Supabase storage integration service, update the controller endpoints for generating signed upload URLs, and adjust DTO/logic flow to connect metadata persistence with binary upload behavior.
+
+---
+
+### **Prompts / Interaction Summary**
+
+* Asked how images should be stored in Supabase and how auth should interact with storage.
+* Prompted for best-practice bucket configuration (public vs. signed).
+* Requested initial service scaffolding and controller wiring.
+* Asked to adjust ImageController tests following storage logic changes.
+
+---
+
+### **Resulting Artifacts**
+
+* Added `SupabaseStorageService.java`
+* Updated `ImageController.java`
+* Updated `UserService.java` to surface subject/owner context for uploads
+* Updated `application.properties` with storage config envs
+* Updated existing `ImageControllerTest.java`
+
+---
+
+### **Verification**
+
+* Application compiled successfully (`mvn clean test`)
+* Manually reviewed controller logic and service wiring
+* Storage paths and bucket naming verified against Supabase UI setup
+
+---
+
+### **Attribution Statement**
+
+> Portions of this commit or configuration were generated with assistance from OpenAI ChatGPT (GPT-5) on October 22, 2025. All AI-generated content was reviewed, verified, and finalized by the development team.
+
+---

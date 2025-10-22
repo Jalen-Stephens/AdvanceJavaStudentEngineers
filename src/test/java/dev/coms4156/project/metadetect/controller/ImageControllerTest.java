@@ -10,7 +10,6 @@ import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
 
 import dev.coms4156.project.metadetect.dto.Dtos;
 import dev.coms4156.project.metadetect.model.Image;
@@ -18,6 +17,7 @@ import dev.coms4156.project.metadetect.service.ImageService;
 import dev.coms4156.project.metadetect.service.UserService;
 import dev.coms4156.project.metadetect.service.errors.ForbiddenException;
 import dev.coms4156.project.metadetect.service.errors.NotFoundException;
+import dev.coms4156.project.metadetect.supabase.SupabaseStorageService;
 import java.time.Instant;
 import java.util.List;
 import java.util.UUID;
@@ -32,8 +32,8 @@ import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
 
-@AutoConfigureMockMvc(addFilters = false)
 @WebMvcTest(ImageController.class)
+@AutoConfigureMockMvc(addFilters = false)
 class ImageControllerTest {
 
   @Autowired private MockMvc mvc;
@@ -41,6 +41,7 @@ class ImageControllerTest {
   @MockBean private ImageService imageService;
   @MockBean private UserService userService;
 
+  @MockBean private SupabaseStorageService storage;
   private UUID userId;
   private UUID imgId;
 
