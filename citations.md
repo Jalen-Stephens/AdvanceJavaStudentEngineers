@@ -726,3 +726,114 @@ Guidance on finalizing Spring Security JWT resource server configuration for Sup
 > Portions of this commit or configuration were generated with assistance from OpenAI ChatGPT (GPT-5) on October 21, 2025. All AI-generated content was reviewed, verified, and finalized by the development team.
 
 ---
+
+### **Commit / Ticket Reference**
+
+* **Commit:** `feat(#9): add ImageRepository and implement ImageService with ownership and service-layer exceptions`
+* **Ticket:** `#9 — Implement ImageService core logic`
+* **Date:** October 22, 2025
+* **Team Member:** Jalen Stephens
+
+---
+
+### **AI Tool Information**
+
+* **Tool Used:** OpenAI ChatGPT (GPT-5)
+* **Access Method:** ChatGPT Web (.edu academic access)
+* **Configuration:** Default model settings
+* **Cost:** $0 (no paid API calls)
+
+---
+
+### **Purpose of AI Assistance**
+
+The AI provided guidance and implementation help for creating the `ImageRepository`, wiring it into the `ImageService`, and introducing service-layer exceptions (`NotFoundException`, `ForbiddenException`) to support ownership enforcement and clean error semantics.
+
+---
+
+### **Prompts / Interaction Summary**
+
+* Asked how to start on the ImageService ticket.
+* Shared existing schema for the `images` table.
+* Requested matching repository + service implementation.
+* Asked whether service-layer exceptions are standard practice.
+* Requested a one-line commit message referencing ticket `#9`.
+
+---
+
+### **Resulting Artifacts**
+
+* `ImageRepository.java` (new)
+* `ImageService.java` (updated core logic + ownership enforcement)
+* `ForbiddenException.java` (new)
+* `NotFoundException.java` (new)
+
+---
+
+### **Verification**
+
+* Build completed successfully using `mvn clean verify`.
+* Code reviewed manually to confirm schema alignment and method signatures.
+* Successfully wired into the service layer with no startup issues.
+
+---
+
+### **Attribution Statement**
+
+> Portions of this commit or configuration were generated with assistance from OpenAI ChatGPT (GPT-5) on October 22, 2025. All AI-generated content was reviewed, verified, and finalized by the development team.
+
+---
+
+### **Commit / Ticket Reference**
+
+* **Commit:** `test(#9): add ImageService unit tests and update pom to run under Java 17`
+* **Ticket:** `#9 — Implement ImageService core logic`
+* **Date:** October 22, 2025
+* **Team Member:** Jalen Stephens
+
+---
+
+### **AI Tool Information**
+
+* **Tool Used:** OpenAI ChatGPT (GPT-5)
+* **Access Method:** ChatGPT Web (.edu academic access)
+* **Configuration:** Default model settings
+* **Cost:** $0 (no paid API calls)
+
+---
+
+### **Purpose of AI Assistance**
+
+Assistance was used to design and implement comprehensive branch-coverage unit tests for `ImageService`, including mocking strategies, repository interaction expectations, and handling JDK/Jacoco compatibility issues for coverage instrumentation.
+
+---
+
+### **Prompts / Interaction Summary**
+
+* “Can we create unit test now on the code we just added…”
+* Debugging JaCoCo crash and version mismatch
+* Fixing Mockito inline instrumentation conflict
+* Request for one-line commit message referencing #9
+
+---
+
+### **Resulting Artifacts**
+
+* `src/test/java/dev/coms4156/project/metadetect/service/ImageServiceTest.java`
+* Updated `pom.xml` (ensuring Java 17 execution for tests/coverage)
+
+---
+
+### **Verification**
+
+* Successfully executed `mvn clean test` under Java 17
+* Verified branch coverage logic (success + failure paths)
+* Confirmed green test suite and valid JaCoCo run
+
+---
+
+### **Attribution Statement**
+
+> Portions of this commit or configuration were generated with assistance from OpenAI ChatGPT (GPT-5) on October 22, 2025. All AI-generated content was reviewed, verified, and finalized by the development team.
+
+---

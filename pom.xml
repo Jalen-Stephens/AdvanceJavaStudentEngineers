@@ -147,12 +147,23 @@
 		</extensions>
 		<finalName>${project.artifactId}-${project.version}</finalName>
 		<plugins>
+			<!-- Spring Boot (single declaration) -->
 			<plugin>
 				<groupId>org.springframework.boot</groupId>
 				<artifactId>spring-boot-maven-plugin</artifactId>
+				<configuration>
+					<jvmArguments>--enable-native-access=ALL-UNNAMED</jvmArguments>
+				</configuration>
+				<executions>
+					<execution>
+						<goals>
+							<goal>repackage</goal>
+						</goals>
+					</execution>
+				</executions>
 			</plugin>
 
-			<!-- Checkstyle (already configured to run at validate) -->
+			<!-- Checkstyle -->
 			<plugin>
 				<groupId>org.apache.maven.plugins</groupId>
 				<artifactId>maven-checkstyle-plugin</artifactId>
@@ -168,12 +179,14 @@
 					<execution>
 						<id>validate</id>
 						<phase>validate</phase>
-						<goals><goal>check</goal></goals>
+						<goals>
+							<goal>check</goal>
+						</goals>
 					</execution>
 				</executions>
 			</plugin>
 
-			<!-- PMD static analysis -->
+			<!-- PMD -->
 			<plugin>
 				<groupId>org.apache.maven.plugins</groupId>
 				<artifactId>maven-pmd-plugin</artifactId>
@@ -185,12 +198,14 @@
 				<executions>
 					<execution>
 						<phase>verify</phase>
-						<goals><goal>check</goal></goals>
+						<goals>
+							<goal>check</goal>
+						</goals>
 					</execution>
 				</executions>
 			</plugin>
 
-			<!-- JaCoCo coverage -->
+			<!-- JaCoCo -->
 			<plugin>
 				<groupId>org.jacoco</groupId>
 				<artifactId>jacoco-maven-plugin</artifactId>
@@ -201,12 +216,9 @@
 							<goal>prepare-agent</goal>
 						</goals>
 						<configuration>
-							<!-- Instrument ONLY our code -->
 							<includes>
-								<include>dev/coms4156/project/metadetect/*</include>
 								<include>dev/coms4156/project/metadetect/**</include>
 							</includes>
-							<!-- Make sure we don't try to touch JDK or Spring classes -->
 							<excludes>
 								<exclude>java/**</exclude>
 								<exclude>jdk/**</exclude>
@@ -215,7 +227,6 @@
 							</excludes>
 						</configuration>
 					</execution>
-
 					<execution>
 						<id>report</id>
 						<phase>verify</phase>
@@ -224,13 +235,6 @@
 						</goals>
 					</execution>
 				</executions>
-			</plugin>
-			<plugin>
-				<groupId>org.springframework.boot</groupId>
-				<artifactId>spring-boot-maven-plugin</artifactId>
-				<configuration>
-					<jvmArguments>--enable-native-access=ALL-UNNAMED</jvmArguments>
-				</configuration>
 			</plugin>
 		</plugins>
 	</build>
