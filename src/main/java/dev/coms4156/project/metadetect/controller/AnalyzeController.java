@@ -56,15 +56,21 @@ public class AnalyzeController {
     return ResponseEntity.status(HttpStatus.ACCEPTED).body(stub);
   }
 
-    @PostMapping(value = "/extract", consumes = "multipart/form-data")
-    public String extract(@RequestParam("file") MultipartFile file) throws Exception {
+  @PostMapping(value = "/extract", consumes = "multipart/form-data")
+  public ResponseEntity<String> extract(@RequestParam("file") MultipartFile file) {
       try {
-        InputStream in = file.getInputStream();
-        return analyzeService.fetchC2pa(in);
+          // Extract the C2PA manifest
+          //InputStream in = file.getInputStream();
+          //String manifestJson = analyzeService.fetchC2pa(in);
+  
+          String manifestJson = analyzeService.fetchC2pa(new java.io.File("tempfile")); //Temp to try just using a file
+
+          // Return the JSON response
+          return ResponseEntity.ok(manifestJson);
       } catch (IOException e) {
-        throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Invalid file input", e);
+          throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Failed to extract C2PA manifest", e);
       }
-    }
+  }
 
 
 

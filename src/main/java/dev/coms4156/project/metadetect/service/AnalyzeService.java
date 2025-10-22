@@ -9,6 +9,7 @@ import com.drew.metadata.MetadataException;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 
+import dev.coms4156.project.metadetect.c2pa.C2paToolInvoker;
 
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
@@ -16,6 +17,7 @@ import org.springframework.web.multipart.MultipartFile;
 // Import Java utilities
 
 import java.io.File;
+import java.io.IOException;
 import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -30,6 +32,11 @@ import java.util.Map;
 public class AnalyzeService {
   // TODO: inject repositories + compute engines when added
 
+    private final C2paToolInvoker c2paToolInvoker;
+
+    public AnalyzeService(C2paToolInvoker c2paToolInvoker) {
+        this.c2paToolInvoker = c2paToolInvoker;
+    }
 
     public String submitAnalysis(MultipartFile file) {
       // TODO: validate/normalize; persist; enqueue; return id
@@ -38,16 +45,26 @@ public class AnalyzeService {
 
 
     /**
-     * Reads EXIF and other metadata from an image InputStream,
-     * converts it into a structured JSON string.
+     * Extracts the C2PA manifest from an image InputStream.
+     *
+     * @param in InputStream of the user-submitted image.
+     * @return JSON string of the C2PA manifest.
+     * @throws IOException if the tool fails or the input is invalid.
      */
-    
-    // TODO: methods to fetch metadata, confidence, compare, etc.
-   
-    public String fetchC2pa(InputStream in) throws Exception {
-      
-      return "c2pa-metadata-placeholder";
-    }
+    //public String fetchC2pa(InputStream in) throws IOException {
+    public String fetchC2pa(File file) throws IOException { //Temp to try just using a file
+      // Convert InputStream to a temporary file
+      //File tempFile = File.createTempFile("uploaded-", ".png");
+      //tempFile.deleteOnExit();
+
+      // Write InputStream to the temporary file
+      //try (var outputStream = java.nio.file.Files.newOutputStream(tempFile.toPath())) {
+      //    in.transferTo(outputStream);
+      //}
+
+      // Invoke the C2PA tool and return the JSON result
+      return c2paToolInvoker.extractManifest(file);
+  }
 
 
   //Fetch confidence score
