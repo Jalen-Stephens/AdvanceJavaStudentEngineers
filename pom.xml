@@ -335,8 +335,9 @@
 					<groupId>io.netty</groupId>
 					<artifactId>netty-resolver-dns-native-macos</artifactId>
 					<version>4.1.119.Final</version>
-					<classifier>${os.detected.name}-${os.detected.arch}</classifier>
+					<classifier>osx-x86_64</classifier>
 					<scope>runtime</scope>
+					<optional>true</optional>
 				</dependency>
 			</dependencies>
 		</profile>
@@ -355,8 +356,9 @@
 					<groupId>io.netty</groupId>
 					<artifactId>netty-resolver-dns-native-linux</artifactId>
 					<version>4.1.119.Final</version>
-					<classifier>${os.detected.name}-${os.detected.arch}</classifier>
+					<classifier>linux-x86_64</classifier>
 					<scope>runtime</scope>
+					<optional>true</optional>
 				</dependency>
 			</dependencies>
 		</profile>
