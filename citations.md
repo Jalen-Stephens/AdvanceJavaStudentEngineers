@@ -545,3 +545,282 @@ The AI helped ensure that the **C2PAtool binary** (used for AI-image authenticit
 - Manually inspected Maven logs and filesystem to confirm that no cleanup phase deletes the binary.  
 
 ---
+
+
+
+### Commit / Ticket Reference
+
+* **Commit:** `feat(c2pa): c2pa tool successfully downloaded (pom.xml updated) only functional on macOS(refs #14)`
+* **Ticket:** `#14 — Service: Implement AnalyzeService core logic (Iteration 1)`
+* **Date:** October 21, 2025
+* **Team Member:** Isaac Schmidt
+
+### **AI Tool Information**
+- **Tool Used:** OpenAI ChatGPT (GPT-5)  
+- **Access Method:** ChatGPT Web (.edu academic access)  
+- **Configuration:** Default model settings  
+- **Cost:** $0 (no paid API calls)  
+
+---
+
+### **Purpose of AI Assistance**
+Assistance was used to **debug and configure Maven build behavior** for the `AnalyzeService` Spring Boot service.  
+The AI helped ensure that the **C2PAtool binary** (used for AI-image authenticity verification) is correctly downloaded, unpacked, and persisted across build phases so it remains executable both locally and in deployment.  
+
+---
+
+### **Prompts / Interaction Summary**
+- Asked why `mvn package` wasn’t producing the `tools/c2patool` binary.  
+- Requested possible solutions to `pom.xml` configuration using `download-maven-plugin` and `maven-antrun-plugin`.  
+- Troubleshot successive build errors (e.g. "file is directory", missing binary). 
+- Asked how to keep the binary after packaging and why Maven was deleting it.  
+- Requested an explanation of the final working solution and how to preserve the executable between builds.  
+
+---
+
+### **Resulting Artifacts**
+- **Edited File:** `pom.xml`  
+  - Added `download-maven-plugin` section to fetch `c2patool-v0.9.12-universal-apple-darwin.zip`.  
+  - Added `maven-antrun-plugin` section to unzip, copy, chmod, and retain the binary.  
+- **New Directory:** `tools/` (containing executable `c2patool`)  
+- **Build Artifact:** Verified Maven package with `tools/c2patool` present and executable.  
+
+---
+
+### **Verification**
+- Ran `mvn clean package` to confirm the binary appears at `./tools/c2patool`.  
+- Executed `./tools/c2patool --version` to verify the file runs successfully.  
+- Rebuilt the Spring Boot JAR to ensure the `tools/` directory remains intact after packaging.  
+- Manually inspected Maven logs and filesystem to confirm that no cleanup phase deletes the binary.  
+
+---
+
+### **Commit / Ticket Reference**
+
+* **Commit:** `feat(auth): add Supabase auth proxy + /auth endpoints + JWKS resource server config (refs #7)`
+* **Ticket:** `#7 — Implement Supabase-backed authentication`
+* **Date:** October 21, 2025
+* **Team Member:** Jalen Stephens
+
+---
+
+### **AI Tool Information**
+
+* **Tool Used:** OpenAI ChatGPT (GPT-5)
+* **Access Method:** ChatGPT Web (.edu academic access)
+* **Configuration:** Default model settings
+* **Cost:** $0 (no paid API calls)
+
+---
+
+### **Purpose of AI Assistance**
+
+The AI assisted in designing and scaffolding the Supabase authentication proxy integration. This included creating the `AuthProxyService`, generating a preconfigured `WebClient` for Supabase Auth endpoints, adding `/auth` controller routes, wiring JWT validation through Supabase’s JWKS, and ensuring all components passed Checkstyle and compilation checks. The AI also provided setup guidance for environment variables and secure configuration management.
+
+---
+
+### **Prompts / Interaction Summary**
+
+* Repeat full proxy wiring code block for AuthController and SupabaseClientConfig
+* Add missing Javadoc comments for Checkstyle compliance
+* Resolve `HttpStatus` vs `HttpStatusCode` compilation mismatch
+* Provide environment variable export commands using `set -a` and `.env.local`
+* Validate correct JWKS configuration in Spring Boot (`spring.security.oauth2.resourceserver.jwt.jwk-set-uri`)
+* Generate `AuthControllerTest` for endpoint validation
+
+---
+
+### **Resulting Artifacts**
+
+* **New:** `SupabaseClientConfig.java`
+* **New:** `AuthProxyService.java`
+* **Modified:** `AuthController.java` (added `/auth/signup`, `/auth/login`, `/auth/refresh`, `/auth/me`)
+* **Modified:** `Dtos.java` (added `RefreshRequest` record)
+* **Modified:** `application.properties` (added Supabase env-based config and JWKS endpoint)
+* **Modified:** `pom.xml` (added WebFlux dependency)
+* **Moved:** `UserServiceTest.java` (to `service/` directory)
+
+---
+
+### **Verification**
+
+* Verified build using `mvn checkstyle:check` (0 violations)
+* Successfully compiled with `mvn -DskipTests compile` after resolving HttpStatusCode changes
+* Confirmed application startup with valid Supabase URL and key configuration
+* Manual test planned for `/auth/signup` and `/auth/me` endpoints once live Supabase credentials are applied
+
+---
+
+### **Attribution Statement**
+
+> Portions of this commit and configuration were generated with assistance from OpenAI ChatGPT (GPT-5) on October 21, 2025. All AI-generated content was reviewed, verified, and finalized by the development team.
+
+---
+
+### **Commit / Ticket Reference**
+
+* **Commit:** `test(auth): add controller slice tests + security test config for Supabase proxy (refs #7)`
+* **Ticket:** `#7 — Integrate Supabase Auth Proxy + Resource Server`
+* **Date:** October 21, 2025
+* **Team Member:** Jalen Stephens
+
+---
+
+### **AI Tool Information**
+
+* **Tool Used:** OpenAI ChatGPT (GPT-5)
+* **Access Method:** ChatGPT Web (.edu academic access)
+* **Configuration:** Default model settings
+* **Cost:** $0 (no paid API calls)
+
+---
+
+### **Purpose of AI Assistance**
+
+The AI assisted in designing and drafting controller-slice tests for the `/auth/*` endpoints, as well as creating a dedicated Spring Security test configuration to allow unauthenticated access for the proxy tests. It also helped refine the JSON content-type enforcement in the proxy response so the controller tests aligned with expected client behavior.
+
+---
+
+### **Prompts / Interaction Summary**
+
+* Requested a controller-level test suite for `AuthController`.
+* Noticed 403 and 401 blocking proxy tests → requested correction for security config.
+* Asked for `SecurityTestConfig` to disable CSRF and allow passthrough behavior.
+* AI provided corrections to enable `application/json` for returned `ResponseEntity`.
+
+---
+
+### **Resulting Artifacts**
+
+* Updated logic in `AuthController.java` (exception handler → JSON passthrough)
+* Updated `AuthProxyService.java` (explicit JSON content type)
+* Added `SecurityTestConfig.java` for test slice security
+* Added `AuthControllerTest.java`, covering success and error paths
+
+---
+
+### **Verification**
+
+Changes were validated by:
+
+* Running `mvn clean test` to ensure all tests passed successfully
+* Confirming Spring Security configuration allowed test access to `/auth/*`
+* Inspecting JaCoCo coverage increase in controller and service layers
+* Manual code review for final consistency
+
+---
+
+### **Attribution Statement**
+
+> Portions of this commit or configuration were generated with assistance from OpenAI ChatGPT (GPT-5) on October 21, 2025. All AI-generated content was reviewed, verified, and finalized by the development team.
+
+---
+
+### Commit / Ticket Reference
+- Commit: test(auth): add AuthProxyService + config tests and branch coverage for /auth refresh (refs #7)
+- Ticket: #7 — Supabase Auth Integration
+- Date: October 21, 2025
+- Team Member: Jalen Stephens
+
+---
+
+### AI Tool Information
+- Tool Used: OpenAI ChatGPT (GPT-5)
+- Access Method: ChatGPT Web (.edu academic access)
+- Configuration: Default model settings
+- Cost: $0 (no paid API calls)
+
+---
+
+### Purpose of AI Assistance
+The AI assisted in improving controller branch coverage and validating proxy/auth configuration behavior by generating focused unit tests and updating Dtos coverage.
+
+---
+
+### Prompts / Interaction Summary
+Key prompts included:
+- “need to increase branch coverage in controllers”
+- “tweak my test cases for both these changes”
+- “write javadoc comment”
+- “fix refresh 400 test”
+- “generate commit message and citations”
+
+---
+
+### Resulting Artifacts
+- `src/test/java/dev/coms4156/project/metadetect/service/AuthProxyServiceTest.java`
+- `src/test/java/dev/coms4156/project/metadetect/config/SupabaseClientConfigTest.java`
+- `src/test/java/dev/coms4156/project/metadetect/controller/AuthControllerTest.java` (expanded branch coverage)
+- `src/test/java/dev/coms4156/project/metadetect/dto/DtosTest.java`
+- Javadoc correction for `/auth/refresh`
+- pom adjustments for test dependencies
+
+---
+
+### Verification
+Changes were validated via:
+- `mvn clean test` passing successfully
+- increased coverage reported in JaCoCo
+- manual review of error-path coverage in controller
+
+---
+
+### Attribution Statement
+> Portions of this commit or configuration were generated with assistance from OpenAI ChatGPT (GPT-5) on October 21, 2025. All AI-generated content was reviewed, verified, and finalized by the development team.
+---
+
+### **Commit / Ticket Reference**
+
+* **Commit:** `chore(security): clean SecurityConfig imports and finalize JWKS config for prod (refs #7)`
+* **Ticket:** `#7 — Supabase Auth Integration`
+* **Date:** October 21, 2025
+* **Team Member:** Jalen Stephens
+
+---
+
+### **AI Tool Information**
+
+* **Tool Used:** OpenAI ChatGPT (GPT-5)
+* **Access Method:** ChatGPT Web (.edu academic access)
+* **Configuration:** Default model settings
+* **Cost:** $0 (no paid API calls)
+
+---
+
+### **Purpose of AI Assistance**
+
+Guidance on finalizing Spring Security JWT resource server configuration for Supabase, correcting JWKS endpoint wiring, and addressing Checkstyle star-import violations in `SecurityConfig.java`.
+
+---
+
+### **Prompts / Interaction Summary**
+
+* Asked how to allow unauthenticated signup/login while keeping `/auth/me` secured.
+* Verified JWKS vs. local symmetric-signature mode for development.
+* Asked for recommended commit message and proper citation entry wording.
+* Requested guidance on Checkstyle warnings and star-import cleanup.
+
+---
+
+### **Resulting Artifacts**
+
+* Adjusted `SecurityConfig.java` (import cleanup and JWKS logic finalized).
+* Updated `application.properties` to cleanly reference `spring.security.oauth2.resourceserver.jwt.jwk-set-uri`.
+* Updated `citations.md` with this entry.
+
+---
+
+### **Verification**
+
+* Local manual authentication test via curl using Supabase-issued token.
+* Confirmed access to `POST /auth/signup` and `POST /auth/login` without JWT.
+* Confirmed `GET /auth/me` returns 200 with valid JWT and 401 without.
+* Re-ran Checkstyle and confirmed zero violations.
+
+---
+
+### **Attribution Statement**
+
+> Portions of this commit or configuration were generated with assistance from OpenAI ChatGPT (GPT-5) on October 21, 2025. All AI-generated content was reviewed, verified, and finalized by the development team.
+
+---
