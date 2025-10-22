@@ -35,15 +35,15 @@ public class C2paToolInvoker {
     // Command to invoke the C2PA tool
     ProcessBuilder processBuilder = new ProcessBuilder(
         c2paToolPath,
-    imageFile.getAbsolutePath(),
-    "-d"
+        imageFile.getAbsolutePath(),
+        "-d"
     );
 
     System.out.println("C2PA Tool Path: " + c2paToolPath);
     System.out.println("Image File Path: " + imageFile.getAbsolutePath());
     System.out.println("Executing command: " + String.join(" ", processBuilder.command()));
 
-      // Print the command for debugging
+    // Print the command for debugging
     System.out.println("Executing command: " + String.join(" ", processBuilder.command()));
 
     // Start the process
