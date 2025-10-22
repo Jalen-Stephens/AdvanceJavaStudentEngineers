@@ -14,6 +14,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 import dev.coms4156.project.metadetect.dto.Dtos;
 import dev.coms4156.project.metadetect.model.Image;
+import dev.coms4156.project.metadetect.service.AuthProxyService;
 import dev.coms4156.project.metadetect.service.ImageService;
 import dev.coms4156.project.metadetect.service.UserService;
 import dev.coms4156.project.metadetect.service.errors.ForbiddenException;
@@ -158,7 +159,6 @@ class ImageControllerTest {
   @Test
   void deleteImage_forbidden() throws Exception {
     doThrow(new ForbiddenException("forbidden")).when(imageService).delete(userId, imgId);
-
     mvc.perform(MockMvcRequestBuilders.delete("/api/images/" + imgId))
         .andExpect(status().isForbidden());
   }
