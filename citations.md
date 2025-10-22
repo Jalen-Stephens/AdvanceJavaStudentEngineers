@@ -617,3 +617,56 @@ Changes were validated by:
 > Portions of this commit or configuration were generated with assistance from OpenAI ChatGPT (GPT-5) on October 21, 2025. All AI-generated content was reviewed, verified, and finalized by the development team.
 
 ---
+
+### Commit / Ticket Reference
+- Commit: test(auth): add AuthProxyService + config tests and branch coverage for /auth refresh (refs #7)
+- Ticket: #7 — Supabase Auth Integration
+- Date: October 21, 2025
+- Team Member: Jalen Stephens
+
+---
+
+### AI Tool Information
+- Tool Used: OpenAI ChatGPT (GPT-5)
+- Access Method: ChatGPT Web (.edu academic access)
+- Configuration: Default model settings
+- Cost: $0 (no paid API calls)
+
+---
+
+### Purpose of AI Assistance
+The AI assisted in improving controller branch coverage and validating proxy/auth configuration behavior by generating focused unit tests and updating Dtos coverage.
+
+---
+
+### Prompts / Interaction Summary
+Key prompts included:
+- “need to increase branch coverage in controllers”
+- “tweak my test cases for both these changes”
+- “write javadoc comment”
+- “fix refresh 400 test”
+- “generate commit message and citations”
+
+---
+
+### Resulting Artifacts
+- `src/test/java/dev/coms4156/project/metadetect/service/AuthProxyServiceTest.java`
+- `src/test/java/dev/coms4156/project/metadetect/config/SupabaseClientConfigTest.java`
+- `src/test/java/dev/coms4156/project/metadetect/controller/AuthControllerTest.java` (expanded branch coverage)
+- `src/test/java/dev/coms4156/project/metadetect/dto/DtosTest.java`
+- Javadoc correction for `/auth/refresh`
+- pom adjustments for test dependencies
+
+---
+
+### Verification
+Changes were validated via:
+- `mvn clean test` passing successfully
+- increased coverage reported in JaCoCo
+- manual review of error-path coverage in controller
+
+---
+
+### Attribution Statement
+> Portions of this commit or configuration were generated with assistance from OpenAI ChatGPT (GPT-5) on October 21, 2025. All AI-generated content was reviewed, verified, and finalized by the development team.
+---
