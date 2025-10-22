@@ -935,3 +935,119 @@ Assistance was used to design and implement comprehensive branch-coverage unit t
 > Portions of this commit or configuration were generated with assistance from OpenAI ChatGPT (GPT-5) on October 22, 2025. All AI-generated content was reviewed, verified, and finalized by the development team.
 
 ---
+
+### **Commit / Ticket Reference**
+
+* **Commit:** `api(#6): wire ImageController to ImageService and update metadata handling`
+* **Ticket:** `#6 — Implement ImageController endpoints`
+* **Date:** October 22, 2025
+* **Team Member:** Jalen Stephens
+
+---
+
+### **AI Tool Information**
+
+* **Tool Used:** OpenAI ChatGPT (GPT-5)
+* **Access Method:** ChatGPT Web (.edu academic access)
+* **Configuration:** Default model settings
+* **Cost:** $0 (no paid API calls)
+
+---
+
+### **Purpose of AI Assistance**
+
+The AI assisted in implementing the HTTP-facing controller layer by wiring `ImageController` to the existing `ImageService`, ensuring correct DTO mappings, handling ownership enforcement, and aligning update endpoints with the final DTO definitions. It also confirmed correct HTTP response shapes and status codes.
+
+---
+
+### **Prompts / Interaction Summary**
+
+* “let’s implement the ticket”
+* “here is image controller”
+* “here is my user service”
+* “we can redo the dtos”
+* Compile errors surfaced → AI realigned controller logic with actual DTO structure
+
+---
+
+### **Resulting Artifacts**
+
+* `src/main/java/dev/coms4156/project/metadetect/controller/ImageController.java` (updated)
+* Metadata update endpoint corrected to match `UpdateImageRequest` structure (note + labels only)
+* Exception → HTTP mapping added (404 / 403)
+
+---
+
+### **Verification**
+
+* Successful Maven compilation after DTO alignment
+* Manual inspection of controller flow against schema and service logic
+* Local run verified routing and method resolution
+
+---
+
+### **Attribution Statement**
+
+> Portions of this commit or configuration were generated with assistance from OpenAI ChatGPT (GPT-5) on October 22, 2025. All AI-generated content was reviewed, verified, and finalized by the development team.
+
+---
+
+### **Commit / Ticket Reference**
+
+* **Commit:** `api(#6): finalize ImageController + DTOs, add controller tests and move C2PA check to unit test`
+* **Ticket:** `#6 — Implement ImageController endpoints`
+* **Date:** October 22, 2025
+* **Team Member:** Jalen Stephens
+
+---
+
+### **AI Tool Information**
+
+* **Tool Used:** OpenAI ChatGPT (GPT-5)
+* **Access Method:** ChatGPT Web (.edu academic access)
+* **Configuration:** Default model settings
+* **Cost:** $0 (no paid API calls)
+
+---
+
+### **Purpose of AI Assistance**
+
+Helped implement the controller logic integrating with the `ImageService`, updated DTO structures to match Supabase schema, and wrote comprehensive MockMvc-based unit tests to achieve branch and error-path coverage.
+
+---
+
+### **Prompts / Interaction Summary**
+
+* “Redo this ticket because we are using Supabase”
+* “Let’s implement the ticket”
+* “Generate test cases”
+* “Fix test failures and remove integration test dependency on c2patool”
+* “One line commit description”
+
+---
+
+### **Resulting Artifacts**
+
+* Updated: `ImageController.java`
+* Updated: `Dtos.java`
+* Added: `ImageControllerTest.java` (MockMvc tests)
+* Added: `AnalyzeServiceTest.java` (unit test replacement for former IT)
+* Removed: `AnalyzeServiceIntegrationTests.java`
+* Updated documentation: `citations.md`
+
+---
+
+### **Verification**
+
+* Successfully built via `mvn clean test`
+* All controller endpoints verified with MockMvc tests
+* Branch/error-path coverage for forbidden and not-found scenarios
+* Ensured no external binary dependency required for CI
+
+---
+
+### **Attribution Statement**
+
+> Portions of this commit or configuration were generated with assistance from OpenAI ChatGPT (GPT-5) on October 22, 2025. All AI-generated content was reviewed, verified, and finalized by the development team.
+
+---

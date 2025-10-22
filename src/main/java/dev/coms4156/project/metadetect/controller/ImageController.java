@@ -124,7 +124,10 @@ public class ImageController {
       img.getId().toString(),
       img.getFilename(),
       img.getUserId().toString(),
-      img.getUploadedAt()
+      img.getUploadedAt(),
+      (img.getLabels() == null ? List.of() : List.of(img.getLabels())),
+      img.getNote()
     );
   }
+
 }
