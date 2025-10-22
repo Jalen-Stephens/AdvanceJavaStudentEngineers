@@ -71,8 +71,14 @@ public final class Dtos {
   /**
    * Simplified view of an image record.
    */
-  public record ImageDto(String id, String filename, String ownerUserId, Instant uploadedAt) {
-  }
+  public record ImageDto(
+      String id,
+      String filename,
+      String ownerUserId,
+      Instant uploadedAt,
+      List<String> labels,
+      String note
+  ) {}
 
   /**
    * Request body for updating image metadata (labels, note).
