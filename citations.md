@@ -497,6 +497,104 @@ Assisted in drafting a unit test suite for the `UserService` to validate identit
 
 ---
 
+
+
+### Commit / Ticket Reference
+
+* **Commit:** `feat(c2pa): c2pa tool successfully downloaded (pom.xml updated) only functional on macOS(refs #14)`
+* **Ticket:** `#14 — Service: Implement AnalyzeService core logic (Iteration 1)`
+* **Date:** October 21, 2025
+* **Team Member:** Isaac Schmidt
+
+### **AI Tool Information**
+- **Tool Used:** OpenAI ChatGPT (GPT-5)  
+- **Access Method:** ChatGPT Web (.edu academic access)  
+- **Configuration:** Default model settings  
+- **Cost:** $0 (no paid API calls)  
+
+---
+
+### **Purpose of AI Assistance**
+Assistance was used to **debug and configure Maven build behavior** for the `AnalyzeService` Spring Boot service.  
+The AI helped ensure that the **C2PAtool binary** (used for AI-image authenticity verification) is correctly downloaded, unpacked, and persisted across build phases so it remains executable both locally and in deployment.  
+
+---
+
+### **Prompts / Interaction Summary**
+- Asked why `mvn package` wasn’t producing the `tools/c2patool` binary.  
+- Requested possible solutions to `pom.xml` configuration using `download-maven-plugin` and `maven-antrun-plugin`.  
+- Troubleshot successive build errors (e.g. "file is directory", missing binary). 
+- Asked how to keep the binary after packaging and why Maven was deleting it.  
+- Requested an explanation of the final working solution and how to preserve the executable between builds.  
+
+---
+
+### **Resulting Artifacts**
+- **Edited File:** `pom.xml`  
+  - Added `download-maven-plugin` section to fetch `c2patool-v0.9.12-universal-apple-darwin.zip`.  
+  - Added `maven-antrun-plugin` section to unzip, copy, chmod, and retain the binary.  
+- **New Directory:** `tools/` (containing executable `c2patool`)  
+- **Build Artifact:** Verified Maven package with `tools/c2patool` present and executable.  
+
+---
+
+### **Verification**
+- Ran `mvn clean package` to confirm the binary appears at `./tools/c2patool`.  
+- Executed `./tools/c2patool --version` to verify the file runs successfully.  
+- Rebuilt the Spring Boot JAR to ensure the `tools/` directory remains intact after packaging.  
+- Manually inspected Maven logs and filesystem to confirm that no cleanup phase deletes the binary.  
+
+---
+
+
+
+### Commit / Ticket Reference
+
+* **Commit:** `feat(c2pa): c2pa tool successfully downloaded (pom.xml updated) only functional on macOS(refs #14)`
+* **Ticket:** `#14 — Service: Implement AnalyzeService core logic (Iteration 1)`
+* **Date:** October 21, 2025
+* **Team Member:** Isaac Schmidt
+
+### **AI Tool Information**
+- **Tool Used:** OpenAI ChatGPT (GPT-5)  
+- **Access Method:** ChatGPT Web (.edu academic access)  
+- **Configuration:** Default model settings  
+- **Cost:** $0 (no paid API calls)  
+
+---
+
+### **Purpose of AI Assistance**
+Assistance was used to **debug and configure Maven build behavior** for the `AnalyzeService` Spring Boot service.  
+The AI helped ensure that the **C2PAtool binary** (used for AI-image authenticity verification) is correctly downloaded, unpacked, and persisted across build phases so it remains executable both locally and in deployment.  
+
+---
+
+### **Prompts / Interaction Summary**
+- Asked why `mvn package` wasn’t producing the `tools/c2patool` binary.  
+- Requested possible solutions to `pom.xml` configuration using `download-maven-plugin` and `maven-antrun-plugin`.  
+- Troubleshot successive build errors (e.g. "file is directory", missing binary). 
+- Asked how to keep the binary after packaging and why Maven was deleting it.  
+- Requested an explanation of the final working solution and how to preserve the executable between builds.  
+
+---
+
+### **Resulting Artifacts**
+- **Edited File:** `pom.xml`  
+  - Added `download-maven-plugin` section to fetch `c2patool-v0.9.12-universal-apple-darwin.zip`.  
+  - Added `maven-antrun-plugin` section to unzip, copy, chmod, and retain the binary.  
+- **New Directory:** `tools/` (containing executable `c2patool`)  
+- **Build Artifact:** Verified Maven package with `tools/c2patool` present and executable.  
+
+---
+
+### **Verification**
+- Ran `mvn clean package` to confirm the binary appears at `./tools/c2patool`.  
+- Executed `./tools/c2patool --version` to verify the file runs successfully.  
+- Rebuilt the Spring Boot JAR to ensure the `tools/` directory remains intact after packaging.  
+- Manually inspected Maven logs and filesystem to confirm that no cleanup phase deletes the binary.  
+
+---
+
 ### **Commit / Ticket Reference**
 
 * **Commit:** `feat(auth): add Supabase auth proxy + /auth endpoints + JWKS resource server config (refs #7)`
