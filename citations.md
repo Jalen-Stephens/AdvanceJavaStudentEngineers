@@ -1108,3 +1108,60 @@ Helped scaffold the Supabase storage integration service, update the controller 
 > Portions of this commit or configuration were generated with assistance from OpenAI ChatGPT (GPT-5) on October 22, 2025. All AI-generated content was reviewed, verified, and finalized by the development team.
 
 ---
+
+### **Commit / Ticket Reference**
+
+* **Commit:** `test(#26): add SupabaseStorageService and upload/signed-url controller unit tests`
+* **Ticket:** `#26 — [API] Implement Binary Upload & Signed URL for Images`
+* **Date:** October 22, 2025
+* **Team Member:** Jalen Stephens
+
+---
+
+### **AI Tool Information**
+
+* **Tool Used:** OpenAI ChatGPT (GPT-5)
+* **Access Method:** ChatGPT Web (.edu academic access)
+* **Configuration:** Default model settings
+* **Cost:** $0 (no paid API calls)
+
+---
+
+### **Purpose of AI Assistance**
+
+Helped implement and structure the storage service test strategy and write unit tests for both the upload and signed URL controller logic. Also assisted in ensuring mocking behavior aligned with Supabase’s REST semantics.
+
+---
+
+### **Prompts / Interaction Summary**
+
+* “can we write unit test for the files we made and change”
+* “we want Supabase mocked for upload/signed URLs”
+* “fix failing controller tests after adding upload”
+* “create standalone SupabaseStorageServiceTest”
+* “one line commit message for unit tests”
+
+---
+
+### **Resulting Artifacts**
+
+* Added `SupabaseStorageServiceTest.java`
+* Updated `ImageControllerTest.java` with upload and signed URL cases
+* Validated integration between controller-service-storage layers via mocks
+
+---
+
+### **Verification**
+
+* All tests executed locally via `mvn clean test`
+* Verified mocking behavior for success and error paths
+* Confirmed controller exception mapping still correct
+* Confirmed behaviors required by ticket #26 are exercised
+
+---
+
+### **Attribution Statement**
+
+> Portions of this commit or configuration were generated with assistance from OpenAI ChatGPT (GPT-5) on October 22, 2025. All AI-generated content was reviewed, verified, and finalized by the development team.
+
+---

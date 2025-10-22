@@ -1,7 +1,9 @@
 package dev.coms4156.project.metadetect.controller;
 
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.ArgumentMatchers.isNull;
 import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.times;
@@ -29,6 +31,7 @@ import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMock
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.http.MediaType;
+import org.springframework.mock.web.MockMultipartFile;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
 
@@ -42,6 +45,7 @@ class ImageControllerTest {
   @MockBean private UserService userService;
 
   @MockBean private SupabaseStorageService storage;
+
   private UUID userId;
   private UUID imgId;
 
@@ -162,5 +166,93 @@ class ImageControllerTest {
 
     mvc.perform(MockMvcRequestBuilders.delete("/api/images/" + imgId))
         .andExpect(status().isForbidden());
+  }
+
+  @Test
+  void upload_success_returns201AndPersistsStoragePath() throws Exception {
+    java.util.UUID user = java.util.UUID.randomUUID();
+    java.util.UUID imgId = java.util.UUID.randomUUID();
+
+    // Auth context
+    org.mockito.Mockito.when(userService.getCurrentUserIdOrThrow()).thenReturn(user);
+    org.mockito.Mockito.when(userService.getCurrentBearerOrThrow()).thenReturn("jwt");
+
+    // DB create → returns new image (no storage path yet)
+    dev.coms4156.project.metadetect.model.Image created = new dev.coms4156.project.metadetect.model.Image();
+    created.setId(imgId);
+    created.setUserId(user);
+    created.setFilename("pic.png");
+    org.mockito.Mockito.when(imageService.create(eq(user), eq("pic.png"), isNull(), isNull(), isNull()))
+      .thenReturn(created);
+
+    // Storage upload (we don't assert its return here; controller ignores the return)
+    org.mockito.Mockito.doReturn("metadetect-images/" + user + "/" + imgId + "--pic.png")
+      .when(storage).uploadObject(any(byte[].class), anyString(), anyString(), anyString());
+
+    // DB update → returns image with storage path set
+    dev.coms4156.project.metadetect.model.Image updated = new dev.coms4156.project.metadetect.model.Image();
+    updated.setId(imgId);
+    updated.setUserId(user);
+    updated.setFilename("pic.png");
+    updated.setStoragePath(user + "/" + imgId + "--pic.png");
+    org.mockito.Mockito.when(imageService.update(eq(user), eq(imgId), isNull(),
+      anyString(), isNull(), isNull())).thenReturn(updated);
+
+    MockMultipartFile file = new MockMultipartFile(
+      "file", "pic.png", "image/png", "PNGDATA".getBytes()
+    );
+
+    mvc.perform(org.springframework.test.web.servlet.request.MockMvcRequestBuilders
+        .multipart("/api/images/upload")
+        .file(file))
+      .andExpect(org.springframework.test.web.servlet.result.MockMvcResultMatchers.status().isCreated())
+      .andExpect(org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath("$.id").value(imgId.toString()))
+      .andExpect(org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath("$.filename").value("pic.png"))
+      .andExpect(org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath("$.ownerUserId").value(user.toString()));
+  }
+
+  @Test
+  void signedUrl_success_returns200WithUrl() throws Exception {
+    java.util.UUID user = java.util.UUID.randomUUID();
+    java.util.UUID imgId = java.util.UUID.randomUUID();
+
+    org.mockito.Mockito.when(userService.getCurrentUserIdOrThrow()).thenReturn(user);
+    org.mockito.Mockito.when(userService.getCurrentBearerOrThrow()).thenReturn("jwt");
+
+    dev.coms4156.project.metadetect.model.Image img = new dev.coms4156.project.metadetect.model.Image();
+    img.setId(imgId);
+    img.setUserId(user);
+    img.setFilename("pic.png");
+    img.setStoragePath(user + "/" + imgId + "--pic.png");
+
+    org.mockito.Mockito.when(imageService.getById(user, imgId)).thenReturn(img);
+    org.mockito.Mockito.when(storage.createSignedUrl(anyString(), anyString()))
+      .thenReturn("https://example.supabase.co/storage/v1/object/sign/..token..");
+
+    mvc.perform(org.springframework.test.web.servlet.request.MockMvcRequestBuilders
+        .get("/api/images/" + imgId + "/url"))
+      .andExpect(org.springframework.test.web.servlet.result.MockMvcResultMatchers.status().isOk())
+      .andExpect(org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath("$.url").exists());
+  }
+
+  @Test
+  void signedUrl_missingStorage_returns404() throws Exception {
+    java.util.UUID user = java.util.UUID.randomUUID();
+    java.util.UUID imgId = java.util.UUID.randomUUID();
+
+    org.mockito.Mockito.when(userService.getCurrentUserIdOrThrow()).thenReturn(user);
+    org.mockito.Mockito.when(userService.getCurrentBearerOrThrow()).thenReturn("jwt");
+
+    dev.coms4156.project.metadetect.model.Image img = new dev.coms4156.project.metadetect.model.Image();
+    img.setId(imgId);
+    img.setUserId(user);
+    img.setFilename("pic.png");
+    img.setStoragePath(null); // triggers controller 404
+
+    org.mockito.Mockito.when(imageService.getById(user, imgId)).thenReturn(img);
+
+    mvc.perform(org.springframework.test.web.servlet.request.MockMvcRequestBuilders
+        .get("/api/images/" + imgId + "/url"))
+      .andExpect(org.springframework.test.web.servlet.result.MockMvcResultMatchers.status().isNotFound());
   }
 }
