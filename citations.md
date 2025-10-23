@@ -563,38 +563,6 @@ The AI helped ensure that the **C2PAtool binary** (used for AI-image authenticit
 
 ---
 
-### **Purpose of AI Assistance**
-Assistance was used to **debug and configure Maven build behavior** for the `AnalyzeService` Spring Boot service.  
-The AI helped ensure that the **C2PAtool binary** (used for AI-image authenticity verification) is correctly downloaded, unpacked, and persisted across build phases so it remains executable both locally and in deployment.  
-
----
-
-### **Prompts / Interaction Summary**
-- Asked why `mvn package` wasn’t producing the `tools/c2patool` binary.  
-- Requested possible solutions to `pom.xml` configuration using `download-maven-plugin` and `maven-antrun-plugin`.  
-- Troubleshot successive build errors (e.g. "file is directory", missing binary). 
-- Asked how to keep the binary after packaging and why Maven was deleting it.  
-- Requested an explanation of the final working solution and how to preserve the executable between builds.  
-
----
-
-### **Resulting Artifacts**
-- **Edited File:** `pom.xml`  
-  - Added `download-maven-plugin` section to fetch `c2patool-v0.9.12-universal-apple-darwin.zip`.  
-  - Added `maven-antrun-plugin` section to unzip, copy, chmod, and retain the binary.  
-- **New Directory:** `tools/` (containing executable `c2patool`)  
-- **Build Artifact:** Verified Maven package with `tools/c2patool` present and executable.  
-
----
-
-### **Verification**
-- Ran `mvn clean package` to confirm the binary appears at `./tools/c2patool`.  
-- Executed `./tools/c2patool --version` to verify the file runs successfully.  
-- Rebuilt the Spring Boot JAR to ensure the `tools/` directory remains intact after packaging.  
-- Manually inspected Maven logs and filesystem to confirm that no cleanup phase deletes the binary.  
-
----
-
 ### **Commit / Ticket Reference**
 
 * **Commit:** `feat(auth): add Supabase auth proxy + /auth endpoints + JWKS resource server config (refs #7)`
@@ -1051,3 +1019,63 @@ Helped implement the controller logic integrating with the `ImageService`, updat
 > Portions of this commit or configuration were generated with assistance from OpenAI ChatGPT (GPT-5) on October 22, 2025. All AI-generated content was reviewed, verified, and finalized by the development team.
 
 ---
+
+### **Commit / Ticket Reference**
+
+* **Commit:** `test(c2pa): add unit tests for C2paToolInvoker to validate tool invocation and error handling`
+* **Ticket:** `#24 — Ensure c2patool Functionality Across All Systems and Build Unit Tests for C2paToolInvoker`
+* **Date:** October 22, 2025
+* **Team Member:** Isaac Schmidt
+
+---
+
+### **AI Tool Information**
+
+* **Tool Used:** OpenAI ChatGPT (GPT-5)
+* **Access Method:** ChatGPT Web (.edu academic access)
+* **Configuration:** Default model settings
+* **Cost:** $0 (no paid API calls)
+
+---
+
+### **Purpose of AI Assistance**
+
+The AI assisted in designing and implementing unit tests for the `C2paToolInvoker` class. These tests validate the correct invocation of the `c2patool` binary, handle various error scenarios, and ensure proper exception handling. The AI also provided guidance on creating temporary files for testing and structuring the test cases to cover success and failure paths.
+
+---
+
+### **Prompts / Interaction Summary**
+
+* Asked for a unit test suite for `C2paToolInvoker` to validate tool invocation.
+* Requested test cases for scenarios like:
+  - Successful manifest extraction.
+  - Non-existent image file.
+  - Invalid file format.
+  - Missing `c2patool` binary.
+* Asked for a commit message and citation entry for the tests.
+
+---
+
+### **Resulting Artifacts**
+
+* **File Created:** `src/test/java/dev/coms4156/project/metadetect/c2pa/C2paToolInvokerUnitTest.java`
+  - `testExtractManifestSuccess`: Validates successful manifest extraction from a mock image file.
+  - `testExtractManifestFileNotFound`: Tests behavior when the image file does not exist.
+  - `testExtractManifestInvalidFile`: Tests behavior when the file is not a valid image.
+  - `testExtractManifestToolNotFound`: Tests behavior when the `c2patool` binary is missing.
+  - Helper method `createTempInvalidFile`: Creates a temporary invalid file for testing.
+
+---
+
+### **Verification**
+
+* Ran `mvn clean test` to confirm all tests pass successfully.
+* Verified that temporary files are created and cleaned up correctly during tests.
+* Confirmed that the `c2patool` binary is invoked correctly for valid test cases.
+* Manually reviewed test output to ensure proper exception messages are logged for failure cases.
+
+---
+
+### **Attribution Statement**
+
+> Portions of this test suite were generated with assistance from OpenAI ChatGPT (GPT-5) on October 22, 2025. All AI-generated content was reviewed, verified, and finalized by the development team.

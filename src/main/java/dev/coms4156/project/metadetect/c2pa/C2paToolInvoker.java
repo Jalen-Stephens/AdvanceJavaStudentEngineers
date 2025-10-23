@@ -1,13 +1,11 @@
 package dev.coms4156.project.metadetect.c2pa;
 
 import java.io.File;
+import java.io.FileWriter;
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.InterruptedIOException;
 import java.nio.charset.StandardCharsets;
-import java.nio.file.Files;
 import java.util.Scanner;
-import java.util.concurrent.TimeUnit;
 
 
 /** Invokes the C2PA command-line tool to extract manifests from images.*/
@@ -39,26 +37,41 @@ public class C2paToolInvoker {
         "-d"
     );
 
-    System.out.println("C2PA Tool Path: " + c2paToolPath);
-    System.out.println("Image File Path: " + imageFile.getAbsolutePath());
-    System.out.println("Executing command: " + String.join(" ", processBuilder.command()));
-
-    // Print the command for debugging
-    System.out.println("Executing command: " + String.join(" ", processBuilder.command()));
-
     // Start the process
     Process process = processBuilder.start();
-
+    String output;
+    String returnString;
     try {
       // Wait for the process to complete
       int exitCode = process.waitFor();
       if (exitCode != 0) {
         throw new IOException("C2PA tool failed with exit code " + exitCode);
       }
+      
       // Read the output file and return its contents as a string
-      return " "; // placeholder
+      try (InputStream is = process.getInputStream();
+           Scanner scanner = new Scanner(is, StandardCharsets.UTF_8.name())) {
+        output = scanner.useDelimiter("\\A").next();
+        
+        returnString = output;
+
+      } catch (Exception e) {
+        throw new IOException("Failed to read C2PA tool output", e);
+      }
+
     } catch (InterruptedException e) {
       throw new IOException("C2PA tool execution was interrupted", e);
     }
+    
+    try (FileWriter file = new FileWriter("output.json")) {
+      file.write(output);
+      file.flush();
+      
+      return returnString;
+
+    } catch (IOException e) {
+      throw new IOException("Failed to write output to file", e);
+    }
+
   }
 }

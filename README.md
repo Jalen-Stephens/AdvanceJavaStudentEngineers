@@ -136,3 +136,8 @@ This section includes notes on tools and technologies used in building this proj
 * JaCoCo
   * We use JaCoCo for generating code coverage reports.
   * Originally we were planning on using Cobertura, however Cobertura does not support our version of Java.
+* c2patool
+  * We use the open-source c2patool to scrape manifest metadata for determining the usage of AI in generating an image.
+  * Coalition for Content Provenance and Authenticity (C2PA). *c2patool (Version 0.23.4)*.  
+  * Content Authenticity Initiative, Adobe Systems, 2024.  
+  * Available at: https://github.com/contentauth/c2pa-rs
