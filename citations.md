@@ -1521,3 +1521,120 @@ The AI was used to help design and implement the REST controller layer for the i
 > Portions of this commit or configuration were generated with assistance from OpenAI ChatGPT (GPT-5) on October 23, 2025. All AI-generated content was reviewed, verified, and finalized by the development team.
 
 ---
+
+### **Commit / Ticket Reference**
+
+* **Commit:** `chore(api): refactor image controller + service (refs #32)`
+* **Ticket:** `#32 — [Test] - Write Unit Test for Image Controller`
+
+* **Date:** October 23, 2025
+* **Team Member:** Jalen Stephens
+
+---
+
+### **AI Tool Information**
+
+* **Tool Used:** OpenAI ChatGPT (GPT-5)
+* **Access Method:** ChatGPT Web (.edu academic access)
+* **Configuration:** Default model settings
+* **Cost:** $0 (no paid API calls)
+
+---
+
+### **Purpose of AI Assistance**
+
+Assisted with restructuring the ImageController and ImageService to follow proper Spring layering conventions, moving storage orchestration into the service layer, and adding missing Javadoc to satisfy static analysis (Checkstyle) requirements.
+
+---
+
+### **Prompts / Interaction Summary**
+
+* Asked whether the controller/service layering was backwards.
+* Requested a revised controller implementation following recommended architecture.
+* Requested a matching updated service implementation.
+* Iterated on compilation issues (paging + DTO mismatch).
+* Added final pass for missing Javadoc to remove Checkstyle warnings.
+
+---
+
+### **Resulting Artifacts**
+
+* `ImageController.java` (refactored: thinner controller, delegates orchestration to service)
+* `ImageService.java` (refactored: upload/delete/sign orchestrated in service)
+* Added Javadoc to all public service methods (Checkstyle clean)
+* Correct import for `MethodArgumentTypeMismatchException`
+
+---
+
+### **Verification**
+
+* Project compiles successfully (`mvn clean test`)
+* Static checker (Checkstyle) produces no Javadoc warnings
+* Manual review of method boundaries confirms correct layering
+* Behavior remains unchanged at API level (no contract breakage)
+
+---
+
+### **Attribution Statement**
+
+> Portions of this commit or configuration were generated with assistance from OpenAI ChatGPT (GPT-5) on October 23, 2025. All AI-generated content was reviewed, verified, and finalized by the development team.
+
+---
+
+### **Commit / Ticket Reference**
+
+* **Commit:** `test(image): expand service + controller unit tests to cover orchestration paths, signed-url flow, upload branches, and delete logic (refs #32)`
+* **Ticket:** `#32 — Write comprehensive unit tests for ImageService and ImageController`
+* **Date:** October 23, 2025
+* **Team Member:** Jalen Stephens
+
+---
+
+### **AI Tool Information**
+
+* **Tool Used:** OpenAI ChatGPT (GPT-5)
+* **Access Method:** ChatGPT Web (.edu academic access)
+* **Configuration:** Default model settings
+* **Cost:** $0 (no paid API calls)
+
+---
+
+### **Purpose of AI Assistance**
+
+Assisted in designing and refining unit tests to achieve branch-level coverage for `ImageService` and `ImageController`, including refactoring test setups to correctly reflect orchestration boundaries introduced after service restructuring. Also helped identify and patch gaps in upload, signed-URL, and delete execution paths.
+
+---
+
+### **Prompts / Interaction Summary**
+
+* Asked for branch coverage guidance on remaining uncovered sections of `ImageService`
+* Identified missing logic coverage in `getSignedUrl`, `update`, and `deleteAndPurge`
+* Requested corrected mocks for double-save orchestration in `upload(...)`
+* Integrated missing blank/null storage path tests
+* Adjusted controller tests to reflect new upload/signedUrl delegation
+
+---
+
+### **Resulting Artifacts**
+
+* `ImageServiceTest.java` (expanded: coverage for null/blank/success branches + exception paths)
+* `ImageControllerTest.java` (aligned with new orchestration semantics)
+* `ImageController.java` (pagination fix default size to match test harness)
+* `citations.md` (commit metadata + attribution updated)
+
+---
+
+### **Verification**
+
+* Local test suite passing (`mvn clean test`)
+* Coverage report verified via `mvn jacoco:report` with improved branch coverage
+* Manual review of save-upload-update orchestration validated against business logic
+* No remaining Mockito unnecessary stubbing errors
+
+---
+
+### **Attribution Statement**
+
+> Portions of this commit or configuration were generated with assistance from OpenAI ChatGPT (GPT-5) on October 23, 2025. All AI-generated content was reviewed, verified, and finalized by the development team.
+
+---

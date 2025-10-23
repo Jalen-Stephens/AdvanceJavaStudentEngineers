@@ -48,7 +48,7 @@ public class ImageController {
   @GetMapping
   public ResponseEntity<List<Dtos.ImageDto>> list(
       @RequestParam(defaultValue = "0") int page,
-      @RequestParam(defaultValue = "20") int size) {
+      @RequestParam(defaultValue = "5") int size) {
 
     if (page < 0 || size <= 0) {
       return ResponseEntity.badRequest().build();
