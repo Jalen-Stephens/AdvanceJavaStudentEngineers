@@ -117,13 +117,23 @@ public class ImageController {
   }
 
 
-  /** DELETE /api/images/{id} — hard delete metadata record. */
+  /** DELETE /api/images/{id} — hard delete metadata + storage object. */
   @DeleteMapping("/{id}")
   public ResponseEntity<Void> delete(@PathVariable String id) {
     UUID userId = userService.getCurrentUserIdOrThrow();
+    String bearer = userService.getCurrentBearerOrThrow();
     UUID imageId = UUID.fromString(id);
 
-    imageService.delete(userId, imageId);
+    // Fetch to (a) verify ownership and (b) learn storage path
+    var img = imageService.getById(userId, imageId); // implement/find method that 404s if not owner
+    var storagePath = img.getStoragePath();
+
+
+    if (storagePath != null && !storagePath.isBlank()) {
+      storage.deleteObject(storagePath, bearer); // delete from bucket first
+    }
+
+    imageService.delete(userId, imageId);        // then remove DB row
     return ResponseEntity.noContent().build();
   }
 

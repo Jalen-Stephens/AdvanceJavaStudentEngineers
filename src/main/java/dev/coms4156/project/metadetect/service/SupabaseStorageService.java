@@ -2,12 +2,17 @@ package dev.coms4156.project.metadetect.supabase;
 
 import java.nio.charset.StandardCharsets;
 import java.time.Duration;
+import java.util.List;
+import java.util.Map;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpMethod;
 import org.springframework.http.MediaType;
 import org.springframework.stereotype.Service;
+import org.springframework.web.reactive.function.client.ClientRequest;
+import org.springframework.web.reactive.function.client.ExchangeFilterFunction;
 import org.springframework.web.reactive.function.client.WebClient;
 import org.springframework.web.reactive.function.client.WebClientResponseException;
 import org.springframework.web.util.UriComponentsBuilder;
@@ -29,6 +34,9 @@ public class SupabaseStorageService {
   private final int signedUrlTtlSeconds;    // e.g. 600
   private final String supabaseAnonKey;     // required for Storage API
 
+  private final WebClient supabaseNoCtOnDelete;
+
+
   /**
    * Constructs a Supabase-backed storage service for image uploads and signed URL retrieval.
    *
@@ -45,12 +53,24 @@ public class SupabaseStorageService {
       @Value("${metadetect.supabase.anonKey}") String supabaseAnonKey
   ) {
     this.supabase = supabaseWebClient;
-    this.projectBase = projectBase.endsWith("/")
-      ? projectBase.substring(0, projectBase.length() - 1)
-      : projectBase;
+    this.projectBase = projectBase;
     this.bucket = bucket;
     this.signedUrlTtlSeconds = signedUrlTtlSeconds;
     this.supabaseAnonKey = supabaseAnonKey;
+
+    ExchangeFilterFunction stripCtOnDelete = (req, next) -> {
+      if (req.method() == HttpMethod.DELETE) {
+        ClientRequest mutated = ClientRequest.from(req)
+            .headers(h -> h.remove(HttpHeaders.CONTENT_TYPE))
+            .build();
+        return next.exchange(mutated);
+      }
+      return next.exchange(req);
+    };
+
+    this.supabaseNoCtOnDelete = supabase.mutate()
+      .filter(stripCtOnDelete)
+      .build();
   }
 
   /** Uploads bytes to /storage/v1/object/{bucket}/{path}. Returns the path used. */
@@ -142,4 +162,35 @@ public class SupabaseStorageService {
 
     return json.substring(q1 + 1, q2);
   }
+
+  /** Deletes one object via POST /storage/v1/object/{bucket}/remove. */
+  public void deleteObject(String objectPath, String bearer) {
+    if (objectPath == null || objectPath.isBlank()) {
+      return;
+    }
+
+    String url = projectBase + "/storage/v1/object/" + bucket + "/" + objectPath;
+
+    try {
+      supabaseNoCtOnDelete
+        .delete()
+        .uri(url)
+        .headers(h -> {
+          h.set(HttpHeaders.AUTHORIZATION, "Bearer " + bearer);
+          h.set("apikey", supabaseAnonKey);
+        })
+        .retrieve()
+        .bodyToMono(Void.class)
+          .block();
+    } catch (WebClientResponseException e) {
+      if (e.getStatusCode().value() != 404) {
+        log.error("Supabase delete failed {} {} body={}",
+            e.getStatusCode(), e.getMessage(), e.getResponseBodyAsString());
+        throw new RuntimeException("Supabase delete failed: " + e.getStatusCode(), e);
+      }
+    }
+  }
+
+
+
 }

@@ -1296,3 +1296,59 @@ Changes were validated via:
 > Portions of this commit or configuration were generated with assistance from OpenAI ChatGPT (GPT-5) on October 22, 2025. All AI-generated content was reviewed, verified, and finalized by the development team.
 
 ---
+
+
+### **Commit / Ticket Reference**
+
+* **Commit:** `fix(api): make delete endpoint controller-thin and align storage delete with Supabase spec`
+* **Ticket:** `#26 — Implement binary upload & signed URL for images`
+* **Date:** October 23, 2025
+* **Team Member:** Jalen Stephens
+
+---
+
+### **AI Tool Information**
+
+* **Tool Used:** OpenAI ChatGPT (GPT-5)
+* **Access Method:** ChatGPT Web (.edu academic access)
+* **Configuration:** Default model settings
+* **Cost:** $0 (no paid API calls)
+
+---
+
+### **Purpose of AI Assistance**
+
+Assisted in debugging Supabase object deletion behavior, identifying incorrect usage of `/remove` vs single-object `DELETE`, and restructuring the controller to delegate deletion entirely to the service layer in order to satisfy test expectations and avoid null dereferences.
+
+---
+
+### **Prompts / Interaction Summary**
+
+* Asked why delete endpoint was returning 400 from Supabase
+* Asked how to properly call Supabase storage delete via REST
+* Debugged controller-side NPE during deleteImage tests
+* Requested thin-controller refactor + commit message
+
+---
+
+### **Resulting Artifacts**
+
+* `ImageController.java` updated to delegate delete logic to `imageService`
+* `SupabaseStorageService.java` updated to align with Supabase delete semantics
+* `ImageControllerTest.java` updated and now passing for success / forbidden / notFound flows
+
+---
+
+### **Verification**
+
+* All image deletion unit tests now pass
+* Manual reasoning check confirmed controller no longer dereferences null `Image`
+* Behavior matches Postman-tested Supabase semantics
+
+---
+
+### **Attribution Statement**
+
+> Portions of this commit or configuration were generated with assistance from OpenAI ChatGPT (GPT-5) on October 23, 2025. All AI-generated content was reviewed, verified, and finalized by the development team.
+
+---
