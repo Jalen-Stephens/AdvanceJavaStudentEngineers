@@ -1638,3 +1638,59 @@ Assisted in designing and refining unit tests to achieve branch-level coverage f
 > Portions of this commit or configuration were generated with assistance from OpenAI ChatGPT (GPT-5) on October 23, 2025. All AI-generated content was reviewed, verified, and finalized by the development team.
 
 ---
+
+### **Commit / Ticket Reference**
+
+* **Commit:** `test(image,analysis): add missing branch coverage for upload, signed-url, truncate, and download paths (refs #32)`
+* **Ticket:** `#32 — Write comprehensive unit tests for ImageService, AnalyzeService, and ImageController`
+* **Date:** October 23, 2025
+* **Team Member:** Jalen Stephens
+
+---
+
+### **AI Tool Information**
+
+* **Tool Used:** OpenAI ChatGPT (GPT-5)
+* **Access Method:** ChatGPT Web (.edu academic access)
+* **Configuration:** Default model settings
+* **Cost:** $0 (no paid API calls)
+
+---
+
+### **Purpose of AI Assistance**
+
+Helped identify untested execution branches across `ImageService` and `AnalyzeService` (upload orchestration, signed URL generation, private truncate and download methods) and guided the creation of targeted tests to ensure coverage of all success and error-state code paths.
+
+---
+
+### **Prompts / Interaction Summary**
+
+* Asked how to achieve full branch coverage for service-layer logic
+* Requested missing paths for upload, URL signing, and truncation helpers
+* Added reflection-based invocation for private helper methods
+* Debugged cast + status mismatch failures in early iterations
+* Finalized test adjustments to reflect real method behavior
+
+---
+
+### **Resulting Artifacts**
+
+* `ImageServiceTest.java` (expanded branch coverage: upload double-save, null/blank path handling, signed URL)
+* `AnalyzeServiceTest.java` (covered truncate variants, downloadToTemp success branch, runExtractionAndFinalize DONE branch)
+* `ImageControllerTest.java` (aligned with service orchestration)
+
+---
+
+### **Verification**
+
+* Full test suite passing (`mvn clean test`)
+* Verified coverage improvement via `mvn jacoco:report`
+* Confirmed no Mockito stubbing errors or private-access violations remain
+
+---
+
+### **Attribution Statement**
+
+> Portions of this commit or configuration were generated with assistance from OpenAI ChatGPT (GPT-5) on October 23, 2025. All AI-generated content was reviewed, verified, and finalized by the development team.
+
+---

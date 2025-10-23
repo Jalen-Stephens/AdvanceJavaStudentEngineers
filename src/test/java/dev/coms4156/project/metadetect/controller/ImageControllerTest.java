@@ -82,7 +82,7 @@ class ImageControllerTest {
       .andExpect(jsonPath("$[0].filename").value("test.jpg"))
       .andExpect(jsonPath("$[0].userId").value(userId.toString()))
       .andExpect(jsonPath("$[0].labels[0]").value("tag1"))
-      .andExpect(jsonPath("$[0].note").value("hello"));
+        .andExpect(jsonPath("$[0].note").value("hello"));
   }
 
   // pagination bounds (empty result if beyond range)
@@ -92,7 +92,7 @@ class ImageControllerTest {
 
     mvc.perform(MockMvcRequestBuilders.get("/api/images?page=5&size=10"))
       .andExpect(status().isOk())
-      .andExpect(content().json("[]"));
+        .andExpect(content().json("[]"));
   }
 
   // ---- GET /api/images/{id} ----
@@ -104,7 +104,7 @@ class ImageControllerTest {
       .andExpect(status().isOk())
       .andExpect(jsonPath("$.id").value(imgId.toString()))
       .andExpect(jsonPath("$.note").value("hello"))
-      .andExpect(jsonPath("$.labels[1]").value("tag2"));
+        .andExpect(jsonPath("$.labels[1]").value("tag2"));
   }
 
   @Test
@@ -112,7 +112,7 @@ class ImageControllerTest {
     when(imageService.getById(userId, imgId)).thenThrow(new NotFoundException("missing"));
 
     mvc.perform(MockMvcRequestBuilders.get("/api/images/" + imgId))
-      .andExpect(status().isNotFound());
+        .andExpect(status().isNotFound());
   }
 
   @Test
@@ -120,7 +120,7 @@ class ImageControllerTest {
     when(imageService.getById(userId, imgId)).thenThrow(new ForbiddenException("nope"));
 
     mvc.perform(MockMvcRequestBuilders.get("/api/images/" + imgId))
-      .andExpect(status().isForbidden());
+        .andExpect(status().isForbidden());
   }
 
   // ---- PUT /api/images/{id} ----
@@ -143,7 +143,7 @@ class ImageControllerTest {
           """))
       .andExpect(status().isOk())
       .andExpect(jsonPath("$.note").value("updated-note"))
-      .andExpect(jsonPath("$.labels[0]").value("new1"));
+        .andExpect(jsonPath("$.labels[0]").value("new1"));
   }
 
   // ---- DELETE /api/images/{id} ----
@@ -189,7 +189,7 @@ class ImageControllerTest {
     when(imageService.upload(eq(user), eq("jwt"), any())).thenReturn(returned);
 
     MockMultipartFile file = new MockMultipartFile(
-      "file", "pic.png", "image/png", "PNGDATA".getBytes()
+        "file", "pic.png", "image/png", "PNGDATA".getBytes()
     );
 
     mvc.perform(MockMvcRequestBuilders
@@ -198,7 +198,7 @@ class ImageControllerTest {
       .andExpect(status().isCreated())
       .andExpect(jsonPath("$.id").value(imgId.toString()))
       .andExpect(jsonPath("$.filename").value("pic.png"))
-      .andExpect(jsonPath("$.userId").value(user.toString()));
+        .andExpect(jsonPath("$.userId").value(user.toString()));
   }
 
   @Test
@@ -210,11 +210,11 @@ class ImageControllerTest {
     when(userService.getCurrentBearerOrThrow()).thenReturn("jwt");
 
     when(imageService.getSignedUrl(user, "jwt", imgId))
-      .thenReturn("https://example.supabase.co/storage/v1/object/sign/..token..");
+        .thenReturn("https://example.supabase.co/storage/v1/object/sign/..token..");
 
     mvc.perform(MockMvcRequestBuilders.get("/api/images/" + imgId + "/url"))
       .andExpect(status().isOk())
-      .andExpect(jsonPath("$.url").exists());
+        .andExpect(jsonPath("$.url").exists());
   }
 }
 

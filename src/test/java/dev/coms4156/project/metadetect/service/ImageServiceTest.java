@@ -58,7 +58,7 @@ class ImageServiceTest {
     // Lenient stubs so tests that don't traverse rls still pass without UnnecessaryStubbing.
     // RlsContext<S> supplier
     when(rls.asUser(any(UUID.class), any(Supplier.class)))
-      .thenAnswer(inv -> ((Supplier<?>) inv.getArgument(1)).get());
+        .thenAnswer(inv -> ((Supplier<?>) inv.getArgument(1)).get());
     // RlsContext<R> runnable
     doAnswer(inv -> {
       ((Runnable) inv.getArgument(1)).run();
@@ -98,7 +98,7 @@ class ImageServiceTest {
     when(repo.save(any(Image.class))).thenAnswer(inv -> dbEchoSave(inv.getArgument(0)));
 
     Image saved =
-      service.create(ownerId, "file.jpg", "images/file.jpg", new String[] {"x"}, "hello");
+        service.create(ownerId, "file.jpg", "images/file.jpg", new String[] {"x"}, "hello");
 
     ArgumentCaptor<Image> captor = ArgumentCaptor.forClass(Image.class);
     verify(repo).save(captor.capture());
@@ -133,7 +133,7 @@ class ImageServiceTest {
 
     assertThatThrownBy(() -> service.getById(ownerId, imageId))
       .isInstanceOf(NotFoundException.class)
-      .hasMessageContaining("Image not found");
+        .hasMessageContaining("Image not found");
 
     verify(repo).findById(imageId);
   }
@@ -144,7 +144,7 @@ class ImageServiceTest {
     when(repo.findById(imageId)).thenReturn(Optional.of(img));
 
     assertThatThrownBy(() -> service.getById(ownerId, imageId))
-      .isInstanceOf(ForbiddenException.class);
+        .isInstanceOf(ForbiddenException.class);
 
     verify(repo).findById(imageId);
   }
@@ -166,9 +166,9 @@ class ImageServiceTest {
   @Test
   void listByOwner_invalidArgs_throwIllegalArgument() {
     assertThatThrownBy(() -> service.listByOwner(ownerId, -1, 5))
-      .isInstanceOf(IllegalArgumentException.class);
+        .isInstanceOf(IllegalArgumentException.class);
     assertThatThrownBy(() -> service.listByOwner(ownerId, 0, 0))
-      .isInstanceOf(IllegalArgumentException.class);
+        .isInstanceOf(IllegalArgumentException.class);
   }
 
   // --- UPDATE ---
@@ -197,7 +197,7 @@ class ImageServiceTest {
     when(repo.save(any(Image.class))).thenAnswer(inv -> inv.getArgument(0));
 
     Image out =
-      service.update(ownerId, imageId, "   ", "images/new.jpg", new String[] {"k"}, null);
+        service.update(ownerId, imageId, "   ", "images/new.jpg", new String[] {"k"}, null);
 
     assertThat(out.getFilename()).isEqualTo("orig.jpg"); // unchanged
     assertThat(out.getStoragePath()).isEqualTo("images/new.jpg");
@@ -211,7 +211,7 @@ class ImageServiceTest {
     when(repo.findById(imageId)).thenReturn(Optional.of(img));
 
     assertThatThrownBy(() -> service.update(ownerId, imageId, "x.jpg", null, null, null))
-      .isInstanceOf(ForbiddenException.class);
+        .isInstanceOf(ForbiddenException.class);
   }
 
   @Test
@@ -219,7 +219,7 @@ class ImageServiceTest {
     when(repo.findById(imageId)).thenReturn(Optional.empty());
 
     assertThatThrownBy(() -> service.update(ownerId, imageId, "x.jpg", null, null, null))
-      .isInstanceOf(NotFoundException.class);
+        .isInstanceOf(NotFoundException.class);
   }
 
   // --- DELETE ---
@@ -242,7 +242,7 @@ class ImageServiceTest {
     when(repo.findById(imageId)).thenReturn(Optional.of(img));
 
     assertThatThrownBy(() -> service.delete(ownerId, imageId))
-      .isInstanceOf(ForbiddenException.class);
+        .isInstanceOf(ForbiddenException.class);
 
     verify(repo).findById(imageId);
     verify(repo, never()).deleteById(any());
@@ -253,7 +253,7 @@ class ImageServiceTest {
     when(repo.findById(imageId)).thenReturn(Optional.empty());
 
     assertThatThrownBy(() -> service.delete(ownerId, imageId))
-      .isInstanceOf(NotFoundException.class);
+        .isInstanceOf(NotFoundException.class);
 
     verify(repo).findById(imageId);
     verify(repo, never()).deleteById(any());
@@ -292,7 +292,7 @@ class ImageServiceTest {
 
     // Execute
     MultipartFile file = new org.springframework.mock.web.MockMultipartFile(
-      "file", "pic.png", "image/png", "DATA".getBytes());
+        "file", "pic.png", "image/png", "DATA".getBytes());
     Image result = service.upload(ownerId, "jwt", file);
 
     String expectedKey = ownerId + "/" + newId + "--pic.png";
@@ -303,7 +303,7 @@ class ImageServiceTest {
 
     // Verify storage called with correct key/content-type
     verify(storage).uploadObject(any(byte[].class), eq("image/png"),
-      eq(expectedKey), eq("jwt"));
+        eq(expectedKey), eq("jwt"));
 
     // Verify two saves: create (no storagePath yet) then update (with storagePath)
     org.mockito.ArgumentCaptor<Image> saveCap = org.mockito.ArgumentCaptor.forClass(Image.class);
@@ -332,7 +332,9 @@ class ImageServiceTest {
     when(repo.save(any(Image.class))).thenAnswer(inv -> {
       Image in = inv.getArgument(0);
       Image out = dbEchoSave(in);
-      if (in.getId() == null) out.setId(newId);
+      if (in.getId() == null) {
+        out.setId(newId);
+      }
       return out;
     });
 
@@ -343,11 +345,12 @@ class ImageServiceTest {
     when(repo.findById(newId)).thenReturn(Optional.of(found));
 
     ArgumentCaptor<String> contentTypeCap = ArgumentCaptor.forClass(String.class);
-    when(storage.uploadObject(any(byte[].class), contentTypeCap.capture(), anyString(), anyString()))
-      .thenReturn("ok");
+    when(storage.uploadObject(any(byte[].class),
+        contentTypeCap.capture(), anyString(), anyString()))
+        .thenReturn("ok");
 
     MultipartFile file = new org.springframework.mock.web.MockMultipartFile(
-      "file", "pic.bin", null, "DATA".getBytes());
+        "file", "pic.bin", null, "DATA".getBytes());
 
     service.upload(ownerId, "jwt", file);
 
@@ -355,7 +358,7 @@ class ImageServiceTest {
   }
 
   @Test
-  void upload_fileBytesThrowIOException_bubblesUp() throws Exception {
+  void upload_fileBytesThrowIoException_bubblesUp() throws Exception {
     // Service calls repo.save() BEFORE file.getBytes()
     UUID newId = UUID.randomUUID();
     when(repo.save(any(Image.class))).thenAnswer(inv -> {
@@ -373,7 +376,7 @@ class ImageServiceTest {
     when(bad.getBytes()).thenThrow(new java.io.IOException("read fail"));
 
     assertThatThrownBy(() -> service.upload(ownerId, "jwt", bad))
-      .isInstanceOf(java.io.IOException.class);
+        .isInstanceOf(java.io.IOException.class);
   }
 
   @Test
@@ -386,7 +389,7 @@ class ImageServiceTest {
     when(repo.findById(imageId)).thenReturn(Optional.of(img));
 
     assertThatThrownBy(() -> service.getSignedUrl(ownerId, "jwt", imageId))
-      .isInstanceOf(NotFoundException.class);
+        .isInstanceOf(NotFoundException.class);
   }
 
   @Test
@@ -437,8 +440,8 @@ class ImageServiceTest {
       .when(storage).deleteObject(eq(img.getStoragePath()), eq("jwt"));
 
     assertThatThrownBy(() -> service.deleteAndPurge(ownerId, "jwt", imageId))
-      .isInstanceOf(RuntimeException.class)
-      .hasMessageContaining("storage down");
+        .isInstanceOf(RuntimeException.class)
+        .hasMessageContaining("storage down");
 
     verify(repo, never()).deleteById(any());
   }
@@ -474,7 +477,7 @@ class ImageServiceTest {
     when(repo.findById(imgId)).thenReturn(Optional.of(img));
 
     assertThatThrownBy(() -> service.getSignedUrl(ownerId, "jwt", imgId))
-      .isInstanceOf(NotFoundException.class);
+        .isInstanceOf(NotFoundException.class);
   }
 
   @Test
@@ -484,10 +487,10 @@ class ImageServiceTest {
     when(repo.save(any(Image.class))).thenAnswer(inv -> inv.getArgument(0));
 
     Image out = service.update(ownerId, imageId,
-      "renamed.jpg",   // filename non-blank branch
-      null,            // storagePath unchanged
-      null,            // labels unchanged
-      "new-note");     // note non-null branch
+        "renamed.jpg",   // filename non-blank branch
+        null,            // storagePath unchanged
+        null,            // labels unchanged
+        "new-note");     // note non-null branch
 
     assertThat(out.getFilename()).isEqualTo("renamed.jpg");
     assertThat(out.getNote()).isEqualTo("new-note");
