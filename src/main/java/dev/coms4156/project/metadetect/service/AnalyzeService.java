@@ -2,12 +2,12 @@ package dev.coms4156.project.metadetect.service;
 
 import static dev.coms4156.project.metadetect.model.AnalysisReport.ReportStatus;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import dev.coms4156.project.metadetect.c2pa.C2paToolInvoker;
 import dev.coms4156.project.metadetect.dto.Dtos;
 import dev.coms4156.project.metadetect.model.AnalysisReport;
 import dev.coms4156.project.metadetect.model.Image;
 import dev.coms4156.project.metadetect.repository.AnalysisReportRepository;
-import dev.coms4156.project.metadetect.service.errors.ForbiddenException;
 import dev.coms4156.project.metadetect.service.errors.MissingStoragePathException;
 import dev.coms4156.project.metadetect.service.errors.NotFoundException;
 import dev.coms4156.project.metadetect.supabase.SupabaseStorageService;
@@ -41,6 +41,9 @@ public class AnalyzeService {
   private final SupabaseStorageService storage;
   private final UserService userService;
   private final Clock clock;
+
+  private final ObjectMapper objectMapper = new ObjectMapper();
+
 
   /**
    * Constructs the analysis orchestration service. This service coordinates the
@@ -76,11 +79,6 @@ public class AnalyzeService {
   }
 
 
-  /** Legacy stub for earlier signature; not used by the ID-driven pipeline. */
-  public String submitAnalysis(org.springframework.web.multipart.MultipartFile file) {
-    return "stub-id";
-  }
-
   /**
    * Starts an analysis for the given image.
    * Creates a PENDING row, then downloads + runs C2PA, and stores the result.
@@ -90,10 +88,8 @@ public class AnalyzeService {
   @Transactional
   public Dtos.AnalyzeStartResponse submitAnalysis(UUID imageId) {
     final UUID currentUser = userService.getCurrentUserIdOrThrow();
-
     // 1) Ownership gate (RLS-friendly through ImageService)
     Image img = imageService.getById(currentUser, imageId);
-
     // 2) Require a non-null storage path
     String storagePath = img.getStoragePath();
     if (!StringUtils.hasText(storagePath)) {
@@ -162,7 +158,7 @@ public class AnalyzeService {
     var currentUser = userService.getCurrentUserIdOrThrow();
     imageService.getById(currentUser, leftImageId);
     imageService.getById(currentUser, rightImageId);
-    return new Dtos.AnalyzeCompareResponse("COMPLETED", null, "compare() is a stub in Iteration 1");
+    return new Dtos.AnalyzeCompareResponse("DONE", null, "compare() is a stub in Iteration 1");
   }
 
   // ======== Internal orchestration ========
@@ -171,9 +167,9 @@ public class AnalyzeService {
     File tempFile = null;
     try {
       // 1) Create a signed URL + download to a temp file
-      String bearer = getUserBearerOrThrow();
+      String bearer = userService.getCurrentBearerOrThrow();
       String signed = storage.createSignedUrl(storagePath, bearer);
-      tempFile = downloadToTemp(signed);
+      tempFile = downloadToTemp(signed, storagePath);
 
       // 2) Run C2PA
       String manifestJson = c2paToolInvoker.extractManifest(tempFile);
@@ -182,17 +178,18 @@ public class AnalyzeService {
       markCompleted(analysisId, manifestJson, /*confidence*/ null);
 
     } catch (Exception e) {
-      // 4) Mark FAILED – store concise error data in details JSON
       String errMsg = truncate(e.toString(), 2000);
-      String errorJson = "{\"error\":\"" + escapeForJson(errMsg) + "\"}";
-      markFailed(analysisId, errorJson);
-    } finally {
-      if (tempFile != null) {
-        try {
-          Files.deleteIfExists(tempFile.toPath());
-        } catch (IOException ignore) {
-          System.out.println(ignore);
-        }
+
+      try {
+        var errorObj = new java.util.LinkedHashMap<String, Object>();
+        errorObj.put("error", errMsg);
+        // optionally include more context:
+        // errorObj.put("storagePath", storagePath);
+        String errorJson = objectMapper.writeValueAsString(errorObj);
+        markFailed(analysisId, errorJson);
+      } catch (Exception jsonEx) {
+        // absolute fallback (escape dangerous chars)
+        markFailed(analysisId, "{\"error\":\"" + escapeForJson(errMsg) + "\"}");
       }
     }
   }
@@ -201,7 +198,7 @@ public class AnalyzeService {
   protected void markCompleted(UUID analysisId, String manifestJson, @Nullable Double confidence) {
     var report = analysisRepo.findById(analysisId)
         .orElseThrow(() -> new NotFoundException("Analysis not found: " + analysisId));
-    report.setStatus(ReportStatus.COMPLETED);
+    report.setStatus(ReportStatus.DONE);
     report.setDetails(manifestJson);
     report.setConfidence(confidence);
     analysisRepo.save(report);
@@ -216,10 +213,23 @@ public class AnalyzeService {
     analysisRepo.save(report);
   }
 
-  private File downloadToTemp(String signedUrl) throws IOException {
-    File tmp = File.createTempFile("analysis-", ".bin");
+  private File downloadToTemp(String signedUrl, String storagePath) throws IOException {
+    String ext = ".bin";
+    int slash = storagePath.lastIndexOf('/');
+    int dot = storagePath.lastIndexOf('.');
+    if (dot > slash && dot >= 0 && dot < storagePath.length() - 1) {
+      String candidate = storagePath.substring(dot);
+      if (candidate.length() <= 10 && candidate.matches("\\.[A-Za-z0-9]+")) {
+        ext = candidate;
+      }
+    }
+    File tmp = File.createTempFile("analysis-", ext);
     try (var in = new URL(signedUrl).openStream()) {
       Files.copy(in, tmp.toPath(), StandardCopyOption.REPLACE_EXISTING);
+    }
+    // quick sanity
+    if (Files.size(tmp.toPath()) <= 0) {
+      throw new IOException("Downloaded empty file from signed URL");
     }
     return tmp;
   }
@@ -235,22 +245,18 @@ public class AnalyzeService {
     return s.length() <= max ? s : s.substring(0, Math.max(0, max));
   }
 
-  private String getUserBearerOrThrow() {
-    // If you don’t yet expose this, either:
-    // - add it to UserService,
-    // - pass it down from the controller, or
-    // - change SupabaseStorageService to support privileged downloads.
-    String bearer = userService.getCurrentBearerOrThrow();
-    if (!StringUtils.hasText(bearer)) {
-      throw new ForbiddenException("Missing user bearer JWT for signed download");
+  private static String escapeForJson(String s) {
+    if (s == null) {
+      return null;
     }
-    return bearer;
+    return s
+      .replace("\\", "\\\\")
+      .replace("\"", "\\\"")
+      .replace("\r", "\\r")
+      .replace("\n", "\\n")
+      .replace("\t", "\\t");
   }
 
-  private static String escapeForJson(String s) {
-    // minimal escape for quotes & backslashes to keep details a valid JSON string
-    return s.replace("\\", "\\\\").replace("\"", "\\\"");
-  }
 
   /** Minimal builder to create a PENDING report if you want to centralize creation logic later. */
   @SuppressWarnings("unused")
