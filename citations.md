@@ -1022,6 +1022,10 @@ Helped implement the controller logic integrating with the `ImageService`, updat
 
 ### **Commit / Ticket Reference**
 
+* **Commit:** `feat(#26): add SupabaseStorageService and wire upload/signed URL endpoints in ImageController`
+* **Ticket:** `#26 — Implement Binary Upload & Signed URL for Images`
+* **Date:** October 22, 2025
+* **Team Member:** Jalen Stephens
 * **Commit:** `test(c2pa): add unit tests for C2paToolInvoker to validate tool invocation and error handling`
 * **Ticket:** `#24 — Ensure c2patool Functionality Across All Systems and Build Unit Tests for C2paToolInvoker`
 * **Date:** October 22, 2025
@@ -1040,12 +1044,17 @@ Helped implement the controller logic integrating with the `ImageService`, updat
 
 ### **Purpose of AI Assistance**
 
+Helped scaffold the Supabase storage integration service, update the controller endpoints for generating signed upload URLs, and adjust DTO/logic flow to connect metadata persistence with binary upload behavior.
 The AI assisted in designing and implementing unit tests for the `C2paToolInvoker` class. These tests validate the correct invocation of the `c2patool` binary, handle various error scenarios, and ensure proper exception handling. The AI also provided guidance on creating temporary files for testing and structuring the test cases to cover success and failure paths.
 
 ---
 
 ### **Prompts / Interaction Summary**
 
+* Asked how images should be stored in Supabase and how auth should interact with storage.
+* Prompted for best-practice bucket configuration (public vs. signed).
+* Requested initial service scaffolding and controller wiring.
+* Asked to adjust ImageController tests following storage logic changes.
 * Asked for a unit test suite for `C2paToolInvoker` to validate tool invocation.
 * Requested test cases for scenarios like:
   - Successful manifest extraction.
@@ -1058,6 +1067,11 @@ The AI assisted in designing and implementing unit tests for the `C2paToolInvoke
 
 ### **Resulting Artifacts**
 
+* Added `SupabaseStorageService.java`
+* Updated `ImageController.java`
+* Updated `UserService.java` to surface subject/owner context for uploads
+* Updated `application.properties` with storage config envs
+* Updated existing `ImageControllerTest.java`
 * **File Created:** `src/test/java/dev/coms4156/project/metadetect/c2pa/C2paToolInvokerUnitTest.java`
   - `testExtractManifestSuccess`: Validates successful manifest extraction from a mock image file.
   - `testExtractManifestFileNotFound`: Tests behavior when the image file does not exist.
@@ -1069,6 +1083,9 @@ The AI assisted in designing and implementing unit tests for the `C2paToolInvoke
 
 ### **Verification**
 
+* Application compiled successfully (`mvn clean test`)
+* Manually reviewed controller logic and service wiring
+* Storage paths and bucket naming verified against Supabase UI setup
 * Ran `mvn clean test` to confirm all tests pass successfully.
 * Verified that temporary files are created and cleaned up correctly during tests.
 * Confirmed that the `c2patool` binary is invoked correctly for valid test cases.
@@ -1078,4 +1095,251 @@ The AI assisted in designing and implementing unit tests for the `C2paToolInvoke
 
 ### **Attribution Statement**
 
+> Portions of this commit or configuration were generated with assistance from OpenAI ChatGPT (GPT-5) on October 22, 2025. All AI-generated content was reviewed, verified, and finalized by the development team.
+
+---
+
+### **Commit / Ticket Reference**
+
+* **Commit:** `test(#26): add SupabaseStorageService and upload/signed-url controller unit tests`
+* **Ticket:** `#26 — [API] Implement Binary Upload & Signed URL for Images`
+* **Date:** October 22, 2025
+* **Team Member:** Jalen Stephens
+
+---
+
+### **AI Tool Information**
+
+* **Tool Used:** OpenAI ChatGPT (GPT-5)
+* **Access Method:** ChatGPT Web (.edu academic access)
+* **Configuration:** Default model settings
+* **Cost:** $0 (no paid API calls)
+
+---
+
+### **Purpose of AI Assistance**
+
+Helped implement and structure the storage service test strategy and write unit tests for both the upload and signed URL controller logic. Also assisted in ensuring mocking behavior aligned with Supabase’s REST semantics.
+
+---
+
+### **Prompts / Interaction Summary**
+
+* “can we write unit test for the files we made and change”
+* “we want Supabase mocked for upload/signed URLs”
+* “fix failing controller tests after adding upload”
+* “create standalone SupabaseStorageServiceTest”
+* “one line commit message for unit tests”
+
+---
+
+### **Resulting Artifacts**
+
+* Added `SupabaseStorageServiceTest.java`
+* Updated `ImageControllerTest.java` with upload and signed URL cases
+* Validated integration between controller-service-storage layers via mocks
+
+---
+
+### **Verification**
+
+* All tests executed locally via `mvn clean test`
+* Verified mocking behavior for success and error paths
+* Confirmed controller exception mapping still correct
+* Confirmed behaviors required by ticket #26 are exercised
+
+---
+
+### **Attribution Statement**
+
+> Portions of this commit or configuration were generated with assistance from OpenAI ChatGPT (GPT-5) on October 22, 2025. All AI-generated content was reviewed, verified, and finalized by the development team.
+
+---
+
+
+### **Commit / Ticket Reference**
+
+* **Commit:** `feat(images): integrate Supabase JWT + RLS context + secure ImageService w/ ownership checks; update tests and mock image path refs(#26)`
+* **Ticket:** `#26 — Implement binary upload + signed URL for images`
+* **Date:** October 22, 2025
+* **Team Member:** Jalen Stephens
+
+---
+
+### **AI Tool Information**
+
+* **Tool Used:** OpenAI ChatGPT (GPT-5)
+* **Access Method:** ChatGPT Web (.edu academic access)
+* **Configuration:** Default model settings
+* **Cost:** $0 (no paid API calls)
+
+---
+
+### **Purpose of AI Assistance**
+
+Integrated Supabase JWT validation into Spring Security, implemented row-level security context for database queries, and refactored `ImageService` to enforce ownership checks through the authenticated Supabase user.
+
+---
+
+### **Prompts / Interaction Summary**
+
+* Asked for security configuration adjustments for custom `/auth/login` and `/auth/signup` endpoints.
+* Requested implementation of an RLS context helper for Postgres session variables.
+* Asked for modifications to `ImageService` to use the new RLS context + per-user ownership enforcement.
+* Clarified error messages and RLS setup behavior during integration testing.
+
+---
+
+### **Resulting Artifacts**
+
+* `SecurityConfig.java` updated to use Supabase JWT secret validation
+* New `RlsContext.java` added
+* `ImageService.java` updated to apply ownership checks via RLS context
+* Test images renamed to lower-case extension for CI
+* `AnalyzeServiceTest.java` updated to align with new security context
+
+---
+
+### **Verification**
+
+* Application builds successfully (`mvn clean test`)
+* Manual review of Spring Security bean instantiation with Supabase-provided JWT secret
+* Validated RLS path resolution through debugging and stack traces during live testing
+* Confirmed correct staged files in Git
+
+---
+
+### **Attribution Statement**
+
+> Portions of this commit or configuration were generated with assistance from OpenAI ChatGPT (GPT-5) on October 22, 2025. All AI-generated content was reviewed, verified, and finalized by the development team.
+
+---
+
+### **Commit / Ticket Reference**
+
+* **Commit:** `feat(API): implement signed URL upload flow, align DTO/JSON mapping, and update tests for RLS (refs #26)`
+* **Ticket:** `#26 — Implement binary upload & signed URL flow for images`
+* **Date:** October 22, 2025
+* **Team Member:** Jalen Stephens
+
+---
+
+### **AI Tool Information**
+
+* **Tool Used:** OpenAI ChatGPT (GPT-5)
+* **Access Method:** ChatGPT Web (.edu academic access)
+* **Configuration:** Default model settings
+* **Cost:** $0 (no paid API calls)
+
+---
+
+### **Purpose of AI Assistance**
+
+AI assistance was used to debug failing tests caused by RLS enforcement, update DTO serialization to reflect new schema (removal of `ownerUserId` in favor of `userId`), ensure proper mapper alignment in the controller response, and update unit tests to correctly mock `RlsContext`.
+
+---
+
+### **Prompts / Interaction Summary**
+
+Key prompts included:
+
+* Fixing missing JSON property in `ImageControllerTest`
+* Updating tests rather than production code to reflect schema changes
+* Resolving NPEs by mocking `RlsContext` correctly
+* Eliminating UnnecessaryStubbing errors via lenient stubs
+* Cleaning assertions expecting DB-populated `uploadedAt`
+* Generating a one-line commit message referencing #26
+
+---
+
+### **Resulting Artifacts**
+
+The following files were modified or updated with AI assistance:
+
+* `SecurityConfig.java`
+* `ImageController.java`
+* `RlsContext.java`
+* `Dtos.java`
+* `Image.java`
+* `ImageService.java`
+* `SupabaseStorageService.java`
+* `application.properties`
+* `ImageControllerTest.java`
+* `ImageServiceTest.java`
+* `SupabaseStorageServiceTest.java`
+
+---
+
+### **Verification**
+
+Changes were validated via:
+
+* `mvn clean test` to ensure all tests pass
+* Manual inspection of JSON output format for DTO alignment
+* Ensuring test mocks correctly simulate RLS behavior
+* Verifying no UnnecessaryStubbing or NPEs remain
+
+---
+
+### **Attribution Statement**
+
+> Portions of this commit or configuration were generated with assistance from OpenAI ChatGPT (GPT-5) on October 22, 2025. All AI-generated content was reviewed, verified, and finalized by the development team.
+
+---
+
+
+### **Commit / Ticket Reference**
+
+* **Commit:** `fix(api): make delete endpoint controller-thin and align storage delete with Supabase spec`
+* **Ticket:** `#26 — Implement binary upload & signed URL for images`
+* **Date:** October 23, 2025
+* **Team Member:** Jalen Stephens
+
+---
+
+### **AI Tool Information**
+
+* **Tool Used:** OpenAI ChatGPT (GPT-5)
+* **Access Method:** ChatGPT Web (.edu academic access)
+* **Configuration:** Default model settings
+* **Cost:** $0 (no paid API calls)
+
+---
+
+### **Purpose of AI Assistance**
+
+Assisted in debugging Supabase object deletion behavior, identifying incorrect usage of `/remove` vs single-object `DELETE`, and restructuring the controller to delegate deletion entirely to the service layer in order to satisfy test expectations and avoid null dereferences.
+
+---
+
+### **Prompts / Interaction Summary**
+
+* Asked why delete endpoint was returning 400 from Supabase
+* Asked how to properly call Supabase storage delete via REST
+* Debugged controller-side NPE during deleteImage tests
+* Requested thin-controller refactor + commit message
+
+---
+
+### **Resulting Artifacts**
+
+* `ImageController.java` updated to delegate delete logic to `imageService`
+* `SupabaseStorageService.java` updated to align with Supabase delete semantics
+* `ImageControllerTest.java` updated and now passing for success / forbidden / notFound flows
+
+---
+
+### **Verification**
+
+* All image deletion unit tests now pass
+* Manual reasoning check confirmed controller no longer dereferences null `Image`
+* Behavior matches Postman-tested Supabase semantics
+
+---
+
+### **Attribution Statement**
+
+> Portions of this commit or configuration were generated with assistance from OpenAI ChatGPT (GPT-5) on October 23, 2025. All AI-generated content was reviewed, verified, and finalized by the development team.
+
+---
 > Portions of this test suite were generated with assistance from OpenAI ChatGPT (GPT-5) on October 22, 2025. All AI-generated content was reviewed, verified, and finalized by the development team.

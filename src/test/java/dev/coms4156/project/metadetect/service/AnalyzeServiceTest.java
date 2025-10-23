@@ -28,7 +28,7 @@ class AnalyzeServiceTest {
     assumeTrue(Files.exists(Path.of(TOOL_PATH)),
         "Skipping test: c2patool not installed");
 
-    File file = new File("src/test/resources/mock-images/Spaghetti.PNG");
+    File file = new File("src/test/resources/mock-images/Spaghetti.png");
 
     String manifestJson = analyzeService.fetchC2pa(file);
 

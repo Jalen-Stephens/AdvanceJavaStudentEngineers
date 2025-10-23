@@ -1,6 +1,7 @@
 package dev.coms4156.project.metadetect.dto;
 
 import java.time.Instant;
+import java.time.OffsetDateTime;
 import java.util.List;
 import java.util.Map;
 
@@ -74,8 +75,8 @@ public final class Dtos {
   public record ImageDto(
       String id,
       String filename,
-      String ownerUserId,
-      Instant uploadedAt,
+      String userId,
+      OffsetDateTime uploadedAt,
       List<String> labels,
       String note
   ) {}
