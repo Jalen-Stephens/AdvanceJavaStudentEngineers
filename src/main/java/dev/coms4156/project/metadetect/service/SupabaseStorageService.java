@@ -119,23 +119,22 @@ public class SupabaseStorageService {
     String url = projectBase + "/storage/v1/object/sign/" + bucket + "/" + storagePath;
     String bodyJson = "{\"expiresIn\":" + signedUrlTtlSeconds + "}";
 
-    String relativeSigned = supabase.post()
-          .uri(url)
-          .header(HttpHeaders.AUTHORIZATION, "Bearer " + userBearerJwt)
-          .header("apikey", supabaseAnonKey)
-          .contentType(MediaType.APPLICATION_JSON)
-          .bodyValue(bodyJson.getBytes(StandardCharsets.UTF_8))
-          .retrieve()
-          .bodyToMono(String.class)
-          .timeout(Duration.ofSeconds(10))
-          .map(SupabaseStorageService::extractSignedUrlFromJson)
-          .block();
+    String signedFromApi = supabase.post()
+        .uri(url)
+        .header(HttpHeaders.AUTHORIZATION, "Bearer " + userBearerJwt)
+        .header("apikey", supabaseAnonKey)
+        .contentType(MediaType.APPLICATION_JSON)
+        .bodyValue(bodyJson.getBytes(StandardCharsets.UTF_8))
+        .retrieve()
+        .bodyToMono(String.class)
+        .timeout(Duration.ofSeconds(10))
+        .map(SupabaseStorageService::extractSignedUrlFromJson)
+        .block();
+    // System.out.println(signedFromApi);
 
-    if (relativeSigned != null && relativeSigned.startsWith("/")) {
-      return projectBase + relativeSigned;
-    }
-    return relativeSigned;
+    return projectBase + "/storage/v1" + signedFromApi;
   }
+
 
   // Supabase returns: {"signedURL":"/storage/v1/object/sign/..."}
   private static String extractSignedUrlFromJson(String json) {

@@ -164,7 +164,7 @@ public class AnalysisReport {
    */
   public enum ReportStatus {
     PENDING,
-    COMPLETED,
+    DONE,
     FAILED
   }
 }

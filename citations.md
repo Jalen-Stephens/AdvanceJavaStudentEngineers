@@ -1464,3 +1464,60 @@ Assisted with configuring the JaCoCo and PMD reporting outputs, improving test c
 > Portions of this commit or configuration were generated with assistance from OpenAI ChatGPT (GPT-5) on October 23, 2025. All AI-generated content was reviewed, verified, and finalized by the development team.
 
 ---
+
+### **Commit / Ticket Reference**
+
+* **Commit:** `feat(API): implement full AnalyzeController endpoints and wire to AnalyzeService (refs #5)`
+* **Ticket:** `#5 — Implement AnalyzeController endpoints`
+* **Date:** October 23, 2025
+* **Team Member:** Jalen Stephens
+
+---
+
+### **AI Tool Information**
+
+* **Tool Used:** OpenAI ChatGPT (GPT-5)
+* **Access Method:** ChatGPT Web (.edu academic access)
+* **Configuration:** Default model settings
+* **Cost:** $0 (no paid API calls)
+
+---
+
+### **Purpose of AI Assistance**
+
+The AI was used to help design and implement the REST controller layer for the image analysis pipeline, ensuring correct delegation to `AnalyzeService`, aligning DTO usage, structuring endpoint semantics, and clarifying the expected Supabase interaction and ownership validation flow.
+
+---
+
+### **Prompts / Interaction Summary**
+
+* Asked for a revised controller ticket that references Supabase-backed storage and the new service-layer pipeline.
+* Requested a full `AnalyzeController.java` implementation aligned with the existing `AnalyzeService`.
+* Discussed C2PA integration, error handling, and JSON output expectations.
+* Verified controller behavior for analysis start, metadata retrieval, confidence polling, and compare stub behavior.
+
+---
+
+### **Resulting Artifacts**
+
+* `AnalyzeController.java` created/rewritten with full HTTP endpoint implementations
+* Wiring and validations integrated with `AnalyzeService`
+* Service changes to propagate errors correctly to the controller layer
+* Adjustments in `C2paToolInvoker` and Supabase logic to improve behavior consistency
+
+---
+
+### **Verification**
+
+* Application boot & manual lifecycle testing via HTTP requests
+* Verified successful `analysisId` return flow and database persistence
+* Verified manifest return and Supabase storage fetch path correctness
+* Verified structured JSON error responses during C2PA failures
+
+---
+
+### **Attribution Statement**
+
+> Portions of this commit or configuration were generated with assistance from OpenAI ChatGPT (GPT-5) on October 23, 2025. All AI-generated content was reviewed, verified, and finalized by the development team.
+
+---

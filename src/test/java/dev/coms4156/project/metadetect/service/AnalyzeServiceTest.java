@@ -106,7 +106,7 @@ class AnalyzeServiceTest {
     ArgumentCaptor<AnalysisReport> saved = ArgumentCaptor.forClass(AnalysisReport.class);
     verify(repo, atLeast(1)).save(saved.capture());
     AnalysisReport last = saved.getAllValues().get(saved.getAllValues().size() - 1);
-    assertThat(last.getStatus().name()).isEqualTo("COMPLETED");
+    assertThat(last.getStatus().name()).isEqualTo("DONE");
     assertThat(last.getDetails()).isEqualTo(manifest);
 
     downloadable.delete();
@@ -187,7 +187,7 @@ class AnalyzeServiceTest {
     AnalysisReport report = new AnalysisReport(imageId);
     report.setId(analysisId);
     report.setDetails("{\"m\":\"v\"}");
-    report.setStatus(AnalysisReport.ReportStatus.COMPLETED);
+    report.setStatus(AnalysisReport.ReportStatus.DONE);
     when(repo.findById(analysisId)).thenReturn(Optional.of(report));
     when(imageService.getById(userId, imageId)).thenReturn(ownedImage("s/p.png"));
 
@@ -202,7 +202,7 @@ class AnalyzeServiceTest {
     AnalysisReport report = new AnalysisReport(imageId);
     report.setId(analysisId);
     report.setDetails(null);
-    report.setStatus(AnalysisReport.ReportStatus.COMPLETED);
+    report.setStatus(AnalysisReport.ReportStatus.DONE);
     when(repo.findById(analysisId)).thenReturn(Optional.of(report));
     when(imageService.getById(userId, imageId)).thenReturn(ownedImage("x"));
 
@@ -239,7 +239,7 @@ class AnalyzeServiceTest {
     when(imageService.getById(userId, otherImage)).thenReturn(ownedImage("y"));
 
     Dtos.AnalyzeCompareResponse out = service.compare(imageId, otherImage);
-    assertThat(out.status()).isEqualTo("COMPLETED");
+    assertThat(out.status()).isEqualTo("DONE");
     assertThat(out.similarity()).isNull();
     assertThat(out.note()).contains("stub");
   }
