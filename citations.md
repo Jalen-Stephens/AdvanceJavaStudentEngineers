@@ -1342,4 +1342,66 @@ Assisted in debugging Supabase object deletion behavior, identifying incorrect u
 > Portions of this commit or configuration were generated with assistance from OpenAI ChatGPT (GPT-5) on October 23, 2025. All AI-generated content was reviewed, verified, and finalized by the development team.
 
 ---
-> Portions of this test suite were generated with assistance from OpenAI ChatGPT (GPT-5) on October 22, 2025. All AI-generated content was reviewed, verified, and finalized by the development team.
+
+### **Commit / Ticket Reference**
+
+* **Commit:** `feat(service): implement core AnalyzeService pipeline and persistence refs #8`
+* **Ticket:** `#8 — Implement AnalyzeService core logic (pipeline + persistence)`
+* **Date:** October 23, 2025
+* **Team Member:** Jalen Stephens
+
+---
+
+### **AI Tool Information**
+
+* **Tool Used:** OpenAI ChatGPT (GPT-5)
+* **Access Method:** ChatGPT Web (.edu academic access)
+* **Configuration:** Default model settings
+* **Cost:** $0 (no paid API calls)
+
+---
+
+### **Purpose of AI Assistance**
+
+AI was used to design and scaffold the new service-layer architecture for image analysis, including defining DTO contracts, repository/entity structure, and wiring the persistence + storage + C2PA pipeline according to the acceptance criteria. It assisted in identifying missing dependencies, shaping RLS-safe flows, and adapting the code to Spring Boot 3 / Jakarta conventions.
+
+---
+
+### **Prompts / Interaction Summary**
+
+* Asked for analysis service design and persistence flow.
+* Requested DTO refinements to align with controller contracts.
+* Generated `AnalysisReport` entity and repository.
+* Updated `AnalyzeService` to implement PENDING → COMPLETED/FAILED lifecycle.
+* Fixed missing JPA imports and Clock bean wiring for successful application startup.
+* Added error handling (`MissingStoragePathException`) and JSON error persistence.
+
+---
+
+### **Resulting Artifacts**
+
+* `AnalyzeService` (full pipeline logic)
+* `AnalysisReport` JPA entity
+* `AnalysisReportRepository`
+* DTO updates (`AnalyzeStartResponse`, `AnalyzeManifestResponse`, `AnalyzeConfidenceResponse`, etc.)
+* `MissingStoragePathException`
+* Supporting changes to `pom.xml` and application configuration
+
+---
+
+### **Verification**
+
+The implementation was validated through:
+
+* Successful project compilation after adding JPA + Clock bean
+* Service-layer unit test updates
+* Manual run ensuring Spring context loads with new beans and dependencies in place
+* Verified DTO compatibility with upcoming controller integration
+
+---
+
+### **Attribution Statement**
+
+> Portions of this commit or configuration were generated with assistance from OpenAI ChatGPT (GPT-5) on October 23, 2025. All AI-generated content was reviewed, verified, and finalized by the development team.
+
+---

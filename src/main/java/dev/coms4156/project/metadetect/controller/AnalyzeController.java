@@ -54,33 +54,34 @@ public class AnalyzeController {
     return ResponseEntity.status(HttpStatus.ACCEPTED).body(stub);
   }
 
-  
-  /**
-   * Extracts the C2PA manifest from an uploaded image file.
-   * This endpoint accepts a multipart/form-data request containing an image file.
-   * It processes the file using the C2PA tool to extract the manifest metadata.
-   * The extracted manifest is returned as a JSON string.
-   *
-   * @param file the uploaded image file (required).
-   * @return a {@link ResponseEntity} containing the extracted C2PA manifest as a JSON string.
-   * @throws ResponseStatusException if the extraction fails due to an I/O error or invalid input.
-   */
-  @PostMapping(value = "/extract", consumes = "multipart/form-data")
-  public ResponseEntity<String> extract(@RequestParam("file") MultipartFile file) {
-    try {
-      // Extract the C2PA manifest
-      //InputStream in = file.getInputStream();
-      //String manifestJson = analyzeService.fetchC2pa(in);
-  
-      String manifestJson = analyzeService.fetchC2pa(new java.io.File("tempfile"));
 
-      // Return the JSON response
-      return ResponseEntity.ok(manifestJson);
-    } catch (IOException e) {
-      throw new ResponseStatusException(HttpStatus.BAD_REQUEST, 
-                                        "Failed to extract C2PA manifest", e);
-    }
-  }
+  //  /**
+  //   * Extracts the C2PA manifest from an uploaded image file.
+  //   * This endpoint accepts a multipart/form-data request containing an image file.
+  //   * It processes the file using the C2PA tool to extract the manifest metadata.
+  //   * The extracted manifest is returned as a JSON string.
+  //   *
+  //   * @param file the uploaded image file (required).
+  //   * @return a {@link ResponseEntity} containing the extracted C2PA manifest as a JSON string.
+  //   * @throws ResponseStatusException
+  //   * if the extraction fails due to an I/O error or invalid input.
+  //   */
+  //  @PostMapping(value = "/extract", consumes = "multipart/form-data")
+  //  public ResponseEntity<String> extract(@RequestParam("file") MultipartFile file) {
+  //    try {
+  //      // Extract the C2PA manifest
+  //      //InputStream in = file.getInputStream();
+  //      //String manifestJson = analyzeService.fetchC2pa(in);
+  //
+  //      // String manifestJson = analyzeService.fetchC2pa(new java.io.File("tempfile"));
+  //
+  //      // Return the JSON response
+  //      return ResponseEntity.ok(manifestJson);
+  //    } catch (IOException e) {
+  //      throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
+  //                                        "Failed to extract C2PA manifest", e);
+  //    }
+  //  }
 
   /**
    * Retrieves metadata for a specific image analysis job. (TODO: IMPLEMENT/DELETE)
