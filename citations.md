@@ -1694,3 +1694,64 @@ Helped identify untested execution branches across `ImageService` and `AnalyzeSe
 > Portions of this commit or configuration were generated with assistance from OpenAI ChatGPT (GPT-5) on October 23, 2025. All AI-generated content was reviewed, verified, and finalized by the development team.
 
 ---
+
+### **Commit / Ticket Reference**
+
+* **Commit:** `docs: add controller-level documentation for ImageController (refs #35)`
+* **Ticket:** `#35 — Add Javadoc and inline comments for controller layer`
+* **Date:** February 23, 2025
+* **Team Member:** Jalen Stephens
+
+---
+
+### **AI Tool Information**
+
+* **Tool Used:** OpenAI ChatGPT (GPT-5)
+* **Access Method:** ChatGPT Web (.edu academic access)
+* **Configuration:** Default model settings
+* **Cost:** $0 (no paid API calls)
+
+---
+
+### **Purpose of AI Assistance**
+
+Assisted with drafting Javadoc comments, controller-level documentation, and inline explanatory
+comments for non-trivial logic within `ImageController`. Ensured documentation quality, structure,
+and consistency with Iteration 1 project standards.
+
+---
+
+### **Prompts / Interaction Summary**
+
+* Asked AI to generate controller comments with <100 character line limit
+* Requested Javadoc coverage for all public endpoints
+* Added inline comments around ownership, UUID parsing, and update metadata behavior
+* Requested final one-line commit message referencing the related ticket
+
+---
+
+### **Resulting Artifacts**
+
+* Updated `ImageController.java` with:
+
+  * Controller-level class Javadoc
+  * Method-level Javadoc
+  * Inline comments for helper logic and DTO conversions
+* Commit message aligned with project style and ticket association
+
+---
+
+### **Verification**
+
+* Performed manual review for clarity and accuracy
+* Confirmed no functional behavior changes
+* Built and ran application to ensure compilation unchanged
+
+---
+
+### **Attribution Statement**
+
+> Portions of this commit or configuration were generated with assistance from OpenAI ChatGPT (GPT-5) on February 23, 2025. All AI-generated content was reviewed, verified, and finalized by the development team.
+
+---
+
