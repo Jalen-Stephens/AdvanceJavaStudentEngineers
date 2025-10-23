@@ -5,17 +5,15 @@ import dev.coms4156.project.metadetect.model.Image;
 import dev.coms4156.project.metadetect.repository.ImageRepository;
 import dev.coms4156.project.metadetect.service.errors.ForbiddenException;
 import dev.coms4156.project.metadetect.service.errors.NotFoundException;
-
 import java.util.List;
-import java.util.Objects;
 import java.util.UUID;
-
+import org.springframework.lang.Nullable;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 /**
- * Provides CRUD and ownership-validated access to {@link Image} records,
- * executing all DB work under a per-request RLS context so Supabase policies
- * (… = auth.uid()) evaluate against the caller’s user id.
+ * Handles creation, retrieval, listing, and ownership validation of images
+ * before interacting with Supabase storage or analysis services.
  */
 @Service
 public class ImageService {
@@ -28,93 +26,83 @@ public class ImageService {
     this.rls = rls;
   }
 
-  /**
-   * Creates a new image record owned by the current user.
-   */
-  public Image create(UUID currentUserId,
+  /** Creates a new image record owned by the current user. */
+  @Transactional
+  public Image create(UUID userId,
                       String filename,
-                      String storagePath,
-                      String[] labels,
-                      String note) {
-    Objects.requireNonNull(currentUserId, "currentUserId");
-    Objects.requireNonNull(filename, "filename");
-
-    return rls.asUser(currentUserId, () -> {
-      Image toSave = new Image(
-        null,              // id (generated)
-        currentUserId,     // userId (must match auth.uid() per RLS)
-        filename,
-        storagePath,
-        labels,
-        note,
-        null               // uploadedAt (db default or set in repo)
-      );
-      return repo.save(toSave); // passes INSERT policy (userId == auth.uid())
+                      @Nullable String storagePath,
+                      @Nullable String[] labels,   // <-- match model
+                      @Nullable String note) {
+    return rls.asUser(userId, () -> {
+      Image img = new Image();
+      img.setUserId(userId);         // REQUIRED (FK to auth.users)
+      img.setFilename(filename);
+      img.setStoragePath(storagePath);
+      img.setLabels(labels);
+      img.setNote(note);
+      // Do NOT set uploadedAt — DB default handles it
+      return repo.save(img);
     });
   }
 
-  /**
-   * Returns an image if and only if the requesting user owns it.
-   * (RLS select already scopes rows to the caller; Forbidden check is a safeguard.)
-   */
-  public Image getById(UUID currentUserId, UUID imageId) {
-    return rls.asUser(currentUserId, () -> {
-      Image img = repo.findById(imageId)
-        .orElseThrow(() -> new NotFoundException("Image not found: " + imageId));
-      requireOwner(currentUserId, img); // redundant with RLS, but explicit
-      return img;
-    });
-  }
-
-  /**
-   * Lists all images belonging to a user in descending upload order.
-   * (RLS select also prevents cross-tenant leakage.)
-   */
-  public List<Image> listByOwner(UUID currentUserId) {
-    return rls.asUser(currentUserId,
-      () -> repo.findAllByUserIdOrderByUploadedAtDesc(currentUserId));
-  }
-
-  /**
-   * Updates optional metadata on an image if owned by the user.
-   */
+  /** Updates optional metadata on an image if owned by the user. */
+  @Transactional
   public Image update(UUID currentUserId,
                       UUID imageId,
-                      String newFilename,
-                      String newStoragePath,
-                      String[] newLabels,
-                      String newNote) {
+                      @Nullable String newFilename,
+                      @Nullable String newStoragePath,
+                      @Nullable String[] newLabels,
+                      @Nullable String newNote) {
     return rls.asUser(currentUserId, () -> {
       Image img = repo.findById(imageId)
-        .orElseThrow(() -> new NotFoundException("Image not found: " + imageId));
+          .orElseThrow(() -> new NotFoundException("Image not found: " + imageId));
+
       requireOwner(currentUserId, img);
 
       if (newFilename != null && !newFilename.isBlank()) {
         img.setFilename(newFilename);
       }
+
       if (newStoragePath != null && !newStoragePath.isBlank()) {
         img.setStoragePath(newStoragePath);
       }
+
       if (newLabels != null) {
         img.setLabels(newLabels);
       }
+
       if (newNote != null) {
         img.setNote(newNote);
       }
 
-      return repo.save(img); // passes UPDATE policy
+      return repo.save(img);
     });
   }
 
-  /**
-   * Deletes an image the user owns.
-   */
+  /** Returns an image if and only if the requesting user owns it. */
+  public Image getById(UUID currentUserId, UUID imageId) {
+    return rls.asUser(currentUserId, () -> {
+      Image img = repo.findById(imageId)
+            .orElseThrow(() -> new NotFoundException("Image not found: " + imageId));
+      requireOwner(currentUserId, img);
+      return img;
+    });
+  }
+
+  /** Lists all images belonging to a user in descending upload order. */
+  public List<Image> listByOwner(UUID currentUserId) {
+    return rls.asUser(currentUserId,
+      () -> repo.findAllByUserIdOrderByUploadedAtDesc(currentUserId));
+  }
+
+  /** Deletes an image the user owns. */
+  @Transactional
   public void delete(UUID currentUserId, UUID imageId) {
     rls.asUser(currentUserId, () -> {
       Image img = repo.findById(imageId)
-        .orElseThrow(() -> new NotFoundException("Image not found: " + imageId));
+            .orElseThrow(() -> new NotFoundException("Image not found: " + imageId));
       requireOwner(currentUserId, img);
-      repo.deleteById(imageId); // passes DELETE policy
+      repo.deleteById(imageId);
     });
   }
 

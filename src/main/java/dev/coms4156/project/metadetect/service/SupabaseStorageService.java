@@ -2,105 +2,124 @@ package dev.coms4156.project.metadetect.supabase;
 
 import java.nio.charset.StandardCharsets;
 import java.time.Duration;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
-import org.springframework.http.client.MultipartBodyBuilder;
 import org.springframework.stereotype.Service;
-import org.springframework.util.Assert;
-import org.springframework.web.reactive.function.BodyInserters;
 import org.springframework.web.reactive.function.client.WebClient;
+import org.springframework.web.reactive.function.client.WebClientResponseException;
+import org.springframework.web.util.UriComponentsBuilder;
 import reactor.core.publisher.Mono;
 
 /**
  * Minimal Supabase Storage client (private bucket).
- * Uses Supabase REST endpoints:
- *   - Upload:  POST  /storage/v1/object/{bucket}/{path}
- *   - Sign:    POST  /storage/v1/object/sign/{bucket}/{path} { "expiresIn": "secconds" }
+ * Upload: PUT /storage/v1/object/{bucket}/{path}
+ * Sign:   POST /storage/v1/object/sign/{bucket}/{path}  { "expiresIn": "seconds" }
  */
 @Service
 public class SupabaseStorageService {
 
+  private static final Logger log = LoggerFactory.getLogger(SupabaseStorageService.class);
+
   private final WebClient supabase;
-  private final String projectBase; // e.g., https://xyz.supabase.co
-  private final String bucket;
-  private final int signedUrlTtlSeconds;
+  private final String projectBase;         // e.g. https://xyz.supabase.co
+  private final String bucket;              // e.g. metadetect-images
+  private final int signedUrlTtlSeconds;    // e.g. 600
+  private final String supabaseAnonKey;     // required for Storage API
 
   /**
-   * Constructs a Supabase-backed storage service responsible for binary uploads
-   * and issuing signed download URLs for restricted access. This abstraction
-   * hides HTTP details behind a WebClient and ensures correct bucket scoping.
+   * Constructs a Supabase-backed storage service for image uploads and signed URL retrieval.
    *
-   * @param supabaseWebClient preconfigured WebClient bound to the Supabase project
-   * @param projectBase base Supabase project URL (without trailing slash)
-   * @param bucket name of the Supabase storage bucket used for images
-   * @param signedUrlTtlSeconds lifetime (in seconds) of signed access URLs
+   * @param supabaseWebClient configured WebClient pointing at the Supabase REST endpoint
+   * @param projectBase the Supabase base URL (project URL)
+   * @param bucket the storage bucket name used for persistence
+   * @param signedUrlTtlSeconds TTL in seconds for generated signed download URLs
    */
   public SupabaseStorageService(
       WebClient supabaseWebClient,
       @Value("${metadetect.supabase.url}") String projectBase,
       @Value("${metadetect.supabase.storageBucket}") String bucket,
-      @Value("${metadetect.supabase.signedUrlTtlSeconds}") int signedUrlTtlSeconds
+      @Value("${metadetect.supabase.signedUrlTtlSeconds}") int signedUrlTtlSeconds,
+      @Value("${metadetect.supabase.anonKey}") String supabaseAnonKey
   ) {
     this.supabase = supabaseWebClient;
     this.projectBase = projectBase.endsWith("/")
-      ? projectBase.substring(0, projectBase.length() - 1) : projectBase;
+      ? projectBase.substring(0, projectBase.length() - 1)
+      : projectBase;
     this.bucket = bucket;
     this.signedUrlTtlSeconds = signedUrlTtlSeconds;
+    this.supabaseAnonKey = supabaseAnonKey;
   }
 
-
-  /** Uploads bytes to /storage/v1/object/{bucket}/{path}. Returns the full storage path used. */
-  public String uploadObject(byte[] content,
+  /** Uploads bytes to /storage/v1/object/{bucket}/{path}. Returns the path used. */
+  public String uploadObject(byte[] bytes,
                              String contentType,
-                             String storagePath,
-                             String userBearerJwt) {
-    Assert.hasText(storagePath, "storagePath required");
-    String url = projectBase + "/storage/v1/object/" + bucket + "/" + storagePath;
+                             String objectPath,   // "<userId>/<imageId>--<filename>"
+                             String bearerJwt) {
 
-    MultipartBodyBuilder mp = new MultipartBodyBuilder();
-    mp.part("file", content)
-        .filename(filenameFromPath(storagePath))
-        .contentType(MediaType.parseMediaType(contentType != null
-          ? contentType : MediaType.APPLICATION_OCTET_STREAM_VALUE));
+    // URL-encode each path segment to avoid 400s from special chars
+    String encoded = UriComponentsBuilder.newInstance()
+        .pathSegment(objectPath.split("/"))
+        .build()
+        .encode()
+        .toUriString()
+        .substring(1); // drop leading '/'
 
-    supabase.post()
-      .uri(url)
-      .header(HttpHeaders.AUTHORIZATION, "Bearer " + userBearerJwt)
-      .contentType(MediaType.MULTIPART_FORM_DATA)
-      .body(BodyInserters.fromMultipartData(mp.build()))
-      .retrieve()
-      .bodyToMono(String.class)
-      .timeout(Duration.ofSeconds(20))
-        .block();
+    String url = projectBase + "/storage/v1/object/" + bucket + "/" + encoded;
 
-    return bucket + "/" + storagePath; // canonical path
+    try {
+      supabase
+        .put()
+        .uri(url)
+        .header(HttpHeaders.AUTHORIZATION, "Bearer " + bearerJwt)
+        .header("apikey", supabaseAnonKey)
+        .header("x-upsert", "true") // allow overwrite if same key
+        .contentType(MediaType.parseMediaType(
+          (contentType == null || contentType.isBlank())
+            ? MediaType.APPLICATION_OCTET_STREAM_VALUE
+            : contentType))
+        .bodyValue(bytes)
+        .retrieve()
+        .bodyToMono(String.class)
+        .onErrorResume(WebClientResponseException.class, ex -> {
+          log.error("Supabase upload failed: status={}, body={}",
+              ex.getStatusCode(), ex.getResponseBodyAsString());
+          return Mono.error(ex);
+        })
+          .block();
+      return objectPath; // we uploaded to this path
+    } catch (WebClientResponseException e) {
+      // Re-throw with a concise message; upstream logs already have details
+      throw new RuntimeException("Supabase upload failed: " + e.getStatusCode(), e);
+    }
   }
 
   /** Creates a signed URL for a private object. Returns an absolute https URL. */
   public String createSignedUrl(String storagePath, String userBearerJwt) {
     String url = projectBase + "/storage/v1/object/sign/" + bucket + "/" + storagePath;
-
     String bodyJson = "{\"expiresIn\":" + signedUrlTtlSeconds + "}";
-    String relativeSigned = supabase.post()
-        .uri(url)
-        .header(HttpHeaders.AUTHORIZATION, "Bearer " + userBearerJwt)
-        .contentType(MediaType.APPLICATION_JSON)
-        .bodyValue(bodyJson.getBytes(StandardCharsets.UTF_8))
-        .retrieve()
-        .bodyToMono(String.class)
-        .timeout(Duration.ofSeconds(10))
-        .map(json -> extractSignedUrlFromJson(json))
-        .block();
 
-    // Supabase returns a *relative* signed URL; prefix with project base
+    String relativeSigned = supabase.post()
+          .uri(url)
+          .header(HttpHeaders.AUTHORIZATION, "Bearer " + userBearerJwt)
+          .header("apikey", supabaseAnonKey)
+          .contentType(MediaType.APPLICATION_JSON)
+          .bodyValue(bodyJson.getBytes(StandardCharsets.UTF_8))
+          .retrieve()
+          .bodyToMono(String.class)
+          .timeout(Duration.ofSeconds(10))
+          .map(SupabaseStorageService::extractSignedUrlFromJson)
+          .block();
+
     if (relativeSigned != null && relativeSigned.startsWith("/")) {
       return projectBase + relativeSigned;
     }
     return relativeSigned;
   }
 
-  // Very small JSON utility (response like {"signedURL":"/storage/v1/object/sign/..."} )
+  // Supabase returns: {"signedURL":"/storage/v1/object/sign/..."}
   private static String extractSignedUrlFromJson(String json) {
 
     if (json == null) {
@@ -114,18 +133,13 @@ public class SupabaseStorageService {
     }
 
     int colon = json.indexOf(':', i);
-    int quote1 = json.indexOf('"', colon + 1);
-    int quote2 = json.indexOf('"', quote1 + 1);
+    int q1 = json.indexOf('"', colon + 1);
+    int q2 = json.indexOf('"', q1 + 1);
 
-    if (quote1 < 0 || quote2 < 0) {
+    if (q1 < 0 || q2 < 0) {
       return null;
     }
 
-    return json.substring(quote1 + 1, quote2);
-  }
-
-  private static String filenameFromPath(String path) {
-    int slash = path.lastIndexOf('/');
-    return slash >= 0 ? path.substring(slash + 1) : path;
+    return json.substring(q1 + 1, q2);
   }
 }

@@ -1,15 +1,16 @@
 package dev.coms4156.project.metadetect.model;
 
-import java.time.Instant;
+import java.time.OffsetDateTime;
+import java.util.List;
 import java.util.UUID;
 import org.springframework.data.annotation.Id;
+import org.springframework.data.annotation.ReadOnlyProperty;
 import org.springframework.data.relational.core.mapping.Column;
 import org.springframework.data.relational.core.mapping.Table;
 
 /**
- * Represents an uploaded image belonging to a user.
- * Each image stores metadata such as filename, optional labels,
- * storage location, and its upload timestamp.
+ * Entity representing a stored image and its associated metadata.
+ * Persisted in the Postgres database via JPA.
  */
 @Table("images")
 public class Image {
@@ -20,44 +21,21 @@ public class Image {
   @Column("user_id")
   private UUID userId;
 
-  @Column("filename")
   private String filename;
 
   @Column("storage_path")
   private String storagePath;
 
-  @Column("labels")
+  // Postgres text[] <-> List<String> works well in Spring Data JDBC
   private String[] labels;
 
-  @Column("note")
   private String note;
 
   @Column("uploaded_at")
-  private Instant uploadedAt;
+  @ReadOnlyProperty // let DB default timezone('utc', now()) set this
+  private OffsetDateTime uploadedAt;
 
   public Image() {}
-
-  /**
-   * Constructs a new Image record.
-   *
-   * @param id          unique identifier of the image
-   * @param userId      id of the owning user
-   * @param filename    original filename from the upload
-   * @param storagePath path of the stored file (if present)
-   * @param labels      optional labels (Postgres text[])
-   * @param note        user note attached to the image
-   * @param uploadedAt  timestamp when the image was uploaded
-   */
-  public Image(UUID id, UUID userId, String filename, String storagePath,
-               String[] labels, String note, Instant uploadedAt) {
-    this.id = id;
-    this.userId = userId;
-    this.filename = filename;
-    this.storagePath = storagePath;
-    this.labels = labels;
-    this.note = note;
-    this.uploadedAt = uploadedAt;
-  }
 
   // Getters/setters
   public UUID getId() {
@@ -108,11 +86,8 @@ public class Image {
     this.note = note;
   }
 
-  public Instant getUploadedAt() {
+  public OffsetDateTime getUploadedAt() {
     return uploadedAt;
   }
-
-  public void setUploadedAt(Instant uploadedAt) {
-    this.uploadedAt = uploadedAt;
-  }
+  // no setter: DB populates it (read-only)
 }

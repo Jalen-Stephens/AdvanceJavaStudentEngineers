@@ -17,18 +17,23 @@ class SupabaseStorageServiceTest {
   private MockWebServer server;
   private SupabaseStorageService storageService;
   private String projectBase;
+  private String anonKey;
 
   @BeforeEach
   void setUp() throws Exception {
     server = new MockWebServer();
     server.start();
     projectBase = server.url("/").toString(); // ends with "/"
+    anonKey = "anon-test-key";
     WebClient webClient = WebClient.builder().build();
+
+    // NOTE: constructor now needs anonKey
     storageService = new SupabaseStorageService(
       webClient,
       projectBase,
       "metadetect-images",
-      900
+      900,
+      anonKey
     );
   }
 
@@ -38,61 +43,69 @@ class SupabaseStorageServiceTest {
   }
 
   @Test
-  void uploadObject_postsMultipartToCorrectPath_withAuthHeader() throws Exception {
+  void uploadObject_putsRawBytesToCorrectPath_withAuthAndApikeyHeaders() throws Exception {
     server.enqueue(new MockResponse().setResponseCode(200).setBody("{}"));
 
     byte[] bytes = "hello".getBytes();
     String returnedPath = storageService.uploadObject(
-      bytes,
-      MediaType.IMAGE_PNG_VALUE,
-      "user-123/img-uuid--photo.png",
-      "bearer.jwt.here"
+          bytes,
+          MediaType.IMAGE_PNG_VALUE,
+          "user-123/img-uuid--photo.png",
+          "bearer.jwt.here"
     );
 
-    assertEquals("metadetect-images/user-123/img-uuid--photo.png", returnedPath);
+    // Service returns the objectPath you asked it to upload to (not prefixed with bucket)
+    assertEquals("user-123/img-uuid--photo.png", returnedPath);
 
     RecordedRequest req = server.takeRequest();
-    assertEquals("POST", req.getMethod());
+    // We now use PUT (not POST) with a raw body
+    assertEquals("PUT", req.getMethod());
     assertEquals("/storage/v1/object/metadetect-images/user-123/img-uuid--photo.png",
-      req.getPath());
+          req.getPath());
+
     // Authorization header present
     String auth = req.getHeader("Authorization");
     assertNotNull(auth);
     assertEquals("Bearer bearer.jwt.here", auth);
-    // multipart content type
+
+    // apikey header must be sent to Supabase
+    String apikey = req.getHeader("apikey");
+    assertEquals(anonKey, apikey);
+
+    // Optional: upsert header
+    assertEquals("true", req.getHeader("x-upsert"));
+
+    // Content-Type is the file's content type (no multipart)
     String ct = req.getHeader("Content-Type");
-    // Should start with multipart/form-data; boundary=...
     assertNotNull(ct);
-    // Do not assert exact boundary—just prefix
-    assertEquals(true, ct.startsWith("multipart/form-data"));
+    assertEquals(MediaType.IMAGE_PNG_VALUE, ct);
   }
 
   @Test
-  void createSignedUrl_returnsAbsoluteProjectUrl() throws Exception {
-    String relative = "/storage/v1/object/sign/metadetect-images/user-123/img-uuid--photo.png?token=xyz&expires=123";
+  void createSignedUrl_returnsAbsoluteProjectUrl_andSendsHeaders() throws Exception {
+    String relative =
+          "/storage/v1/object/sign/metadetect-images/"
+            + "user-123/img-uuid--photo.png?token=xyz&expires=123";
     server.enqueue(new MockResponse()
-      .setResponseCode(200)
-      .setHeader("Content-Type", "application/json")
-      .setBody("{\"signedURL\":\"" + relative + "\"}"));
+          .setResponseCode(200)
+          .setHeader("Content-Type", "application/json")
+          .setBody("{\"signedURL\":\"" + relative + "\"}"));
 
     String abs = storageService.createSignedUrl(
-      "user-123/img-uuid--photo.png",
-      "bearer.jwt.here"
+        "user-123/img-uuid--photo.png",
+        "bearer.jwt.here"
     );
 
     assertNotNull(abs);
-    // Should be projectBase (without ensuring trailing slash) + relative
-    // projectBase from server ends with "/", service trims it, so result should start with same host.
-    // Just assert it ends with the relative path for stability.
+    // Service prefixes the relative path with the (trimmed) project base
     assertEquals(true, abs.endsWith(relative));
 
     RecordedRequest req = server.takeRequest();
     assertEquals("POST", req.getMethod());
     assertEquals("/storage/v1/object/sign/metadetect-images/user-123/img-uuid--photo.png",
-      req.getPath());
-    String auth = req.getHeader("Authorization");
-    assertEquals("Bearer bearer.jwt.here", auth);
-    String contentType = req.getHeader("Content-Type");
-    assertEquals("application/json", contentType);
+          req.getPath());
+    assertEquals("Bearer bearer.jwt.here", req.getHeader("Authorization"));
+    assertEquals(anonKey, req.getHeader("apikey"));
+    assertEquals("application/json", req.getHeader("Content-Type"));
   }
 }

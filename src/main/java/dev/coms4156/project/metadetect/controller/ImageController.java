@@ -9,6 +9,7 @@ import dev.coms4156.project.metadetect.service.errors.NotFoundException;
 import dev.coms4156.project.metadetect.supabase.SupabaseStorageService;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
 import java.util.stream.Collectors;
 import org.springframework.http.HttpStatus;
@@ -159,8 +160,9 @@ public class ImageController {
     var bearer = userService.getCurrentBearerOrThrow();
 
     // Build storage key: <userId>/<imageId>--<originalFilename>
-    String original = file.getOriginalFilename() != null
-        ? file.getOriginalFilename() : "upload.bin";
+    String original = Optional.ofNullable(file.getOriginalFilename())
+        .orElse("upload.bin")
+        .replaceAll("[/\\\\]", "_");
     // Create DB row first to get the generated id (service-level create should exist)
     Image created = imageService.create(userId, original,
       /*storagePath*/ null, /*labels*/ null, /*note*/ null);
@@ -169,7 +171,12 @@ public class ImageController {
     String contentType = file.getContentType() != null
         ? file.getContentType() : MediaType.APPLICATION_OCTET_STREAM_VALUE;
 
-    storage.uploadObject(file.getBytes(), contentType, storageKey, bearer);
+    storage.uploadObject(
+        file.getBytes(),
+        Optional.ofNullable(file.getContentType()).orElse(MediaType.APPLICATION_OCTET_STREAM_VALUE),
+        storageKey,
+        bearer  // user JWT
+    );
 
     // persist storage path
     Image updated = imageService.update(userId, created.getId(),

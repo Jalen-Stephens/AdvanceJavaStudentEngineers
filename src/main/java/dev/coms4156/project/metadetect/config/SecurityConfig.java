@@ -1,8 +1,8 @@
 package dev.coms4156.project.metadetect.config;
 
 import java.nio.charset.StandardCharsets;
+import java.util.List;
 import javax.crypto.spec.SecretKeySpec;
-
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -22,8 +22,11 @@ import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 
-import java.util.List;
 
+/**
+ * Spring Security configuration for the MetaDetect service.
+ * Defines authentication, authorization, and HTTP security policies.
+ */
 @Configuration
 @EnableWebSecurity
 public class SecurityConfig {
@@ -41,30 +44,30 @@ public class SecurityConfig {
         // Everything else requires auth
         .anyRequest().authenticated()
       )
-      // Validate incoming Bearer tokens as JWTs
-      .oauth2ResourceServer(oauth -> oauth.jwt(Customizer.withDefaults()));
+        // Validate incoming Bearer tokens as JWTs
+        .oauth2ResourceServer(oauth -> oauth.jwt(Customizer.withDefaults()));
 
     return http.build();
   }
 
   @Bean
   JwtDecoder jwtDecoder(
-    @Value("${metadetect.supabase.jwtSecret}") String jwtSecret,
-    @Value("${metadetect.supabase.url}") String projectBaseUrl
+      @Value("${metadetect.supabase.jwtSecret}") String jwtSecret,
+      @Value("${metadetect.supabase.url}") String projectBaseUrl
   ) {
     // Supabase access tokens are HS256-signed with the project's JWT secret
     var key = new SecretKeySpec(jwtSecret.getBytes(StandardCharsets.UTF_8), "HmacSHA256");
     var decoder = NimbusJwtDecoder.withSecretKey(key)
-      .macAlgorithm(MacAlgorithm.HS256)
-      .build();
+        .macAlgorithm(MacAlgorithm.HS256)
+        .build();
 
     // Enforce issuer = https://<project>.supabase.co/auth/v1
     var issuer = projectBaseUrl.endsWith("/")
-      ? projectBaseUrl + "auth/v1"
-      : projectBaseUrl + "/auth/v1";
+        ? projectBaseUrl + "auth/v1"
+        : projectBaseUrl + "/auth/v1";
 
     OAuth2TokenValidator<Jwt> validator =
-      new DelegatingOAuth2TokenValidator<>(JwtValidators.createDefaultWithIssuer(issuer));
+        new DelegatingOAuth2TokenValidator<>(JwtValidators.createDefaultWithIssuer(issuer));
     decoder.setJwtValidator(validator);
 
     return decoder;

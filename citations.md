@@ -1224,3 +1224,75 @@ Integrated Supabase JWT validation into Spring Security, implemented row-level s
 > Portions of this commit or configuration were generated with assistance from OpenAI ChatGPT (GPT-5) on October 22, 2025. All AI-generated content was reviewed, verified, and finalized by the development team.
 
 ---
+
+### **Commit / Ticket Reference**
+
+* **Commit:** `feat(API): implement signed URL upload flow, align DTO/JSON mapping, and update tests for RLS (refs #26)`
+* **Ticket:** `#26 — Implement binary upload & signed URL flow for images`
+* **Date:** October 22, 2025
+* **Team Member:** Jalen Stephens
+
+---
+
+### **AI Tool Information**
+
+* **Tool Used:** OpenAI ChatGPT (GPT-5)
+* **Access Method:** ChatGPT Web (.edu academic access)
+* **Configuration:** Default model settings
+* **Cost:** $0 (no paid API calls)
+
+---
+
+### **Purpose of AI Assistance**
+
+AI assistance was used to debug failing tests caused by RLS enforcement, update DTO serialization to reflect new schema (removal of `ownerUserId` in favor of `userId`), ensure proper mapper alignment in the controller response, and update unit tests to correctly mock `RlsContext`.
+
+---
+
+### **Prompts / Interaction Summary**
+
+Key prompts included:
+
+* Fixing missing JSON property in `ImageControllerTest`
+* Updating tests rather than production code to reflect schema changes
+* Resolving NPEs by mocking `RlsContext` correctly
+* Eliminating UnnecessaryStubbing errors via lenient stubs
+* Cleaning assertions expecting DB-populated `uploadedAt`
+* Generating a one-line commit message referencing #26
+
+---
+
+### **Resulting Artifacts**
+
+The following files were modified or updated with AI assistance:
+
+* `SecurityConfig.java`
+* `ImageController.java`
+* `RlsContext.java`
+* `Dtos.java`
+* `Image.java`
+* `ImageService.java`
+* `SupabaseStorageService.java`
+* `application.properties`
+* `ImageControllerTest.java`
+* `ImageServiceTest.java`
+* `SupabaseStorageServiceTest.java`
+
+---
+
+### **Verification**
+
+Changes were validated via:
+
+* `mvn clean test` to ensure all tests pass
+* Manual inspection of JSON output format for DTO alignment
+* Ensuring test mocks correctly simulate RLS behavior
+* Verifying no UnnecessaryStubbing or NPEs remain
+
+---
+
+### **Attribution Statement**
+
+> Portions of this commit or configuration were generated with assistance from OpenAI ChatGPT (GPT-5) on October 22, 2025. All AI-generated content was reviewed, verified, and finalized by the development team.
+
+---

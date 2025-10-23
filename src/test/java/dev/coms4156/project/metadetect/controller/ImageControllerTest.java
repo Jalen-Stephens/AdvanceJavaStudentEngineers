@@ -64,7 +64,6 @@ class ImageControllerTest {
     img.setStoragePath("images/test.jpg");
     img.setLabels(new String[] {"tag1", "tag2"});
     img.setNote("hello");
-    img.setUploadedAt(Instant.parse("2025-01-01T00:00:00Z"));
     return img;
   }
 
@@ -77,7 +76,7 @@ class ImageControllerTest {
       .andExpect(status().isOk())
       .andExpect(jsonPath("$[0].id").value(imgId.toString()))
       .andExpect(jsonPath("$[0].filename").value("test.jpg"))
-      .andExpect(jsonPath("$[0].ownerUserId").value(userId.toString()))
+      .andExpect(jsonPath("$[0].userId").value(userId.toString()))
       .andExpect(jsonPath("$[0].labels[0]").value("tag1"))
         .andExpect(jsonPath("$[0].note").value("hello"));
   }
@@ -178,19 +177,22 @@ class ImageControllerTest {
     org.mockito.Mockito.when(userService.getCurrentBearerOrThrow()).thenReturn("jwt");
 
     // DB create → returns new image (no storage path yet)
-    dev.coms4156.project.metadetect.model.Image created = new dev.coms4156.project.metadetect.model.Image();
+    dev.coms4156.project.metadetect.model.Image created =
+        new dev.coms4156.project.metadetect.model.Image();
     created.setId(imgId);
     created.setUserId(user);
     created.setFilename("pic.png");
-    org.mockito.Mockito.when(imageService.create(eq(user), eq("pic.png"), isNull(), isNull(), isNull()))
-      .thenReturn(created);
+    org.mockito.Mockito.when(imageService.create(eq(user),
+        eq("pic.png"), isNull(), isNull(), isNull()))
+        .thenReturn(created);
 
     // Storage upload (we don't assert its return here; controller ignores the return)
     org.mockito.Mockito.doReturn("metadetect-images/" + user + "/" + imgId + "--pic.png")
       .when(storage).uploadObject(any(byte[].class), anyString(), anyString(), anyString());
 
     // DB update → returns image with storage path set
-    dev.coms4156.project.metadetect.model.Image updated = new dev.coms4156.project.metadetect.model.Image();
+    dev.coms4156.project.metadetect.model.Image updated =
+        new dev.coms4156.project.metadetect.model.Image();
     updated.setId(imgId);
     updated.setUserId(user);
     updated.setFilename("pic.png");
@@ -199,16 +201,20 @@ class ImageControllerTest {
       anyString(), isNull(), isNull())).thenReturn(updated);
 
     MockMultipartFile file = new MockMultipartFile(
-      "file", "pic.png", "image/png", "PNGDATA".getBytes()
+        "file", "pic.png", "image/png", "PNGDATA".getBytes()
     );
 
     mvc.perform(org.springframework.test.web.servlet.request.MockMvcRequestBuilders
         .multipart("/api/images/upload")
         .file(file))
-      .andExpect(org.springframework.test.web.servlet.result.MockMvcResultMatchers.status().isCreated())
-      .andExpect(org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath("$.id").value(imgId.toString()))
-      .andExpect(org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath("$.filename").value("pic.png"))
-      .andExpect(org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath("$.ownerUserId").value(user.toString()));
+        .andExpect(org.springframework.test.web.servlet.result.MockMvcResultMatchers
+        .status().isCreated())
+        .andExpect(org.springframework.test.web.servlet.result.MockMvcResultMatchers
+        .jsonPath("$.id").value(imgId.toString()))
+        .andExpect(org.springframework.test.web.servlet.result.MockMvcResultMatchers
+        .jsonPath("$.filename").value("pic.png"))
+        .andExpect(org.springframework.test.web.servlet.result.MockMvcResultMatchers
+          .jsonPath("$.userId").value(user.toString()));
   }
 
   @Test
@@ -219,7 +225,8 @@ class ImageControllerTest {
     org.mockito.Mockito.when(userService.getCurrentUserIdOrThrow()).thenReturn(user);
     org.mockito.Mockito.when(userService.getCurrentBearerOrThrow()).thenReturn("jwt");
 
-    dev.coms4156.project.metadetect.model.Image img = new dev.coms4156.project.metadetect.model.Image();
+    dev.coms4156.project.metadetect.model.Image img =
+        new dev.coms4156.project.metadetect.model.Image();
     img.setId(imgId);
     img.setUserId(user);
     img.setFilename("pic.png");
@@ -227,12 +234,14 @@ class ImageControllerTest {
 
     org.mockito.Mockito.when(imageService.getById(user, imgId)).thenReturn(img);
     org.mockito.Mockito.when(storage.createSignedUrl(anyString(), anyString()))
-      .thenReturn("https://example.supabase.co/storage/v1/object/sign/..token..");
+        .thenReturn("https://example.supabase.co/storage/v1/object/sign/..token..");
 
     mvc.perform(org.springframework.test.web.servlet.request.MockMvcRequestBuilders
         .get("/api/images/" + imgId + "/url"))
-      .andExpect(org.springframework.test.web.servlet.result.MockMvcResultMatchers.status().isOk())
-      .andExpect(org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath("$.url").exists());
+        .andExpect(org.springframework.test.web.servlet.result
+          .MockMvcResultMatchers.status().isOk())
+        .andExpect(org.springframework.test.web.servlet.result.MockMvcResultMatchers
+          .jsonPath("$.url").exists());
   }
 
   @Test
@@ -243,7 +252,8 @@ class ImageControllerTest {
     org.mockito.Mockito.when(userService.getCurrentUserIdOrThrow()).thenReturn(user);
     org.mockito.Mockito.when(userService.getCurrentBearerOrThrow()).thenReturn("jwt");
 
-    dev.coms4156.project.metadetect.model.Image img = new dev.coms4156.project.metadetect.model.Image();
+    dev.coms4156.project.metadetect.model.Image img =
+          new dev.coms4156.project.metadetect.model.Image();
     img.setId(imgId);
     img.setUserId(user);
     img.setFilename("pic.png");
@@ -253,6 +263,7 @@ class ImageControllerTest {
 
     mvc.perform(org.springframework.test.web.servlet.request.MockMvcRequestBuilders
         .get("/api/images/" + imgId + "/url"))
-      .andExpect(org.springframework.test.web.servlet.result.MockMvcResultMatchers.status().isNotFound());
+        .andExpect(org.springframework.test.web.servlet.result.MockMvcResultMatchers
+          .status().isNotFound());
   }
 }
