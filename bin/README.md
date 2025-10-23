@@ -4,14 +4,6 @@ This is the public repo for posting the miniproject assignments to the class.
 ## Viewing the Repository
 Please use the following link to view the repository: https://github.com/Jalen-Stephens/Advance-Software-Engineering-Mini-Projects
 
-## 🐳 Docker (Quick Testing)
-
-Build and run with Docker:
-```bash
-docker build -t metadetect .
-docker run -p 8080:8080 -e SPRING_DATASOURCE_URL=<your-db-url> -e SPRING_DATASOURCE_USERNAME=<user> -e SPRING_DATASOURCE_PASSWORD=<pass> -e SUPABASE_URL=<url> -e SUPABASE_ANON_KEY=<key> -e SUPABASE_JWT_SECRET=<secret> metadetect
-```
-
 ## Building and Running a Local Instance
 In order to build and use this project you must install the following:
 
@@ -125,6 +117,26 @@ I used PMD to perform static analysis on my codebase, see below for the most rec
 This repository using GitHub Actions to perform continous integration, to view the latest results go to the following link: https://github.com/Jalen-Stephens/Advance-Software-Engineering-Mini-Projects/actions
 
 Click on the latest job on the top under "X workflow runs" then Click 'build' under jobs finally click the drop down next to all the action items to read the logs made during their execution.
+
+## CI Reports (JaCoCo + PMD)
+This project generates automated code coverage (JaCoCo) and static analysis (PMD) reports as part of the CI pipeline. To run these reports locally:
+
+```bash
+# Run unit tests
+mvn clean test
+
+# Generate JaCoCo coverage and PMD analysis reports
+mvn jacoco:report pmd:pmd pmd:check
+
+# Convert HTML reports to PNG snapshots
+bash scripts/html_to_png.sh
+```
+
+The generated PNG reports will be saved to:
+- `/reports/jacoco.png` - JaCoCo code coverage report
+- `/reports/pmd.png` - PMD static analysis report
+
+These reports are automatically uploaded as GitHub Actions artifacts named "ci-reports" on every push and pull request.
 
 ## Tools used 
 This section includes notes on tools and technologies used in building this project, as well as any additional details if applicable.

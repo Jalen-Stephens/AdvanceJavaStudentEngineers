@@ -45,17 +45,14 @@
 	</dependencyManagement>
 
 	<dependencies>
-		<!-- macOS native DNS resolver (commented out for Docker/Linux builds) -->
-		<!--
+		<!-- macOS native DNS resolver -->
 		<dependency>
 			<groupId>io.netty</groupId>
 			<artifactId>netty-resolver-dns-native-macos</artifactId>
 			<version>4.1.119.Final</version>
 			<classifier>${os.detected.name}-${os.detected.arch}</classifier>
 			<scope>runtime</scope>
-			<optional>true</optional>
 		</dependency>
-		-->
 
 		<!-- Spring Security core -->
 		<dependency>
@@ -239,9 +236,15 @@
 				<configuration>
 					<printFailingErrors>true</printFailingErrors>
 					<failOnViolation>true</failOnViolation>
+					<rulesets>
+						<ruleset>config/pmd/ruleset.xml</ruleset>
+					</rulesets>
+					<includeTests>true</includeTests>
+					<targetJdk>${java.version}</targetJdk>
 				</configuration>
 				<executions>
 					<execution>
+						<id>pmd-check</id>
 						<phase>verify</phase>
 						<goals>
 							<goal>check</goal>
@@ -283,4 +286,36 @@
 			</plugin>
 		</plugins>
 	</build>
+
+	<reporting>
+		<plugins>
+			<!-- JaCoCo HTML report generation -->
+			<plugin>
+				<groupId>org.jacoco</groupId>
+				<artifactId>jacoco-maven-plugin</artifactId>
+				<version>0.8.12</version>
+				<reportSets>
+					<reportSet>
+						<reports>
+							<report>report</report>
+						</reports>
+					</reportSet>
+				</reportSets>
+			</plugin>
+
+			<!-- PMD HTML report generation -->
+			<plugin>
+				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-pmd-plugin</artifactId>
+				<version>3.21.2</version>
+				<configuration>
+					<rulesets>
+						<ruleset>config/pmd/ruleset.xml</ruleset>
+					</rulesets>
+					<includeTests>true</includeTests>
+					<targetJdk>${java.version}</targetJdk>
+				</configuration>
+			</plugin>
+		</plugins>
+	</reporting>
 </project>
