@@ -563,38 +563,6 @@ The AI helped ensure that the **C2PAtool binary** (used for AI-image authenticit
 
 ---
 
-### **Purpose of AI Assistance**
-Assistance was used to **debug and configure Maven build behavior** for the `AnalyzeService` Spring Boot service.  
-The AI helped ensure that the **C2PAtool binary** (used for AI-image authenticity verification) is correctly downloaded, unpacked, and persisted across build phases so it remains executable both locally and in deployment.  
-
----
-
-### **Prompts / Interaction Summary**
-- Asked why `mvn package` wasn’t producing the `tools/c2patool` binary.  
-- Requested possible solutions to `pom.xml` configuration using `download-maven-plugin` and `maven-antrun-plugin`.  
-- Troubleshot successive build errors (e.g. "file is directory", missing binary). 
-- Asked how to keep the binary after packaging and why Maven was deleting it.  
-- Requested an explanation of the final working solution and how to preserve the executable between builds.  
-
----
-
-### **Resulting Artifacts**
-- **Edited File:** `pom.xml`  
-  - Added `download-maven-plugin` section to fetch `c2patool-v0.9.12-universal-apple-darwin.zip`.  
-  - Added `maven-antrun-plugin` section to unzip, copy, chmod, and retain the binary.  
-- **New Directory:** `tools/` (containing executable `c2patool`)  
-- **Build Artifact:** Verified Maven package with `tools/c2patool` present and executable.  
-
----
-
-### **Verification**
-- Ran `mvn clean package` to confirm the binary appears at `./tools/c2patool`.  
-- Executed `./tools/c2patool --version` to verify the file runs successfully.  
-- Rebuilt the Spring Boot JAR to ensure the `tools/` directory remains intact after packaging.  
-- Manually inspected Maven logs and filesystem to confirm that no cleanup phase deletes the binary.  
-
----
-
 ### **Commit / Ticket Reference**
 
 * **Commit:** `feat(auth): add Supabase auth proxy + /auth endpoints + JWKS resource server config (refs #7)`
@@ -1049,5 +1017,680 @@ Helped implement the controller logic integrating with the `ImageService`, updat
 ### **Attribution Statement**
 
 > Portions of this commit or configuration were generated with assistance from OpenAI ChatGPT (GPT-5) on October 22, 2025. All AI-generated content was reviewed, verified, and finalized by the development team.
+
+---
+
+### **Commit / Ticket Reference**
+
+* **Commit:** `feat(#26): add SupabaseStorageService and wire upload/signed URL endpoints in ImageController`
+* **Ticket:** `#26 — Implement Binary Upload & Signed URL for Images`
+* **Date:** October 22, 2025
+* **Team Member:** Jalen Stephens
+* **Commit:** `test(c2pa): add unit tests for C2paToolInvoker to validate tool invocation and error handling`
+* **Ticket:** `#24 — Ensure c2patool Functionality Across All Systems and Build Unit Tests for C2paToolInvoker`
+* **Date:** October 22, 2025
+* **Team Member:** Isaac Schmidt
+
+---
+
+### **AI Tool Information**
+
+* **Tool Used:** OpenAI ChatGPT (GPT-5)
+* **Access Method:** ChatGPT Web (.edu academic access)
+* **Configuration:** Default model settings
+* **Cost:** $0 (no paid API calls)
+
+---
+
+### **Purpose of AI Assistance**
+
+Helped scaffold the Supabase storage integration service, update the controller endpoints for generating signed upload URLs, and adjust DTO/logic flow to connect metadata persistence with binary upload behavior.
+The AI assisted in designing and implementing unit tests for the `C2paToolInvoker` class. These tests validate the correct invocation of the `c2patool` binary, handle various error scenarios, and ensure proper exception handling. The AI also provided guidance on creating temporary files for testing and structuring the test cases to cover success and failure paths.
+
+---
+
+### **Prompts / Interaction Summary**
+
+* Asked how images should be stored in Supabase and how auth should interact with storage.
+* Prompted for best-practice bucket configuration (public vs. signed).
+* Requested initial service scaffolding and controller wiring.
+* Asked to adjust ImageController tests following storage logic changes.
+* Asked for a unit test suite for `C2paToolInvoker` to validate tool invocation.
+* Requested test cases for scenarios like:
+  - Successful manifest extraction.
+  - Non-existent image file.
+  - Invalid file format.
+  - Missing `c2patool` binary.
+* Asked for a commit message and citation entry for the tests.
+
+---
+
+### **Resulting Artifacts**
+
+* Added `SupabaseStorageService.java`
+* Updated `ImageController.java`
+* Updated `UserService.java` to surface subject/owner context for uploads
+* Updated `application.properties` with storage config envs
+* Updated existing `ImageControllerTest.java`
+* **File Created:** `src/test/java/dev/coms4156/project/metadetect/c2pa/C2paToolInvokerUnitTest.java`
+  - `testExtractManifestSuccess`: Validates successful manifest extraction from a mock image file.
+  - `testExtractManifestFileNotFound`: Tests behavior when the image file does not exist.
+  - `testExtractManifestInvalidFile`: Tests behavior when the file is not a valid image.
+  - `testExtractManifestToolNotFound`: Tests behavior when the `c2patool` binary is missing.
+  - Helper method `createTempInvalidFile`: Creates a temporary invalid file for testing.
+
+---
+
+### **Verification**
+
+* Application compiled successfully (`mvn clean test`)
+* Manually reviewed controller logic and service wiring
+* Storage paths and bucket naming verified against Supabase UI setup
+* Ran `mvn clean test` to confirm all tests pass successfully.
+* Verified that temporary files are created and cleaned up correctly during tests.
+* Confirmed that the `c2patool` binary is invoked correctly for valid test cases.
+* Manually reviewed test output to ensure proper exception messages are logged for failure cases.
+
+---
+
+### **Attribution Statement**
+
+> Portions of this commit or configuration were generated with assistance from OpenAI ChatGPT (GPT-5) on October 22, 2025. All AI-generated content was reviewed, verified, and finalized by the development team.
+
+---
+
+### **Commit / Ticket Reference**
+
+* **Commit:** `test(#26): add SupabaseStorageService and upload/signed-url controller unit tests`
+* **Ticket:** `#26 — [API] Implement Binary Upload & Signed URL for Images`
+* **Date:** October 22, 2025
+* **Team Member:** Jalen Stephens
+
+---
+
+### **AI Tool Information**
+
+* **Tool Used:** OpenAI ChatGPT (GPT-5)
+* **Access Method:** ChatGPT Web (.edu academic access)
+* **Configuration:** Default model settings
+* **Cost:** $0 (no paid API calls)
+
+---
+
+### **Purpose of AI Assistance**
+
+Helped implement and structure the storage service test strategy and write unit tests for both the upload and signed URL controller logic. Also assisted in ensuring mocking behavior aligned with Supabase’s REST semantics.
+
+---
+
+### **Prompts / Interaction Summary**
+
+* “can we write unit test for the files we made and change”
+* “we want Supabase mocked for upload/signed URLs”
+* “fix failing controller tests after adding upload”
+* “create standalone SupabaseStorageServiceTest”
+* “one line commit message for unit tests”
+
+---
+
+### **Resulting Artifacts**
+
+* Added `SupabaseStorageServiceTest.java`
+* Updated `ImageControllerTest.java` with upload and signed URL cases
+* Validated integration between controller-service-storage layers via mocks
+
+---
+
+### **Verification**
+
+* All tests executed locally via `mvn clean test`
+* Verified mocking behavior for success and error paths
+* Confirmed controller exception mapping still correct
+* Confirmed behaviors required by ticket #26 are exercised
+
+---
+
+### **Attribution Statement**
+
+> Portions of this commit or configuration were generated with assistance from OpenAI ChatGPT (GPT-5) on October 22, 2025. All AI-generated content was reviewed, verified, and finalized by the development team.
+
+---
+
+
+### **Commit / Ticket Reference**
+
+* **Commit:** `feat(images): integrate Supabase JWT + RLS context + secure ImageService w/ ownership checks; update tests and mock image path refs(#26)`
+* **Ticket:** `#26 — Implement binary upload + signed URL for images`
+* **Date:** October 22, 2025
+* **Team Member:** Jalen Stephens
+
+---
+
+### **AI Tool Information**
+
+* **Tool Used:** OpenAI ChatGPT (GPT-5)
+* **Access Method:** ChatGPT Web (.edu academic access)
+* **Configuration:** Default model settings
+* **Cost:** $0 (no paid API calls)
+
+---
+
+### **Purpose of AI Assistance**
+
+Integrated Supabase JWT validation into Spring Security, implemented row-level security context for database queries, and refactored `ImageService` to enforce ownership checks through the authenticated Supabase user.
+
+---
+
+### **Prompts / Interaction Summary**
+
+* Asked for security configuration adjustments for custom `/auth/login` and `/auth/signup` endpoints.
+* Requested implementation of an RLS context helper for Postgres session variables.
+* Asked for modifications to `ImageService` to use the new RLS context + per-user ownership enforcement.
+* Clarified error messages and RLS setup behavior during integration testing.
+
+---
+
+### **Resulting Artifacts**
+
+* `SecurityConfig.java` updated to use Supabase JWT secret validation
+* New `RlsContext.java` added
+* `ImageService.java` updated to apply ownership checks via RLS context
+* Test images renamed to lower-case extension for CI
+* `AnalyzeServiceTest.java` updated to align with new security context
+
+---
+
+### **Verification**
+
+* Application builds successfully (`mvn clean test`)
+* Manual review of Spring Security bean instantiation with Supabase-provided JWT secret
+* Validated RLS path resolution through debugging and stack traces during live testing
+* Confirmed correct staged files in Git
+
+---
+
+### **Attribution Statement**
+
+> Portions of this commit or configuration were generated with assistance from OpenAI ChatGPT (GPT-5) on October 22, 2025. All AI-generated content was reviewed, verified, and finalized by the development team.
+
+---
+
+### **Commit / Ticket Reference**
+
+* **Commit:** `feat(API): implement signed URL upload flow, align DTO/JSON mapping, and update tests for RLS (refs #26)`
+* **Ticket:** `#26 — Implement binary upload & signed URL flow for images`
+* **Date:** October 22, 2025
+* **Team Member:** Jalen Stephens
+
+---
+
+### **AI Tool Information**
+
+* **Tool Used:** OpenAI ChatGPT (GPT-5)
+* **Access Method:** ChatGPT Web (.edu academic access)
+* **Configuration:** Default model settings
+* **Cost:** $0 (no paid API calls)
+
+---
+
+### **Purpose of AI Assistance**
+
+AI assistance was used to debug failing tests caused by RLS enforcement, update DTO serialization to reflect new schema (removal of `ownerUserId` in favor of `userId`), ensure proper mapper alignment in the controller response, and update unit tests to correctly mock `RlsContext`.
+
+---
+
+### **Prompts / Interaction Summary**
+
+Key prompts included:
+
+* Fixing missing JSON property in `ImageControllerTest`
+* Updating tests rather than production code to reflect schema changes
+* Resolving NPEs by mocking `RlsContext` correctly
+* Eliminating UnnecessaryStubbing errors via lenient stubs
+* Cleaning assertions expecting DB-populated `uploadedAt`
+* Generating a one-line commit message referencing #26
+
+---
+
+### **Resulting Artifacts**
+
+The following files were modified or updated with AI assistance:
+
+* `SecurityConfig.java`
+* `ImageController.java`
+* `RlsContext.java`
+* `Dtos.java`
+* `Image.java`
+* `ImageService.java`
+* `SupabaseStorageService.java`
+* `application.properties`
+* `ImageControllerTest.java`
+* `ImageServiceTest.java`
+* `SupabaseStorageServiceTest.java`
+
+---
+
+### **Verification**
+
+Changes were validated via:
+
+* `mvn clean test` to ensure all tests pass
+* Manual inspection of JSON output format for DTO alignment
+* Ensuring test mocks correctly simulate RLS behavior
+* Verifying no UnnecessaryStubbing or NPEs remain
+
+---
+
+### **Attribution Statement**
+
+> Portions of this commit or configuration were generated with assistance from OpenAI ChatGPT (GPT-5) on October 22, 2025. All AI-generated content was reviewed, verified, and finalized by the development team.
+
+---
+
+
+### **Commit / Ticket Reference**
+
+* **Commit:** `fix(api): make delete endpoint controller-thin and align storage delete with Supabase spec`
+* **Ticket:** `#26 — Implement binary upload & signed URL for images`
+* **Date:** October 23, 2025
+* **Team Member:** Jalen Stephens
+
+---
+
+### **AI Tool Information**
+
+* **Tool Used:** OpenAI ChatGPT (GPT-5)
+* **Access Method:** ChatGPT Web (.edu academic access)
+* **Configuration:** Default model settings
+* **Cost:** $0 (no paid API calls)
+
+---
+
+### **Purpose of AI Assistance**
+
+Assisted in debugging Supabase object deletion behavior, identifying incorrect usage of `/remove` vs single-object `DELETE`, and restructuring the controller to delegate deletion entirely to the service layer in order to satisfy test expectations and avoid null dereferences.
+
+---
+
+### **Prompts / Interaction Summary**
+
+* Asked why delete endpoint was returning 400 from Supabase
+* Asked how to properly call Supabase storage delete via REST
+* Debugged controller-side NPE during deleteImage tests
+* Requested thin-controller refactor + commit message
+
+---
+
+### **Resulting Artifacts**
+
+* `ImageController.java` updated to delegate delete logic to `imageService`
+* `SupabaseStorageService.java` updated to align with Supabase delete semantics
+* `ImageControllerTest.java` updated and now passing for success / forbidden / notFound flows
+
+---
+
+### **Verification**
+
+* All image deletion unit tests now pass
+* Manual reasoning check confirmed controller no longer dereferences null `Image`
+* Behavior matches Postman-tested Supabase semantics
+
+---
+
+### **Attribution Statement**
+
+> Portions of this commit or configuration were generated with assistance from OpenAI ChatGPT (GPT-5) on October 23, 2025. All AI-generated content was reviewed, verified, and finalized by the development team.
+
+---
+
+### **Commit / Ticket Reference**
+
+* **Commit:** `feat(service): implement core AnalyzeService pipeline and persistence refs #8`
+* **Ticket:** `#8 — Implement AnalyzeService core logic (pipeline + persistence)`
+* **Date:** October 23, 2025
+* **Team Member:** Jalen Stephens
+
+---
+
+### **AI Tool Information**
+
+* **Tool Used:** OpenAI ChatGPT (GPT-5)
+* **Access Method:** ChatGPT Web (.edu academic access)
+* **Configuration:** Default model settings
+* **Cost:** $0 (no paid API calls)
+
+---
+
+### **Purpose of AI Assistance**
+
+AI was used to design and scaffold the new service-layer architecture for image analysis, including defining DTO contracts, repository/entity structure, and wiring the persistence + storage + C2PA pipeline according to the acceptance criteria. It assisted in identifying missing dependencies, shaping RLS-safe flows, and adapting the code to Spring Boot 3 / Jakarta conventions.
+
+---
+
+### **Prompts / Interaction Summary**
+
+* Asked for analysis service design and persistence flow.
+* Requested DTO refinements to align with controller contracts.
+* Generated `AnalysisReport` entity and repository.
+* Updated `AnalyzeService` to implement PENDING → COMPLETED/FAILED lifecycle.
+* Fixed missing JPA imports and Clock bean wiring for successful application startup.
+* Added error handling (`MissingStoragePathException`) and JSON error persistence.
+
+---
+
+### **Resulting Artifacts**
+
+* `AnalyzeService` (full pipeline logic)
+* `AnalysisReport` JPA entity
+* `AnalysisReportRepository`
+* DTO updates (`AnalyzeStartResponse`, `AnalyzeManifestResponse`, `AnalyzeConfidenceResponse`, etc.)
+* `MissingStoragePathException`
+* Supporting changes to `pom.xml` and application configuration
+
+---
+
+### **Verification**
+
+The implementation was validated through:
+
+* Successful project compilation after adding JPA + Clock bean
+* Service-layer unit test updates
+* Manual run ensuring Spring context loads with new beans and dependencies in place
+* Verified DTO compatibility with upcoming controller integration
+
+---
+
+### **Attribution Statement**
+
+> Portions of this commit or configuration were generated with assistance from OpenAI ChatGPT (GPT-5) on October 23, 2025. All AI-generated content was reviewed, verified, and finalized by the development team.
+
+---
+
+### **Commit / Ticket Reference**
+
+* **Commit:** `chore(pmd): enable HTML reporting and add comprehensive AnalyzeService unit tests (refs #8)`
+* **Ticket:** `#8 — Implement AnalyzeService core logic`
+* **Date:** October 23, 2025
+* **Team Member:** Jalen Stephens
+
+---
+
+### **AI Tool Information**
+
+* **Tool Used:** OpenAI ChatGPT (GPT-5)
+* **Access Method:** ChatGPT Web (.edu academic access)
+* **Configuration:** Default model settings
+* **Cost:** $0 (no paid API calls)
+
+---
+
+### **Purpose of AI Assistance**
+
+Assisted with configuring the JaCoCo and PMD reporting outputs, improving test coverage structure for `AnalyzeService`, and advising on best practices for service-level mocking and repository stubbing in unit tests.
+
+---
+
+### **Prompts / Interaction Summary**
+
+* Requested help enabling HTML PMD reporting and linking it into the Maven lifecycle.
+* Asked for fixes to existing PMD violations and updated formatting.
+* Asked for new unit tests and integration test coverage for `AnalyzeService`.
+* Follow-up prompts clarified stubbing behavior and ownership enforcement flow.
+
+---
+
+### **Resulting Artifacts**
+
+* Updated `pom.xml` with PMD HTML report configuration
+* New or updated test classes:
+
+  * `AnalyzeServiceTest`
+  * `AnalyzeServiceC2paIntegrationTest`
+  * Minor fixes to `C2paToolInvokerUnitTest`
+* Cleanup of code paths that PMD flagged (unused imports, missing braces, etc.)
+
+---
+
+### **Verification**
+
+* Ran `mvn clean test` to ensure all unit tests pass
+* Confirmed JaCoCo instrumentation runs and PMD passes verification
+* Manual review of generated `/target/pmd.html` output to validate HTML reporting
+
+---
+
+### **Attribution Statement**
+
+> Portions of this commit or configuration were generated with assistance from OpenAI ChatGPT (GPT-5) on October 23, 2025. All AI-generated content was reviewed, verified, and finalized by the development team.
+
+---
+
+### **Commit / Ticket Reference**
+
+* **Commit:** `feat(API): implement full AnalyzeController endpoints and wire to AnalyzeService (refs #5)`
+* **Ticket:** `#5 — Implement AnalyzeController endpoints`
+* **Date:** October 23, 2025
+* **Team Member:** Jalen Stephens
+
+---
+
+### **AI Tool Information**
+
+* **Tool Used:** OpenAI ChatGPT (GPT-5)
+* **Access Method:** ChatGPT Web (.edu academic access)
+* **Configuration:** Default model settings
+* **Cost:** $0 (no paid API calls)
+
+---
+
+### **Purpose of AI Assistance**
+
+The AI was used to help design and implement the REST controller layer for the image analysis pipeline, ensuring correct delegation to `AnalyzeService`, aligning DTO usage, structuring endpoint semantics, and clarifying the expected Supabase interaction and ownership validation flow.
+
+---
+
+### **Prompts / Interaction Summary**
+
+* Asked for a revised controller ticket that references Supabase-backed storage and the new service-layer pipeline.
+* Requested a full `AnalyzeController.java` implementation aligned with the existing `AnalyzeService`.
+* Discussed C2PA integration, error handling, and JSON output expectations.
+* Verified controller behavior for analysis start, metadata retrieval, confidence polling, and compare stub behavior.
+
+---
+
+### **Resulting Artifacts**
+
+* `AnalyzeController.java` created/rewritten with full HTTP endpoint implementations
+* Wiring and validations integrated with `AnalyzeService`
+* Service changes to propagate errors correctly to the controller layer
+* Adjustments in `C2paToolInvoker` and Supabase logic to improve behavior consistency
+
+---
+
+### **Verification**
+
+* Application boot & manual lifecycle testing via HTTP requests
+* Verified successful `analysisId` return flow and database persistence
+* Verified manifest return and Supabase storage fetch path correctness
+* Verified structured JSON error responses during C2PA failures
+
+---
+
+### **Attribution Statement**
+
+> Portions of this commit or configuration were generated with assistance from OpenAI ChatGPT (GPT-5) on October 23, 2025. All AI-generated content was reviewed, verified, and finalized by the development team.
+
+---
+
+### **Commit / Ticket Reference**
+
+* **Commit:** `chore(api): refactor image controller + service (refs #32)`
+* **Ticket:** `#32 — [Test] - Write Unit Test for Image Controller`
+
+* **Date:** October 23, 2025
+* **Team Member:** Jalen Stephens
+
+---
+
+### **AI Tool Information**
+
+* **Tool Used:** OpenAI ChatGPT (GPT-5)
+* **Access Method:** ChatGPT Web (.edu academic access)
+* **Configuration:** Default model settings
+* **Cost:** $0 (no paid API calls)
+
+---
+
+### **Purpose of AI Assistance**
+
+Assisted with restructuring the ImageController and ImageService to follow proper Spring layering conventions, moving storage orchestration into the service layer, and adding missing Javadoc to satisfy static analysis (Checkstyle) requirements.
+
+---
+
+### **Prompts / Interaction Summary**
+
+* Asked whether the controller/service layering was backwards.
+* Requested a revised controller implementation following recommended architecture.
+* Requested a matching updated service implementation.
+* Iterated on compilation issues (paging + DTO mismatch).
+* Added final pass for missing Javadoc to remove Checkstyle warnings.
+
+---
+
+### **Resulting Artifacts**
+
+* `ImageController.java` (refactored: thinner controller, delegates orchestration to service)
+* `ImageService.java` (refactored: upload/delete/sign orchestrated in service)
+* Added Javadoc to all public service methods (Checkstyle clean)
+* Correct import for `MethodArgumentTypeMismatchException`
+
+---
+
+### **Verification**
+
+* Project compiles successfully (`mvn clean test`)
+* Static checker (Checkstyle) produces no Javadoc warnings
+* Manual review of method boundaries confirms correct layering
+* Behavior remains unchanged at API level (no contract breakage)
+
+---
+
+### **Attribution Statement**
+
+> Portions of this commit or configuration were generated with assistance from OpenAI ChatGPT (GPT-5) on October 23, 2025. All AI-generated content was reviewed, verified, and finalized by the development team.
+
+---
+
+### **Commit / Ticket Reference**
+
+* **Commit:** `test(image): expand service + controller unit tests to cover orchestration paths, signed-url flow, upload branches, and delete logic (refs #32)`
+* **Ticket:** `#32 — Write comprehensive unit tests for ImageService and ImageController`
+* **Date:** October 23, 2025
+* **Team Member:** Jalen Stephens
+
+---
+
+### **AI Tool Information**
+
+* **Tool Used:** OpenAI ChatGPT (GPT-5)
+* **Access Method:** ChatGPT Web (.edu academic access)
+* **Configuration:** Default model settings
+* **Cost:** $0 (no paid API calls)
+
+---
+
+### **Purpose of AI Assistance**
+
+Assisted in designing and refining unit tests to achieve branch-level coverage for `ImageService` and `ImageController`, including refactoring test setups to correctly reflect orchestration boundaries introduced after service restructuring. Also helped identify and patch gaps in upload, signed-URL, and delete execution paths.
+
+---
+
+### **Prompts / Interaction Summary**
+
+* Asked for branch coverage guidance on remaining uncovered sections of `ImageService`
+* Identified missing logic coverage in `getSignedUrl`, `update`, and `deleteAndPurge`
+* Requested corrected mocks for double-save orchestration in `upload(...)`
+* Integrated missing blank/null storage path tests
+* Adjusted controller tests to reflect new upload/signedUrl delegation
+
+---
+
+### **Resulting Artifacts**
+
+* `ImageServiceTest.java` (expanded: coverage for null/blank/success branches + exception paths)
+* `ImageControllerTest.java` (aligned with new orchestration semantics)
+* `ImageController.java` (pagination fix default size to match test harness)
+* `citations.md` (commit metadata + attribution updated)
+
+---
+
+### **Verification**
+
+* Local test suite passing (`mvn clean test`)
+* Coverage report verified via `mvn jacoco:report` with improved branch coverage
+* Manual review of save-upload-update orchestration validated against business logic
+* No remaining Mockito unnecessary stubbing errors
+
+---
+
+### **Attribution Statement**
+
+> Portions of this commit or configuration were generated with assistance from OpenAI ChatGPT (GPT-5) on October 23, 2025. All AI-generated content was reviewed, verified, and finalized by the development team.
+
+---
+
+### **Commit / Ticket Reference**
+
+* **Commit:** `test(image,analysis): add missing branch coverage for upload, signed-url, truncate, and download paths (refs #32)`
+* **Ticket:** `#32 — Write comprehensive unit tests for ImageService, AnalyzeService, and ImageController`
+* **Date:** October 23, 2025
+* **Team Member:** Jalen Stephens
+
+---
+
+### **AI Tool Information**
+
+* **Tool Used:** OpenAI ChatGPT (GPT-5)
+* **Access Method:** ChatGPT Web (.edu academic access)
+* **Configuration:** Default model settings
+* **Cost:** $0 (no paid API calls)
+
+---
+
+### **Purpose of AI Assistance**
+
+Helped identify untested execution branches across `ImageService` and `AnalyzeService` (upload orchestration, signed URL generation, private truncate and download methods) and guided the creation of targeted tests to ensure coverage of all success and error-state code paths.
+
+---
+
+### **Prompts / Interaction Summary**
+
+* Asked how to achieve full branch coverage for service-layer logic
+* Requested missing paths for upload, URL signing, and truncation helpers
+* Added reflection-based invocation for private helper methods
+* Debugged cast + status mismatch failures in early iterations
+* Finalized test adjustments to reflect real method behavior
+
+---
+
+### **Resulting Artifacts**
+
+* `ImageServiceTest.java` (expanded branch coverage: upload double-save, null/blank path handling, signed URL)
+* `AnalyzeServiceTest.java` (covered truncate variants, downloadToTemp success branch, runExtractionAndFinalize DONE branch)
+* `ImageControllerTest.java` (aligned with service orchestration)
+
+---
+
+### **Verification**
+
+* Full test suite passing (`mvn clean test`)
+* Verified coverage improvement via `mvn jacoco:report`
+* Confirmed no Mockito stubbing errors or private-access violations remain
+
+---
+
+### **Attribution Statement**
+
+> Portions of this commit or configuration were generated with assistance from OpenAI ChatGPT (GPT-5) on October 23, 2025. All AI-generated content was reviewed, verified, and finalized by the development team.
 
 ---
