@@ -71,7 +71,7 @@ class ImageControllerTest {
   // ---- GET /api/images (list) ----
   @Test
   void listImages_success() throws Exception {
-    when(imageService.listByOwner(userId)).thenReturn(List.of(makeImage()));
+    when(imageService.listByOwner(userId, 0, 5)).thenReturn(List.of(makeImage()));
 
     mvc.perform(MockMvcRequestBuilders.get("/api/images"))
       .andExpect(status().isOk())
@@ -85,7 +85,7 @@ class ImageControllerTest {
   // pagination bounds (empty result if beyond range)
   @Test
   void listImages_outOfRangePagination_returnsEmptyList() throws Exception {
-    when(imageService.listByOwner(userId)).thenReturn(List.of(makeImage()));
+    when(imageService.listByOwner(userId, 0, 5)).thenReturn(List.of(makeImage()));
 
     mvc.perform(MockMvcRequestBuilders.get("/api/images?page=5&size=10"))
       .andExpect(status().isOk())

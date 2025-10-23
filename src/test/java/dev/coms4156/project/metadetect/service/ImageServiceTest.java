@@ -152,7 +152,7 @@ class ImageServiceTest {
     Image b = newImage(ownerId);
     when(repo.findAllByUserIdOrderByUploadedAtDesc(ownerId)).thenReturn(List.of(a, b));
 
-    List<Image> out = service.listByOwner(ownerId);
+    List<Image> out = service.listByOwner(ownerId, 0, 5);
 
     assertThat(out).containsExactly(a, b);
     verify(repo).findAllByUserIdOrderByUploadedAtDesc(ownerId);
