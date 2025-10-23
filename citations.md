@@ -1755,3 +1755,68 @@ and consistency with Iteration 1 project standards.
 
 ---
 
+### **Commit / Ticket Reference**
+
+* **Commit:** `docs: annotate RlsContext, DTOs, and image/analysis models with comments (refs #35)`
+* **Ticket:** `#35 — Add Javadoc and inline comments for non-trivial codebase elements`
+* **Date:** February 23, 2025
+* **Team Member:** Jalen Stephens
+
+---
+
+### **AI Tool Information**
+
+* **Tool Used:** OpenAI ChatGPT (GPT-5)
+* **Access Method:** ChatGPT Web (.edu academic access)
+* **Configuration:** Default model settings
+* **Cost:** $0 (no paid API calls)
+
+---
+
+### **Purpose of AI Assistance**
+
+Assisted with expanding documentation coverage for non-controller layers, including entity models,
+DTOs, database/RLS context helpers, and repository interfaces. The goal was to make code self-
+documenting and ensure domain intent is clear to future maintainers.
+
+---
+
+### **Prompts / Interaction Summary**
+
+* Asked AI to enhance documentation for model + database layers under 100 chars/line
+* Updated class-level Javadoc for `AnalysisReport`, `Image`, and DTO aggregates
+* Added explanations to `RlsContext` regarding Postgres GUC and RLS enforcement patterns
+* Documented explicit query semantics in repository interfaces
+* Requested a one-line commit message referencing ticket #35
+
+---
+
+### **Resulting Artifacts**
+
+* Updated the following files with improved documentation and inline comments:
+
+  * `RlsContext.java`
+  * `Dtos.java`
+  * `AnalysisReport.java`
+  * `Image.java`
+  * `AnalysisReportRepository.java`
+  * `ImageRepository.java`
+
+---
+
+### **Verification**
+
+* Manual inspection of generated comments for correctness and clarity
+* Confirmed compilation unchanged — documentation-only modifications
+* Verified repository method signatures and mappings remained intact
+
+---
+
+### **Attribution Statement**
+
+> Portions of this commit were generated with assistance from OpenAI ChatGPT (GPT-5) on
+> February 23, 2025. All AI-generated content was reviewed, verified, and finalized by the
+> development team.
+
+---
+
