@@ -178,8 +178,6 @@ public class ImageController {
       /*storagePath*/ null, /*labels*/ null, /*note*/ null);
 
     String storageKey = userId + "/" + created.getId() + "--" + original;
-    String contentType = file.getContentType() != null
-        ? file.getContentType() : MediaType.APPLICATION_OCTET_STREAM_VALUE;
 
     storage.uploadObject(
         file.getBytes(),

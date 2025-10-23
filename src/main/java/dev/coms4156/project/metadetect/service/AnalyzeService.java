@@ -18,7 +18,6 @@ import java.nio.file.Files;
 import java.nio.file.StandardCopyOption;
 import java.time.Clock;
 import java.time.Instant;
-import java.util.Objects;
 import java.util.UUID;
 import org.springframework.lang.Nullable;
 import org.springframework.stereotype.Service;
@@ -192,7 +191,7 @@ public class AnalyzeService {
         try {
           Files.deleteIfExists(tempFile.toPath());
         } catch (IOException ignore) {
-          // Can Ignore
+          System.out.println(ignore);
         }
       }
     }
@@ -233,7 +232,7 @@ public class AnalyzeService {
     if (s == null) {
       return null;
     }
-    return (s.length() <= max) ? s : s.substring(0, Math.max(0, max));
+    return s.length() <= max ? s : s.substring(0, Math.max(0, max));
   }
 
   private String getUserBearerOrThrow() {

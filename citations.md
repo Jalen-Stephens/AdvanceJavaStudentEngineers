@@ -1405,3 +1405,62 @@ The implementation was validated through:
 > Portions of this commit or configuration were generated with assistance from OpenAI ChatGPT (GPT-5) on October 23, 2025. All AI-generated content was reviewed, verified, and finalized by the development team.
 
 ---
+
+### **Commit / Ticket Reference**
+
+* **Commit:** `chore(pmd): enable HTML reporting and add comprehensive AnalyzeService unit tests (refs #8)`
+* **Ticket:** `#8 — Implement AnalyzeService core logic`
+* **Date:** October 23, 2025
+* **Team Member:** Jalen Stephens
+
+---
+
+### **AI Tool Information**
+
+* **Tool Used:** OpenAI ChatGPT (GPT-5)
+* **Access Method:** ChatGPT Web (.edu academic access)
+* **Configuration:** Default model settings
+* **Cost:** $0 (no paid API calls)
+
+---
+
+### **Purpose of AI Assistance**
+
+Assisted with configuring the JaCoCo and PMD reporting outputs, improving test coverage structure for `AnalyzeService`, and advising on best practices for service-level mocking and repository stubbing in unit tests.
+
+---
+
+### **Prompts / Interaction Summary**
+
+* Requested help enabling HTML PMD reporting and linking it into the Maven lifecycle.
+* Asked for fixes to existing PMD violations and updated formatting.
+* Asked for new unit tests and integration test coverage for `AnalyzeService`.
+* Follow-up prompts clarified stubbing behavior and ownership enforcement flow.
+
+---
+
+### **Resulting Artifacts**
+
+* Updated `pom.xml` with PMD HTML report configuration
+* New or updated test classes:
+
+  * `AnalyzeServiceTest`
+  * `AnalyzeServiceC2paIntegrationTest`
+  * Minor fixes to `C2paToolInvokerUnitTest`
+* Cleanup of code paths that PMD flagged (unused imports, missing braces, etc.)
+
+---
+
+### **Verification**
+
+* Ran `mvn clean test` to ensure all unit tests pass
+* Confirmed JaCoCo instrumentation runs and PMD passes verification
+* Manual review of generated `/target/pmd.html` output to validate HTML reporting
+
+---
+
+### **Attribution Statement**
+
+> Portions of this commit or configuration were generated with assistance from OpenAI ChatGPT (GPT-5) on October 23, 2025. All AI-generated content was reviewed, verified, and finalized by the development team.
+
+---

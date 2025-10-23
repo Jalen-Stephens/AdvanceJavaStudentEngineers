@@ -22,10 +22,10 @@
 		<java.version>17</java.version>
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 
-       <!-- C2PA tool download configuration -->
-        <c2pa.version>v0.23.4</c2pa.version>
-        <c2pa.unpack.dir>${project.basedir}/tools/c2patool</c2pa.unpack.dir>
-        <c2pa.unpack.archive>${c2pa.unpack.dir}/c2patool.zip</c2pa.unpack.archive>
+		<!-- C2PA tool download configuration -->
+		<c2pa.version>v0.23.4</c2pa.version>
+		<c2pa.unpack.dir>${project.basedir}/tools/c2patool</c2pa.unpack.dir>
+		<c2pa.unpack.archive>${c2pa.unpack.dir}/c2patool.zip</c2pa.unpack.archive>
 	</properties>
 
 	<dependencyManagement>
@@ -90,18 +90,18 @@
 				<exclusion>
 					<groupId>org.mockito</groupId>
 					<artifactId>mockito-core</artifactId>
-				</exclusion>				
+				</exclusion>
 			</exclusions>
 		</dependency>
 
-		<!-- API tests (optional but nice for iteration 1) -->
+		<!-- API tests -->
 		<dependency>
 			<groupId>io.rest-assured</groupId>
 			<artifactId>rest-assured</artifactId>
 			<scope>test</scope>
 		</dependency>
 
-		<!-- Swagger/OpenAPI UI (optional but helpful for README) -->
+		<!-- Swagger/OpenAPI UI -->
 		<dependency>
 			<groupId>org.springdoc</groupId>
 			<artifactId>springdoc-openapi-starter-webmvc-ui</artifactId>
@@ -115,20 +115,18 @@
 			<scope>runtime</scope>
 		</dependency>
 
-		<!-- Spring Data (choose one; JDBC is simpler to start) -->
+		<!-- Spring Data JDBC (you’re also using JPA below; both can coexist) -->
 		<dependency>
 			<groupId>org.springframework.boot</groupId>
 			<artifactId>spring-boot-starter-data-jdbc</artifactId>
 		</dependency>
 
-		<!-- Flyway core (PG17-aware) -->
+		<!-- Flyway -->
 		<dependency>
 			<groupId>org.flywaydb</groupId>
 			<artifactId>flyway-core</artifactId>
 			<version>11.14.1</version>
 		</dependency>
-
-		<!-- PostgreSQL database support module -->
 		<dependency>
 			<groupId>org.flywaydb</groupId>
 			<artifactId>flyway-database-postgresql</artifactId>
@@ -146,38 +144,38 @@
 			<version>4.12.0</version>
 			<scope>test</scope>
 		</dependency>
+
 		<!-- Metadata Extractor library -->
 		<dependency>
-  			<groupId>com.drewnoakes</groupId>
-  			<artifactId>metadata-extractor</artifactId>
- 			<version>2.18.0</version>
-		</dependency>
-	
-		<dependency>
-  			<groupId>com.fasterxml.jackson.core</groupId>
-  			<artifactId>jackson-databind</artifactId>
-  			<version>2.17.1</version>
+			<groupId>com.drewnoakes</groupId>
+			<artifactId>metadata-extractor</artifactId>
+			<version>2.18.0</version>
 		</dependency>
 
-		<!-- Mockito core (re-added with specific version) -->
 		<dependency>
-    		<groupId>org.mockito</groupId>
+			<groupId>com.fasterxml.jackson.core</groupId>
+			<artifactId>jackson-databind</artifactId>
+			<version>2.17.1</version>
+		</dependency>
+
+		<!-- Mockito (explicit) -->
+		<dependency>
+			<groupId>org.mockito</groupId>
 			<artifactId>mockito-core</artifactId>
 			<scope>test</scope>
 		</dependency>
-
 		<dependency>
-    		<groupId>org.mockito</groupId>
-   			<artifactId>mockito-inline</artifactId>
-    		<version>5.2.0</version> <!-- Use the latest version -->
-   			<scope>test</scope>
+			<groupId>org.mockito</groupId>
+			<artifactId>mockito-inline</artifactId>
+			<version>5.2.0</version>
+			<scope>test</scope>
 		</dependency>
 
+		<!-- Spring Data JPA -->
 		<dependency>
 			<groupId>org.springframework.boot</groupId>
 			<artifactId>spring-boot-starter-data-jpa</artifactId>
 		</dependency>
-
 	</dependencies>
 
 	<build>
@@ -188,12 +186,12 @@
 				<version>1.7.1</version>
 			</extension>
 		</extensions>
+
 		<finalName>${project.artifactId}-${project.version}</finalName>
-		<pluginManagement>
-			
-		
+
+		<!-- EXECUTABLE plugins -->
 		<plugins>
-			<!-- Spring Boot (single declaration) -->
+			<!-- Spring Boot -->
 			<plugin>
 				<groupId>org.springframework.boot</groupId>
 				<artifactId>spring-boot-maven-plugin</artifactId>
@@ -240,9 +238,28 @@
 				<configuration>
 					<printFailingErrors>true</printFailingErrors>
 					<failOnViolation>true</failOnViolation>
+					<linkXRef>false</linkXRef>
+					<targetJdk>17</targetJdk>
 				</configuration>
 				<executions>
+					<!-- Generate an HTML report -->
 					<execution>
+						<id>pmd-report-html</id>
+						<phase>verify</phase>
+						<goals>
+							<goal>pmd</goal>
+						</goals>
+						<configuration>
+							<format>html</format>
+							<outputDirectory>${project.build.directory}/site</outputDirectory>
+							<!-- optional: include tests too -->
+							<!-- <includeTests>true</includeTests> -->
+						</configuration>
+					</execution>
+
+					<!-- Keep the build-breaking check -->
+					<execution>
+						<id>pmd-check</id>
 						<phase>verify</phase>
 						<goals>
 							<goal>check</goal>
@@ -251,7 +268,8 @@
 				</executions>
 			</plugin>
 
-			<!-- JaCoCo -->
+
+			<!-- JaCoCo (bind to test + verify so reports are produced) -->
 			<plugin>
 				<groupId>org.jacoco</groupId>
 				<artifactId>jacoco-maven-plugin</artifactId>
@@ -283,6 +301,5 @@
 				</executions>
 			</plugin>
 		</plugins>
-		</pluginManagement>
 	</build>
 </project>
