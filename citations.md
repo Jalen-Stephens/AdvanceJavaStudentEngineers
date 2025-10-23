@@ -1165,3 +1165,62 @@ Helped implement and structure the storage service test strategy and write unit 
 > Portions of this commit or configuration were generated with assistance from OpenAI ChatGPT (GPT-5) on October 22, 2025. All AI-generated content was reviewed, verified, and finalized by the development team.
 
 ---
+
+
+### **Commit / Ticket Reference**
+
+* **Commit:** `feat(images): integrate Supabase JWT + RLS context + secure ImageService w/ ownership checks; update tests and mock image path refs(#26)`
+* **Ticket:** `#26 — Implement binary upload + signed URL for images`
+* **Date:** October 22, 2025
+* **Team Member:** Jalen Stephens
+
+---
+
+### **AI Tool Information**
+
+* **Tool Used:** OpenAI ChatGPT (GPT-5)
+* **Access Method:** ChatGPT Web (.edu academic access)
+* **Configuration:** Default model settings
+* **Cost:** $0 (no paid API calls)
+
+---
+
+### **Purpose of AI Assistance**
+
+Integrated Supabase JWT validation into Spring Security, implemented row-level security context for database queries, and refactored `ImageService` to enforce ownership checks through the authenticated Supabase user.
+
+---
+
+### **Prompts / Interaction Summary**
+
+* Asked for security configuration adjustments for custom `/auth/login` and `/auth/signup` endpoints.
+* Requested implementation of an RLS context helper for Postgres session variables.
+* Asked for modifications to `ImageService` to use the new RLS context + per-user ownership enforcement.
+* Clarified error messages and RLS setup behavior during integration testing.
+
+---
+
+### **Resulting Artifacts**
+
+* `SecurityConfig.java` updated to use Supabase JWT secret validation
+* New `RlsContext.java` added
+* `ImageService.java` updated to apply ownership checks via RLS context
+* Test images renamed to lower-case extension for CI
+* `AnalyzeServiceTest.java` updated to align with new security context
+
+---
+
+### **Verification**
+
+* Application builds successfully (`mvn clean test`)
+* Manual review of Spring Security bean instantiation with Supabase-provided JWT secret
+* Validated RLS path resolution through debugging and stack traces during live testing
+* Confirmed correct staged files in Git
+
+---
+
+### **Attribution Statement**
+
+> Portions of this commit or configuration were generated with assistance from OpenAI ChatGPT (GPT-5) on October 22, 2025. All AI-generated content was reviewed, verified, and finalized by the development team.
+
+---
