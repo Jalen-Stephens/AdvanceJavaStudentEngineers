@@ -1,7 +1,6 @@
 package dev.coms4156.project.metadetect.model;
 
 import java.time.OffsetDateTime;
-import java.util.List;
 import java.util.UUID;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.annotation.ReadOnlyProperty;

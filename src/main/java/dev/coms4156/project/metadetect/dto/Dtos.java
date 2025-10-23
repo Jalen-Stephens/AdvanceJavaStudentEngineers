@@ -31,7 +31,57 @@ public final class Dtos {
   }
 
   /**
-   * Response returned after submitting an analysis job.
+   * Response returned immediately after submitting an analysis for an existing image.
+   * Matches POST /api/analyze/{imageId} -> 202 Accepted.
+   */
+  public record AnalyzeStartResponse(String analysisId) { }
+
+  /**
+   * Pollable view of an analysis job.
+   * Matches GET /api/analyze/{analysisId}.
+   */
+  public record AnalysisStatusResponse(
+      String analysisId,
+      String imageId,
+      String status,            // PENDING | COMPLETED | FAILED
+      Instant createdAt,
+      Instant completedAt,      // may be null until terminal state
+      String errorMessage       // present when status == FAILED
+  ) { }
+
+  /**
+   * Manifest response for an analysis.
+   * Matches GET /api/analyze/{analysisId}/manifest.
+   * The service stores raw JSON; we surface it as a String to avoid lossy parsing.
+   */
+  public record AnalysisManifestResponse(
+      String analysisId,
+      String manifestJson
+  ) { }
+
+  /**
+   * Confidence/status view (stubbed score for now, but shaped for future ML).
+   * Can back GET /api/analyze/{analysisId} or a dedicated .../confidence route.
+   */
+  public record AnalyzeConfidenceResponse(
+      String analysisId,
+      String status,
+      Double score              // nullable until we implement a real scorer
+  ) { }
+
+  /**
+   * Stub compare response for GET /api/analyze/compare?left=&right=.
+   * Adds status/note fields while keeping your older CompareResponse available.
+   */
+  public record AnalyzeCompareResponse(
+      String status,
+      Double similarity,        // nullable in the initial stub
+      String note
+  ) { }
+
+  /**
+   * (Legacy/general) Response returned after submitting an analysis job.
+   * Retained for backward compatibility with any callers using this shape.
    */
   public record AnalyzeResponse(
       String id,
@@ -48,7 +98,8 @@ public final class Dtos {
   }
 
   /**
-   * Confidence score and processing status for an analysis job.
+   * (Legacy/general) Confidence score and processing status for an analysis job.
+   * Kept for callers already using this shape; new endpoints can prefer AnalyzeConfidenceResponse.
    */
   public record ConfidenceResponse(String id, Double confidence, String status) {
   }
@@ -60,7 +111,8 @@ public final class Dtos {
   }
 
   /**
-   * Response containing similarity score between two images.
+   * (Legacy/general) Response containing similarity score between two images.
+   * New analysis endpoints can prefer AnalyzeCompareResponse.
    */
   public record CompareResponse(String imageIdA, String imageIdB, Double similarity) {
   }

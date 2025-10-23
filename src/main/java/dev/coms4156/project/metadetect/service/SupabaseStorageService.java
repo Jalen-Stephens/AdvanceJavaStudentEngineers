@@ -2,8 +2,6 @@ package dev.coms4156.project.metadetect.supabase;
 
 import java.nio.charset.StandardCharsets;
 import java.time.Duration;
-import java.util.List;
-import java.util.Map;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
@@ -97,7 +95,7 @@ public class SupabaseStorageService {
         .header("apikey", supabaseAnonKey)
         .header("x-upsert", "true") // allow overwrite if same key
         .contentType(MediaType.parseMediaType(
-          (contentType == null || contentType.isBlank())
+          contentType == null || contentType.isBlank()
             ? MediaType.APPLICATION_OCTET_STREAM_VALUE
             : contentType))
         .bodyValue(bytes)
@@ -190,7 +188,4 @@ public class SupabaseStorageService {
       }
     }
   }
-
-
-
 }
