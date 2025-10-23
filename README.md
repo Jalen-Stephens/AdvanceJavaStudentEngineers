@@ -4,6 +4,14 @@ This is the public repo for posting the miniproject assignments to the class.
 ## Viewing the Repository
 Please use the following link to view the repository: https://github.com/Jalen-Stephens/Advance-Software-Engineering-Mini-Projects
 
+## 🐳 Docker (Quick Testing)
+
+Build and run with Docker:
+```bash
+docker build -t metadetect .
+docker run -p 8080:8080 -e SPRING_DATASOURCE_URL=<your-db-url> -e SPRING_DATASOURCE_USERNAME=<user> -e SPRING_DATASOURCE_PASSWORD=<pass> -e SUPABASE_URL=<url> -e SUPABASE_ANON_KEY=<key> -e SUPABASE_JWT_SECRET=<secret> metadetect
+```
+
 ## Building and Running a Local Instance
 In order to build and use this project you must install the following:
 
@@ -156,3 +164,8 @@ This section includes notes on tools and technologies used in building this proj
 * JaCoCo
   * We use JaCoCo for generating code coverage reports.
   * Originally we were planning on using Cobertura, however Cobertura does not support our version of Java.
+* c2patool
+  * We use the open-source c2patool to scrape manifest metadata for determining the usage of AI in generating an image.
+  * Coalition for Content Provenance and Authenticity (C2PA). *c2patool (Version 0.23.4)*.  
+  * Content Authenticity Initiative, Adobe Systems, 2024.  
+  * Available at: https://github.com/contentauth/c2pa-rs

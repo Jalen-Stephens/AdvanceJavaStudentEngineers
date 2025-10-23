@@ -3,12 +3,8 @@ package dev.coms4156.project.metadetect.c2pa;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.InterruptedIOException;
 import java.nio.charset.StandardCharsets;
-import java.nio.file.Files;
 import java.util.Scanner;
-import java.util.concurrent.TimeUnit;
-
 
 /** Invokes the C2PA command-line tool to extract manifests from images.*/
 public class C2paToolInvoker {
@@ -28,37 +24,33 @@ public class C2paToolInvoker {
   *
   */
   public String extractManifest(File imageFile) throws IOException {
-    // Create a temporary file for the output
-
-    
-
-    // Command to invoke the C2PA tool
-    ProcessBuilder processBuilder = new ProcessBuilder(
+    ProcessBuilder pb = new ProcessBuilder(
         c2paToolPath,
         imageFile.getAbsolutePath(),
-        "-d"
+        "-d" // your tool version expects this
     );
+    pb.redirectErrorStream(false);
 
-    System.out.println("C2PA Tool Path: " + c2paToolPath);
-    System.out.println("Image File Path: " + imageFile.getAbsolutePath());
-    System.out.println("Executing command: " + String.join(" ", processBuilder.command()));
+    Process proc = pb.start();
+    try (InputStream out = proc.getInputStream();
+         InputStream err = proc.getErrorStream();
+         Scanner so = new Scanner(out, StandardCharsets.UTF_8);
+         Scanner se =
+           new Scanner(err, StandardCharsets.UTF_8)) {
 
-    // Print the command for debugging
-    System.out.println("Executing command: " + String.join(" ", processBuilder.command()));
+      int exit = proc.waitFor();
+      String stdout = so.useDelimiter("\\A").hasNext() ? so.next() : "";
+      String stderr = se.useDelimiter("\\A").hasNext() ? se.next() : "";
 
-    // Start the process
-    Process process = processBuilder.start();
-
-    try {
-      // Wait for the process to complete
-      int exitCode = process.waitFor();
-      if (exitCode != 0) {
-        throw new IOException("C2PA tool failed with exit code " + exitCode);
+      if (exit != 0) {
+        String msg = "C2PA tool failed with exit code " + exit
+            + (stderr.isBlank() ? "" : " | stderr: " + stderr);
+        throw new IOException(msg);
       }
-      // Read the output file and return its contents as a string
-      return " "; // placeholder
-    } catch (InterruptedException e) {
-      throw new IOException("C2PA tool execution was interrupted", e);
+      return stdout; // should already be JSON from -d
+    } catch (InterruptedException ie) {
+      Thread.currentThread().interrupt();
+      throw new IOException("C2PA tool execution was interrupted", ie);
     }
   }
 }

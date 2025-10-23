@@ -37,6 +37,15 @@ public class UserService {
     return getJwt().map(jwt -> jwt.getClaimAsString("email"));
   }
 
+  /**
+   * Returns the raw bearer token for the current user or throws 401.
+   * */
+  public String getCurrentBearerOrThrow() {
+    return getJwt().map(Jwt::getTokenValue)
+      .orElseThrow(() -> new ResponseStatusException(HttpStatus.UNAUTHORIZED,
+        "Authentication required"));
+  }
+
   /** Returns 401 if no authenticated JWT is present. */
   private Jwt getJwtOrThrow() {
     return getJwt().orElseThrow(() ->
