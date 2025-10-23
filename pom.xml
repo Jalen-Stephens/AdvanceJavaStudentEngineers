@@ -170,13 +170,6 @@
 	</dependencies>
 
 	<build>
-		<extensions>
-			<extension>
-				<groupId>kr.motd.maven</groupId>
-				<artifactId>os-maven-plugin</artifactId>
-				<version>1.7.1</version>
-			</extension>
-		</extensions>
 		<finalName>${project.artifactId}-${project.version}</finalName>
 
 		<plugins>
@@ -319,61 +312,8 @@
 			</plugin>
 		</plugins>
 	</reporting>
-
 	<profiles>
 		<!-- Platform-specific native dependencies -->
-		<profile>
-			<id>macos</id>
-			<activation>
-				<os>
-					<family>mac</family>
-				</os>
-			</activation>
-			<dependencies>
-				<!-- macOS native DNS resolver -->
-				<dependency>
-					<groupId>io.netty</groupId>
-					<artifactId>netty-resolver-dns-native-macos</artifactId>
-					<version>4.1.119.Final</version>
-					<classifier>osx-x86_64</classifier>
-					<scope>runtime</scope>
-					<optional>true</optional>
-				</dependency>
-			</dependencies>
-		</profile>
-		
-		<profile>
-			<id>linux</id>
-			<activation>
-				<os>
-					<family>unix</family>
-					<name>linux</name>
-				</os>
-			</activation>
-			<dependencies>
-				<!-- Linux native DNS resolver -->
-				<dependency>
-					<groupId>io.netty</groupId>
-					<artifactId>netty-resolver-dns-native-linux</artifactId>
-					<version>4.1.119.Final</version>
-					<classifier>linux-x86_64</classifier>
-					<scope>runtime</scope>
-					<optional>true</optional>
-				</dependency>
-			</dependencies>
-		</profile>
-		
-		<profile>
-			<id>windows</id>
-			<activation>
-				<os>
-					<family>windows</family>
-				</os>
-			</activation>
-			<dependencies>
-				<!-- Windows uses the default Netty DNS resolver -->
-				<!-- No native dependency needed for Windows -->
-			</dependencies>
-		</profile>
+		<!-- These are optional performance optimizations and not required -->
 	</profiles>
 </project>

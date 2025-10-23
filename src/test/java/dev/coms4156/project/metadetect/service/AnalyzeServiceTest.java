@@ -1,4 +1,4 @@
-package dev.coms4156.project.metadetect;
+package dev.coms4156.project.metadetect.service;
 
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assumptions.assumeTrue;
