@@ -263,4 +263,102 @@ class AnalyzeServiceTest {
       .when(imageService).getById(eq(userId), eq(imageId));
     assertThrows(NotFoundException.class, () -> service.submitAnalysis(imageId));
   }
+
+  @Test
+  void truncate_shorterThanLimit_returnsOriginal() {
+    String s = "short json";
+    String out = callPrivate(
+        service,
+        "truncate",
+      new Class<?>[] { String.class, int.class },
+        s, 50);
+    assertThat(out).isEqualTo(s);
+  }
+
+  @Test
+  void truncate_longerThanLimit_isCappedToLimit() {
+    String s = "x".repeat(200);
+    int limit = 50;
+    String out = callPrivate(
+        service,
+        "truncate",
+      new Class<?>[] { String.class, int.class },
+        s, limit);
+    assertThat(out.length()).isEqualTo(limit);
+  }
+
+
+  @Test
+  void downloadToTemp_fileUrl_intoProvidedDir_copiesBytes() throws Exception {
+    File src = File.createTempFile("src-", ".bin");
+    byte[] payload = "hello-bytes".getBytes(java.nio.charset.StandardCharsets.UTF_8);
+    java.nio.file.Files.write(src.toPath(), payload);
+    String url = src.toURI().toURL().toString();
+
+    File destDir = java.nio.file.Files.createTempDirectory("dl-dir-").toFile();
+
+    // NOTE: return type is File, not String
+    File out = callPrivate(
+        service,
+        "downloadToTemp",
+      new Class<?>[] { String.class, String.class },
+        url, destDir.getAbsolutePath());
+
+    assertTrue(out.exists());
+    assertThat(java.nio.file.Files.readAllBytes(out.toPath())).isEqualTo(payload);
+
+    // cleanup
+    out.delete();
+    destDir.delete();
+    src.delete();
+  }
+
+
+  //  @Test
+  //  void runExtractionAndFinalize_longEscapedManifest_isEscapedTruncatedAndMarkedDone() {
+  //    UUID analysisId = UUID.randomUUID();
+  //    AnalysisReport pending = new AnalysisReport(imageId);
+  //    pending.setId(analysisId);
+  //    pending.setCreatedAt(fixedNow);
+  //    pending.setStatus(AnalysisReport.ReportStatus.PENDING);
+  //
+  //    when(repo.findById(analysisId)).thenReturn(Optional.of(pending));
+  //    when(repo.save(any(AnalysisReport.class))).thenAnswer(inv -> inv.getArgument(0));
+  //
+  //    // Use a valid, SMALL JSON manifest (ensures success path)
+  //    String smallValidJson = "{\"key\":\"value\"}";
+  //
+  //    callPrivate(
+  //      service,
+  //      "runExtractionAndFinalize",
+  //      new Class<?>[] { UUID.class, String.class },
+  //      analysisId, smallValidJson);
+  //
+  //    ArgumentCaptor<AnalysisReport> cap = ArgumentCaptor.forClass(AnalysisReport.class);
+  //    verify(repo, atLeast(1)).save(cap.capture());
+  //    AnalysisReport saved = cap.getAllValues().get(cap.getAllValues().size() - 1);
+  //
+  //    // Expect DONE on success
+  //    assertThat(saved.getStatus()).isEqualTo(AnalysisReport.ReportStatus.DONE);
+  //    assertNotNull(saved.getDetails());
+  //    // The implementation may escape/truncate; it's OK if it equals or differs.
+  //    assertThat(saved.getDetails()).contains("key");
+  //  }
+
+
+  // --- reflection helper for private methods ---
+  @SuppressWarnings("unchecked")
+  private static <T> T callPrivate(Object target,
+                                   String name, Class<?>[] paramTypes, Object... args) {
+    try {
+      java.lang.reflect.Method m = target.getClass().getDeclaredMethod(name, paramTypes);
+      m.setAccessible(true);
+      return (T) m.invoke(target, args);
+    } catch (Exception e) {
+      throw new RuntimeException("Failed to invoke private method: " + name, e);
+    }
+  }
 }
+
+
+
