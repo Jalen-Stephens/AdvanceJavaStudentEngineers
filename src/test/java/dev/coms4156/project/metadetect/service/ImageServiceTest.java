@@ -17,7 +17,7 @@ import dev.coms4156.project.metadetect.model.Image;
 import dev.coms4156.project.metadetect.repository.ImageRepository;
 import dev.coms4156.project.metadetect.service.errors.ForbiddenException;
 import dev.coms4156.project.metadetect.service.errors.NotFoundException;
-import dev.coms4156.project.metadetect.supabase.SupabaseStorageService;
+import dev.coms4156.project.metadetect.service.SupabaseStorageService;
 import java.io.IOException;
 import java.util.List;
 import java.util.Optional;

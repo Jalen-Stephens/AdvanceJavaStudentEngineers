@@ -23,7 +23,7 @@ import dev.coms4156.project.metadetect.repository.AnalysisReportRepository;
 import dev.coms4156.project.metadetect.service.errors.ForbiddenException;
 import dev.coms4156.project.metadetect.service.errors.MissingStoragePathException;
 import dev.coms4156.project.metadetect.service.errors.NotFoundException;
-import dev.coms4156.project.metadetect.supabase.SupabaseStorageService;
+import dev.coms4156.project.metadetect.service.SupabaseStorageService;
 import java.io.File;
 import java.io.FileWriter;
 import java.nio.charset.StandardCharsets;

@@ -1,4 +1,4 @@
-package dev.coms4156.project.metadetect.supabase;
+package dev.coms4156.project.metadetect.service;
 
 import java.nio.charset.StandardCharsets;
 import java.time.Duration;
