@@ -1,4 +1,4 @@
-package dev.coms4156.project.metadetect;
+package dev.coms4156.project.metadetect.service;
 
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assumptions.assumeTrue;
@@ -33,5 +33,6 @@ class AnalyzeServiceTest {
     String manifestJson = analyzeService.fetchC2pa(file);
 
     assertNotNull(manifestJson, "fetchC2pa returned null");
+    System.out.println(manifestJson);
   }
 }

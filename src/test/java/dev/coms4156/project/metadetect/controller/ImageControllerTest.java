@@ -15,6 +15,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 import dev.coms4156.project.metadetect.dto.Dtos;
 import dev.coms4156.project.metadetect.model.Image;
+import dev.coms4156.project.metadetect.service.AuthProxyService;
 import dev.coms4156.project.metadetect.service.ImageService;
 import dev.coms4156.project.metadetect.service.UserService;
 import dev.coms4156.project.metadetect.service.errors.ForbiddenException;
@@ -245,25 +246,9 @@ class ImageControllerTest {
   }
 
   @Test
-  void signedUrl_missingStorage_returns404() throws Exception {
-    java.util.UUID user = java.util.UUID.randomUUID();
-    java.util.UUID imgId = java.util.UUID.randomUUID();
-
-    org.mockito.Mockito.when(userService.getCurrentUserIdOrThrow()).thenReturn(user);
-    org.mockito.Mockito.when(userService.getCurrentBearerOrThrow()).thenReturn("jwt");
-
-    dev.coms4156.project.metadetect.model.Image img =
-          new dev.coms4156.project.metadetect.model.Image();
-    img.setId(imgId);
-    img.setUserId(user);
-    img.setFilename("pic.png");
-    img.setStoragePath(null); // triggers controller 404
-
-    org.mockito.Mockito.when(imageService.getById(user, imgId)).thenReturn(img);
-
-    mvc.perform(org.springframework.test.web.servlet.request.MockMvcRequestBuilders
-        .get("/api/images/" + imgId + "/url"))
-        .andExpect(org.springframework.test.web.servlet.result.MockMvcResultMatchers
-          .status().isNotFound());
+  void deleteImage_forbidden() throws Exception {
+    doThrow(new ForbiddenException("forbidden")).when(imageService).delete(userId, imgId);
+    mvc.perform(MockMvcRequestBuilders.delete("/api/images/" + imgId))
+        .andExpect(status().isForbidden());
   }
 }

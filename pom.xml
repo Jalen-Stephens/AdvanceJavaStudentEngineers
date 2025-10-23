@@ -22,13 +22,10 @@
 		<java.version>17</java.version>
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 
-		<!-- C2PA tool download configuration (macOS universal ZIP) -->
-    	<c2pa.version>v0.23.4</c2pa.version>
-    	<c2pa.url>https://github.com/contentauth/c2pa-rs/releases/download/c2patool-{c2pa.version}/c2patool-{c2pa.version}-universal-apple-darwin.zip</c2pa.url>
-   		<c2pa.unpack.dir>${project.basedir}/tools</c2pa.unpack.dir>
-    	<c2pa.unpack.archive>${c2pa.unpack.dir}/c2patool.zip</c2pa.unpack.archive>
-    	<!-- Folder name created by the ZIP for v0.23.4 (contains the binary named "c2patool") -->
-    	<c2pa.unzipped.folder>c2patool-${c2pa.version}-universal-apple-darwin</c2pa.unzipped.folder>
+       <!-- C2PA tool download configuration -->
+        <c2pa.version>v0.23.4</c2pa.version>
+        <c2pa.unpack.dir>${project.basedir}/tools/c2patool</c2pa.unpack.dir>
+        <c2pa.unpack.archive>${c2pa.unpack.dir}/c2patool.zip</c2pa.unpack.archive>
 	</properties>
 
 	<dependencyManagement>
@@ -187,7 +184,9 @@
 			</extension>
 		</extensions>
 		<finalName>${project.artifactId}-${project.version}</finalName>
-
+		<pluginManagement>
+			
+		
 		<plugins>
 			<!-- Spring Boot (single declaration) -->
 			<plugin>
@@ -279,5 +278,6 @@
 				</executions>
 			</plugin>
 		</plugins>
+		</pluginManagement>
 	</build>
 </project>

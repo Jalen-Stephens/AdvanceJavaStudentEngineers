@@ -3,12 +3,6 @@ package dev.coms4156.project.metadetect.service;
 import dev.coms4156.project.metadetect.c2pa.C2paToolInvoker;
 import java.io.File;
 import java.io.IOException;
-import java.io.InputStream;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Map;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
