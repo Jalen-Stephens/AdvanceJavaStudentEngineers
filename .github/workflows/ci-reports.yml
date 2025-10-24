@@ -1,0 +1,68 @@
+name: CI Reports
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  ci-reports:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      
+    - name: Set up JDK 17
+      uses: actions/setup-java@v4
+      with:
+        java-version: '17'
+        distribution: 'temurin'
+        
+    - name: Cache Maven dependencies
+      uses: actions/cache@v4
+      with:
+        path: ~/.m2
+        key: ${{ runner.os }}-m2-${{ hashFiles('**/pom.xml') }}
+        restore-keys: ${{ runner.os }}-m2
+        
+    - name: Run tests with coverage
+      run: ./mvnw -B clean test
+      
+    - name: Generate JaCoCo report
+      run: ./mvnw -B jacoco:report -Dmaven.test.skip=true
+      
+    - name: Generate PMD report (without failing on violations)
+      run: ./mvnw -B pmd:pmd -Dpmd.failOnViolation=false -Dmaven.test.skip=true
+      
+    - name: Generate HTML site reports  
+      run: ./mvnw -B site -Dcheckstyle.failsOnError=false -Dpmd.failOnViolation=false -Dmaven.test.skip=true
+      
+    - name: Run quality checks (separate from report generation)
+      run: ./mvnw -B checkstyle:check pmd:check -Dmaven.test.skip=true
+      continue-on-error: true
+      
+    - name: Debug - List generated files
+      run: |
+        echo "Checking for generated reports..."
+        ls -la target/site/ || echo "No target/site directory"
+        ls -la target/site/jacoco/ || echo "No JaCoCo reports"
+        echo "PMD report location:"
+        find target -name "pmd.html" -o -name "index.html" | grep -E "(pmd|site)" || echo "No PMD HTML reports found"
+      
+    - name: Install wkhtmltopdf
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y wkhtmltopdf
+        
+    - name: Make script executable
+      run: chmod +x scripts/html_to_png.sh
+      
+    - name: Convert HTML reports to PNG
+      run: bash scripts/html_to_png.sh
+      
+    - name: Upload CI reports
+      uses: actions/upload-artifact@v4
+      if: always()
+      with:
+        name: ci-reports
+        path: reports/*
