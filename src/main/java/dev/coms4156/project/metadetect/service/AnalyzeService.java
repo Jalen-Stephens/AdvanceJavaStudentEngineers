@@ -10,7 +10,6 @@ import dev.coms4156.project.metadetect.model.Image;
 import dev.coms4156.project.metadetect.repository.AnalysisReportRepository;
 import dev.coms4156.project.metadetect.service.errors.MissingStoragePathException;
 import dev.coms4156.project.metadetect.service.errors.NotFoundException;
-import dev.coms4156.project.metadetect.service.SupabaseStorageService;
 import java.io.File;
 import java.io.IOException;
 import java.net.URL;
