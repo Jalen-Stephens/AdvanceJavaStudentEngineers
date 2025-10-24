@@ -2077,3 +2077,60 @@ line length and formatting requirements were followed.
 > Portions of this commit or configuration were generated with assistance from OpenAI ChatGPT (GPT-5) on October 23, 2025. All AI-generated content was reviewed, verified, and finalized by the development team.
 
 ---
+
+### **Commit / Ticket Reference**
+
+* **Commit:** `test: add SecurityConfigMvcTest and AnalysisReportTest for branch coverage`
+* **Ticket:** `#35 — write javadoc comments for all non-trivial code`
+* **Date:** October 23, 2025
+* **Team Member:** Jalen Stephens
+
+---
+
+### **AI Tool Information**
+
+* **Tool Used:** OpenAI ChatGPT (GPT-5)
+* **Access Method:** ChatGPT Web (.edu academic access)
+* **Configuration:** Default model settings
+* **Cost:** $0 (no paid API calls)
+
+---
+
+### **Purpose of AI Assistance**
+
+Add missing test coverage for security configuration and AnalysisReport entity, including branch-path testing, annotation validation, and lifecycle behavior verification.
+
+---
+
+### **Prompts / Interaction Summary**
+
+* Asked for JUnit 5 test coverage for entity model (`AnalysisReport`)
+* Asked for Spring Security filter-chain + CORS + JWT branch coverage
+* Requested fixes for HS256 bit-length and null CORS request edge case
+* Requested javadoc & inline comments for non-trivial sections
+* Also asked for star-import removal and Checkstyle-safe cleanup
+
+---
+
+### **Resulting Artifacts**
+
+* `src/test/java/dev/coms4156/project/metadetect/config/SecurityConfigMvcTest.java`
+* `src/test/java/dev/coms4156/project/metadetect/model/AnalysisReportTest.java`
+
+---
+
+### **Verification**
+
+* Executed `mvn -q -DskipITs test` successfully with 0 failures
+* Verified security rules: public vs authenticated endpoints
+* Validated CORS configuration and issuer selection logic in JwtDecoder
+* Confirmed lifecycle behavior of `@PrePersist` and default enum values
+* Confirmed compliance with style rules (no star imports, annotations verified)
+
+---
+
+### **Attribution Statement**
+
+> Portions of this commit were generated with assistance from OpenAI ChatGPT (GPT-5) on October 23, 2025. All AI-generated content was reviewed, verified, and finalized by the development team.
+
+---
