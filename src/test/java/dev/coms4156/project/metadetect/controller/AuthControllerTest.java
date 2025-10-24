@@ -29,6 +29,12 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.web.servlet.MockMvc;
 
+/**
+ * Controller-slice tests for {@link AuthController}.
+ * Uses {@code @WebMvcTest} with {@code SecurityTestConfig} to relax auth on proxy
+ * endpoints. Verifies passthrough JSON behavior and error bubbling for Supabase
+ * proxy methods, plus coverage for /auth/me with and without email.
+ */
 @Import(dev.coms4156.project.metadetect.config.SecurityTestConfig.class)
 @WebMvcTest(controllers = AuthController.class)
 class AuthControllerTest {
@@ -73,8 +79,8 @@ class AuthControllerTest {
         .with(csrf())
         .contentType(APPLICATION_JSON)
         .content(reqJson))
-        .andExpect(status().isOk())
-        .andExpect(content().contentTypeCompatibleWith(APPLICATION_JSON))
+      .andExpect(status().isOk())
+      .andExpect(content().contentTypeCompatibleWith(APPLICATION_JSON))
         .andExpect(content().json(supabaseJson));
   }
 
@@ -99,10 +105,11 @@ class AuthControllerTest {
   }
 
   @Test
-  @DisplayName("POST proxy endpoints bubble up Supabase error status/body via @ExceptionHandler")
+  @DisplayName("POST proxy endpoints bubble up Supabase error via @ExceptionHandler")
   void proxy_error_bubbled() throws Exception {
     String reqJson = "{\"email\":\"bad\",\"password\":\"pw\"}";
-    var ex = new AuthProxyService.ProxyException(HttpStatus.BAD_REQUEST, "{\"msg\":\"bad\"}");
+    var ex = new AuthProxyService.ProxyException(
+        HttpStatus.BAD_REQUEST, "{\"msg\":\"bad\"}");
     when(authProxyService.signup(anyString(), anyString())).thenThrow(ex);
 
     mockMvc.perform(post("/auth/signup")
@@ -161,7 +168,7 @@ class AuthControllerTest {
   void login_unsupported_media_type_415() throws Exception {
     String body = "{\"email\":\"a@b.com\",\"password\":\"pw\"}";
     mockMvc.perform(post("/auth/login")
-        .contentType(TEXT_PLAIN)   // wrong content type
+        .contentType(TEXT_PLAIN) // wrong content type
         .content(body))
         .andExpect(status().isUnsupportedMediaType());
   }
@@ -176,27 +183,27 @@ class AuthControllerTest {
   }
 
   @Test
-  @DisplayName("POST /auth/refresh with missing refreshToken -> 400 + JSON error (controller)")
+  @DisplayName("POST /auth/refresh missing refreshToken -> 400 JSON error (controller)")
   void refresh_missing_field_400_controller() throws Exception {
     mockMvc.perform(post("/auth/refresh")
         .contentType(APPLICATION_JSON)
         .content("{}"))
-        .andExpect(status().isBadRequest())
+      .andExpect(status().isBadRequest())
         .andExpect(content().string("{\"error\":\"missing refreshToken\"}"));
   }
 
   @WithMockUser(username = "whoever")
   @Test
-  @DisplayName("GET /auth/me when authenticated but email missing -> email omitted")
+  @DisplayName("GET /auth/me with email missing -> email omitted")
   void me_authenticated_email_null() throws Exception {
     UUID id = UUID.fromString("22222222-2222-2222-2222-222222222222");
     when(userService.getCurrentUserIdOrThrow()).thenReturn(id);
     when(userService.getCurrentUserEmail()).thenReturn(Optional.empty());
 
     mockMvc.perform(get("/auth/me"))
-      .andExpect(status().isOk())
-      .andExpect(content().contentTypeCompatibleWith(APPLICATION_JSON))
-      .andExpect(jsonPath("$.id", is(id.toString())))
+        .andExpect(status().isOk())
+        .andExpect(content().contentTypeCompatibleWith(APPLICATION_JSON))
+        .andExpect(jsonPath("$.id", is(id.toString())))
         .andExpect(jsonPath("$.email").doesNotExist());
   }
 
@@ -211,8 +218,8 @@ class AuthControllerTest {
     mockMvc.perform(post("/auth/login")
         .contentType(APPLICATION_JSON)
         .content("{\"email\":\"a@b.com\",\"password\":\"pw\"}"))
-        .andExpect(status().isTooManyRequests())
-        .andExpect(header().string("Content-Type", startsWith("application/json")))
+      .andExpect(status().isTooManyRequests())
+      .andExpect(header().string("Content-Type", startsWith("application/json")))
         .andExpect(content().json("{\"error\":\"rate_limit\"}"));
   }
 }

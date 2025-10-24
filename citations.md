@@ -1695,6 +1695,72 @@ Helped identify untested execution branches across `ImageService` and `AnalyzeSe
 
 ---
 
+### **Commit / Ticket Reference**
+
+* **Commit:** `docs: add controller-level documentation for ImageController (refs #35)`
+* **Ticket:** `#35 — Add Javadoc and inline comments for controller layer`
+* **Date:** February 23, 2025
+* **Team Member:** Jalen Stephens
+
+---
+
+### **AI Tool Information**
+
+* **Tool Used:** OpenAI ChatGPT (GPT-5)
+* **Access Method:** ChatGPT Web (.edu academic access)
+* **Configuration:** Default model settings
+* **Cost:** $0 (no paid API calls)
+
+---
+
+### **Purpose of AI Assistance**
+
+Assisted with drafting Javadoc comments, controller-level documentation, and inline explanatory
+comments for non-trivial logic within `ImageController`. Ensured documentation quality, structure,
+and consistency with Iteration 1 project standards.
+
+---
+
+### **Prompts / Interaction Summary**
+
+* Asked AI to generate controller comments with <100 character line limit
+* Requested Javadoc coverage for all public endpoints
+* Added inline comments around ownership, UUID parsing, and update metadata behavior
+* Requested final one-line commit message referencing the related ticket
+
+---
+
+### **Resulting Artifacts**
+
+* Updated `ImageController.java` with:
+
+  * Controller-level class Javadoc
+  * Method-level Javadoc
+  * Inline comments for helper logic and DTO conversions
+* Commit message aligned with project style and ticket association
+
+---
+
+### **Verification**
+
+* Performed manual review for clarity and accuracy
+* Confirmed no functional behavior changes
+* Built and ran application to ensure compilation unchanged
+
+---
+
+### **Attribution Statement**
+
+> Portions of this commit or configuration were generated with assistance from OpenAI ChatGPT (GPT-5) on February 23, 2025. All AI-generated content was reviewed, verified, and finalized by the development team.
+
+---
+
+### **Commit / Ticket Reference**
+
+* **Commit:** `docs: annotate RlsContext, DTOs, and image/analysis models with comments (refs #35)`
+* **Ticket:** `#35 — Add Javadoc and inline comments for non-trivial codebase elements`
+* **Date:** February 23, 2025
+* **Team Member:** Jalen Stephens
 
 ### **Commit / Ticket Reference**
 - **Commit:** Update README.md to include Docker setup, full API documentation, and build/run/test details
@@ -1705,6 +1771,11 @@ Helped identify untested execution branches across `ImageService` and `AnalyzeSe
 ---
 
 ### **AI Tool Information**
+
+* **Tool Used:** OpenAI ChatGPT (GPT-5)
+* **Access Method:** ChatGPT Web (.edu academic access)
+* **Configuration:** Default model settings
+* **Cost:** $0 (no paid API calls)
 - **Tool Used:** OpenAI ChatGPT (GPT-5)
 - **Access Method:** ChatGPT Web (.edu academic access)
 - **Configuration:** Default model settings
@@ -1713,6 +1784,10 @@ Helped identify untested execution branches across `ImageService` and `AnalyzeSe
 ---
 
 ### **Purpose of AI Assistance**
+
+Assisted with expanding documentation coverage for non-controller layers, including entity models,
+DTOs, database/RLS context helpers, and repository interfaces. The goal was to make code self-
+documenting and ensure domain intent is clear to future maintainers.
 ChatGPT assisted with rewriting and expanding the project’s `README.md` to meet grading and documentation guidelines.  
 Specifically, it helped integrate:
 - A new **Docker setup section** (build, run, troubleshoot instructions).
@@ -1723,6 +1798,12 @@ Specifically, it helped integrate:
 ---
 
 ### **Prompts / Interaction Summary**
+
+* Asked AI to enhance documentation for model + database layers under 100 chars/line
+* Updated class-level Javadoc for `AnalysisReport`, `Image`, and DTO aggregates
+* Added explanations to `RlsContext` regarding Postgres GUC and RLS enforcement patterns
+* Documented explicit query semantics in repository interfaces
+* Requested a one-line commit message referencing ticket #35
 - *“Create a copy and pastable README.md according to the format of the first file you received.”*
 - *“Create another section in `README.md` about running the file in Docker according to the information from `DOCKER_README.md`.”*
 - *“Does this file fulfill the rubric requirements for API documentation and setup instructions?”*
@@ -1731,6 +1812,15 @@ Specifically, it helped integrate:
 ---
 
 ### **Resulting Artifacts**
+
+* Updated the following files with improved documentation and inline comments:
+
+  * `RlsContext.java`
+  * `Dtos.java`
+  * `AnalysisReport.java`
+  * `Image.java`
+  * `AnalysisReportRepository.java`
+  * `ImageRepository.java`
 - `README.md` — new full-length Markdown file including:
   - Local setup & environment instructions (`env.pooler.sh`).
   - Complete Docker build/run instructions.
@@ -1747,6 +1837,10 @@ Specifically, it helped integrate:
 ---
 
 ### **Verification**
+
+* Manual inspection of generated comments for correctness and clarity
+* Confirmed compilation unchanged — documentation-only modifications
+* Verified repository method signatures and mappings remained intact
 - Manually reviewed the generated README for completeness and clarity.
 - Cross-checked against grading rubric for all 4 requirement categories.
 - Verified command accuracy by comparing against project’s existing Maven and Docker configurations.
@@ -1755,6 +1849,325 @@ Specifically, it helped integrate:
 ---
 
 ### **Attribution Statement**
+
+> Portions of this commit were generated with assistance from OpenAI ChatGPT (GPT-5) on
+> February 23, 2025. All AI-generated content was reviewed, verified, and finalized by the
+> development team.
+
+---
+
+### **Commit / Ticket Reference**
+
+* **Commit:** `docs: add Javadoc and inline comments across service layer and entrypoint (refs #35)`
+* **Ticket:** `#35 — Add Javadoc and inline comments for non-trivial codebase elements`
+* **Date:** February 23, 2025
+* **Team Member:** Jalen Stephens
+
+---
+
+### **AI Tool Information**
+
+* **Tool Used:** OpenAI ChatGPT (GPT-5)
+* **Access Method:** ChatGPT Web (.edu academic access)
+* **Configuration:** Default model settings
+* **Cost:** $0 (no paid API calls)
+
+---
+
+### **Purpose of AI Assistance**
+
+Provided Javadoc and inline explanatory comments across the service layer and the
+Spring Boot entrypoint, improving readability, maintainability, and future onboarding
+clarity without modifying runtime behavior.
+
+---
+
+### **Prompts / Interaction Summary**
+
+* Requested Javadoc for each service with <100 char line wrapping
+* Clarified ownership + RLS enforcement in ImageService
+* Documented lifecycle/pipeline semantics in AnalyzeService
+* Added usage/intent notes for SupabaseStorageService and AuthProxyService
+* Confirmed Jwt→identity semantics in UserService Javadoc
+* Added entrypoint-level project context to MetaDetectApplication
+* Requested one-line commit message referencing ticket #35
+
+---
+
+### **Resulting Artifacts**
+
+* Updated documentation in the following files:
+
+  * `AnalyzeService.java`
+  * `AuthProxyService.java`
+  * `ImageService.java`
+  * `SupabaseStorageService.java`
+  * `UserService.java`
+  * `MetaDetectApplication.java`
+
+---
+
+### **Verification**
+
+* Manual confirmation that Javadoc compiled and rendered correctly
+* No functional or behavioral code changes
+* Application builds and runs normally with all tests passing
+
+---
+
+### **Attribution Statement**
+
+> Portions of this commit were generated with assistance from OpenAI ChatGPT (GPT-5)
+> on February 23, 2025. All generated comments were reviewed, verified, and finalized
+> by the development team.
+
+---
+
+### **Commit / Ticket Reference**
+
+* **Commit:** `docs: add Javadoc and inline comments across service layer and entrypoint (refs #35)`
+* **Ticket:** `#35 — Add Javadoc and inline comments for non-trivial codebase elements`
+* **Date:** February 23, 2025
+* **Team Member:** Jalen Stephens
+
+---
+
+### **AI Tool Information**
+
+* **Tool Used:** OpenAI ChatGPT (GPT-5)
+* **Access Method:** ChatGPT Web (.edu academic access)
+* **Configuration:** Default model settings
+* **Cost:** $0 (no paid API calls)
+
+---
+
+### **Purpose of AI Assistance**
+
+Provided Javadoc and inline explanatory comments across the service layer and the
+Spring Boot entrypoint, improving readability, maintainability, and future onboarding
+clarity without modifying runtime behavior.
+
+---
+
+### **Prompts / Interaction Summary**
+
+* Requested Javadoc for each service with <100 char line wrapping
+* Clarified ownership + RLS enforcement in `ImageService`
+* Documented lifecycle/pipeline semantics in `AnalyzeService`
+* Added usage/intent notes for `SupabaseStorageService` and `AuthProxyService`
+* Confirmed JWT→identity behavior and constraints in `UserService`
+* Added entrypoint-level context comment to `MetaDetectApplication`
+* Asked for and received a one-line commit message referencing ticket #35
+
+---
+
+### **Resulting Artifacts**
+
+Documentation added/improved in:
+
+* `AnalyzeService.java`
+* `AuthProxyService.java`
+* `ImageService.java`
+* `SupabaseStorageService.java`
+* `UserService.java`
+* `MetaDetectApplication.java`
+
+---
+
+### **Verification**
+
+* Full manual review of Javadoc text
+* Ensured compilation unchanged (comments-only change)
+* Confirmed all existing tests pass
+
+---
+
+### **Attribution Statement**
+
+> Portions of this commit were generated with assistance from OpenAI ChatGPT (GPT-5)
+> on February 23, 2025. All generated comments were reviewed, verified, and finalized
+> by the development team.
+
+---
+
+### **Commit / Ticket Reference**
+
+* **Commit:** `test: add coverage docs and edge-case branches for auth/image tests (refs #35)`
+* **Ticket:** `#35 — Add Javadoc and inline comments for non-trivial codebase elements`
+* **Date:** February 23, 2025
+* **Team Member:** Jalen Stephens
+
+---
+
+### **AI Tool Information**
+
+* **Tool Used:** OpenAI ChatGPT (GPT-5)
+* **Access Method:** ChatGPT Web (.edu academic access)
+* **Configuration:** Default model settings
+* **Cost:** $0 (no paid API calls)
+
+---
+
+### **Purpose of AI Assistance**
+
+Added commentary coverage notes and expanded edge-case test branches to improve
+line/branch coverage for controller endpoints. Ensured error states, missing
+fields, and invalid method/media combinations were represented to validate
+API surface behavior.
+
+---
+
+### **Prompts / Interaction Summary**
+
+* Asked for additional test coverage for controller edge paths
+* Added missing negative branches for `/auth/*` routes
+* Restored and validated multipart/upload path coverage for `/api/images`
+* Confirmed JSON structure assertions and status codes for error handlers
+* Generated one-line commit message referencing ticket #35
+
+---
+
+### **Resulting Artifacts**
+
+Tests were expanded/refined in:
+
+* `C2paToolInvokerUnitTest.java`
+* `SecurityTestConfig.java` (test-only coverage)
+* `SupabaseClientConfigTest.java`
+* `AuthControllerTest.java`
+* `ImageControllerTest.java`
+
+---
+
+### **Verification**
+
+* Full test suite runs successfully
+* CI-style coverage confirmed locally (no functional changes to code)
+* Manual inspection: assertions and JSON paths confirmed accurate
+
+---
+
+### **Attribution Statement**
+
+> Portions of this commit were generated with assistance from OpenAI ChatGPT (GPT-5)
+> on February 23, 2025. All AI-generated content was reviewed, verified, and finalized
+> by the development team.
+
+---
+
+### **Commit / Ticket Reference**
+
+* **Commit:** `test: add javadoc and inline documentation for service layer tests refs(#35)`
+* **Ticket:** `#35 — write-javadoc-comments-for-all-non-trivial-code`
+* **Date:** October 23, 2025
+* **Team Member:** Jalen Stephens
+
+---
+
+### **AI Tool Information**
+
+* **Tool Used:** OpenAI ChatGPT (GPT-5)
+* **Access Method:** ChatGPT Web (.edu academic access)
+* **Configuration:** Default model settings
+* **Cost:** $0 (no paid API calls)
+
+---
+
+### **Purpose of AI Assistance**
+
+The AI assisted with drafting concise Javadoc blocks and inline comments in test classes to ensure
+clarity, maintainability, and compliance with project documentation standards. The AI also ensured
+line length and formatting requirements were followed.
+
+---
+
+### **Prompts / Interaction Summary**
+
+* “create javadoc comments and comment …”
+* “don’t use p tags and keep lines under 100 chars”
+* “apply formatting to UserServiceTest”
+* “one line commit message”
+* “fill out commit citation template”
+
+---
+
+### **Resulting Artifacts**
+
+* Updated `UserServiceTest.java` with Javadoc and inline comments
+* Standardized test documentation style for service layer tests
+* Commit message for tracking the change
+
+---
+
+### **Verification**
+
+* Manual review of updated test file
+* Confirmed formatting and line-length rules met
+* Verified no behavioral/test logic changes introduced
+* Build and test suite continue to pass
+
+---
+
+### **Attribution Statement**
+
+> Portions of this commit or configuration were generated with assistance from OpenAI ChatGPT (GPT-5) on October 23, 2025. All AI-generated content was reviewed, verified, and finalized by the development team.
+
+---
+
+### **Commit / Ticket Reference**
+
+* **Commit:** `test: add SecurityConfigMvcTest and AnalysisReportTest for branch coverage`
+* **Ticket:** `#35 — write javadoc comments for all non-trivial code`
+* **Date:** October 23, 2025
+* **Team Member:** Jalen Stephens
+
+---
+
+### **AI Tool Information**
+
+* **Tool Used:** OpenAI ChatGPT (GPT-5)
+* **Access Method:** ChatGPT Web (.edu academic access)
+* **Configuration:** Default model settings
+* **Cost:** $0 (no paid API calls)
+
+---
+
+### **Purpose of AI Assistance**
+
+Add missing test coverage for security configuration and AnalysisReport entity, including branch-path testing, annotation validation, and lifecycle behavior verification.
+
+---
+
+### **Prompts / Interaction Summary**
+
+* Asked for JUnit 5 test coverage for entity model (`AnalysisReport`)
+* Asked for Spring Security filter-chain + CORS + JWT branch coverage
+* Requested fixes for HS256 bit-length and null CORS request edge case
+* Requested javadoc & inline comments for non-trivial sections
+* Also asked for star-import removal and Checkstyle-safe cleanup
+
+---
+
+### **Resulting Artifacts**
+
+* `src/test/java/dev/coms4156/project/metadetect/config/SecurityConfigMvcTest.java`
+* `src/test/java/dev/coms4156/project/metadetect/model/AnalysisReportTest.java`
+
+---
+
+### **Verification**
+
+* Executed `mvn -q -DskipITs test` successfully with 0 failures
+* Verified security rules: public vs authenticated endpoints
+* Validated CORS configuration and issuer selection logic in JwtDecoder
+* Confirmed lifecycle behavior of `@PrePersist` and default enum values
+* Confirmed compliance with style rules (no star imports, annotations verified)
+
+---
+
+### **Attribution Statement**
+
+> Portions of this commit were generated with assistance from OpenAI ChatGPT (GPT-5) on October 23, 2025. All AI-generated content was reviewed, verified, and finalized by the development team.
 > Portions of this commit and documentation were generated with assistance from OpenAI ChatGPT (GPT-5) on October 23, 2025. All AI-generated content was reviewed, verified, and finalized by the development team before commit.
 
 ---

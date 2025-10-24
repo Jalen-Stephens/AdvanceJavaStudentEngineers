@@ -25,20 +25,53 @@ public class AuthController {
   private final UserService userService;
   private final AuthProxyService authProxy;
 
+  /**
+   * Constructs the controller with required collaborators.
+   *
+   * @param userService local user domain service
+   * @param authProxy adaptor that calls Supabase Auth endpoints
+   */
   public AuthController(UserService userService, AuthProxyService authProxy) {
     this.userService = userService;
     this.authProxy = authProxy;
   }
 
-  // --- Proxy endpoints (raw Supabase JSON passthrough) ---
+  // === Proxy endpoints (raw Supabase JSON passthrough) ========================
 
+  /**
+   * Proxies a sign-up request to Supabase Auth.
+   * Returns Supabase's JSON (e.g., user, session, error) as-is to the caller.
+   * Validation
+   * - Basic shape validation is provided by the DTO; deeper
+   *   validation and error shaping are
+   *   delegated to Supabase.
+   * Side effects
+   * - Supabase may create the user and return a session
+   *   depending on project config
+   *   (email confirmation, etc.).
+   *
+   * @param req register payload containing email and password
+   * @return upstream Supabase JSON wrapped in a {@link ResponseEntity}
+   */
   @PostMapping("/signup")
   public ResponseEntity<String> signup(@RequestBody Dtos.RegisterRequest req) {
+    // Pass-through: do not log raw passwords; the proxy handles HTTP and error codes.
     return authProxy.signup(req.email(), req.password());
   }
 
+  /**
+   * Proxies a login request to Supabase Auth.
+   * Returns Supabase's JSON (e.g., session/access token) as-is.
+   * Error handling
+   * - Incorrect credentials and account state errors are surfaced from Supabase and returned
+   *   unchanged so clients can rely on standard Supabase error formats.
+   *
+   * @param req login payload containing email and password
+   * @return upstream Supabase JSON wrapped in a {@link ResponseEntity}
+   */
   @PostMapping("/login")
   public ResponseEntity<String> login(@RequestBody Dtos.LoginRequest req) {
+    // Pass-through: credentials are forwarded to Supabase; no local auth happens here.
     return authProxy.login(req.email(), req.password());
   }
 

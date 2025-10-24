@@ -36,6 +36,11 @@ import org.springframework.mock.web.MockMultipartFile;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
 
+/**
+ * Controller-slice tests for {@link ImageController}.
+ * Uses @WebMvcTest to focus on request mapping, validation, and response shape.
+ * Security filters are disabled for brevity in these unit tests.
+ */
 @WebMvcTest(ImageController.class)
 @AutoConfigureMockMvc(addFilters = false)
 class ImageControllerTest {
@@ -43,12 +48,9 @@ class ImageControllerTest {
   @Autowired
   private MockMvc mvc;
 
-  @MockBean
-  private ImageService imageService;
-  @MockBean
-  private UserService userService;
-
-  // @MockBean private SupabaseStorageService storage;
+  @MockBean private ImageService imageService;
+  @MockBean private UserService userService;
+  // @MockBean private SupabaseStorageService storage; // not needed in this slice
 
   private UUID userId;
   private UUID imgId;
@@ -60,18 +62,20 @@ class ImageControllerTest {
     when(userService.getCurrentUserIdOrThrow()).thenReturn(userId);
   }
 
+  /** Creates a minimal Image domain object for responses. */
   private Image makeImage() {
     Image img = new Image();
     img.setId(imgId);
     img.setUserId(userId);
     img.setFilename("test.jpg");
     img.setStoragePath("images/test.jpg");
-    img.setLabels(new String[]{"tag1", "tag2"});
+    img.setLabels(new String[] { "tag1", "tag2" });
     img.setNote("hello");
     return img;
   }
 
   // ---- GET /api/images (list) ----
+
   @Test
   void listImages_success() throws Exception {
     when(imageService.listByOwner(userId, 0, 5)).thenReturn(List.of(makeImage()));
@@ -85,7 +89,10 @@ class ImageControllerTest {
         .andExpect(jsonPath("$[0].note").value("hello"));
   }
 
-  // pagination bounds (empty result if beyond range)
+  /**
+   * When the requested page is beyond the available results, the controller
+   * returns an empty array (based on service paging behavior).
+   */
   @Test
   void listImages_outOfRangePagination_returnsEmptyList() throws Exception {
     when(imageService.listByOwner(userId, 0, 5)).thenReturn(List.of(makeImage()));
@@ -96,6 +103,7 @@ class ImageControllerTest {
   }
 
   // ---- GET /api/images/{id} ----
+
   @Test
   void getImage_success() throws Exception {
     when(imageService.getById(userId, imgId)).thenReturn(makeImage());
@@ -124,6 +132,7 @@ class ImageControllerTest {
   }
 
   // ---- PUT /api/images/{id} ----
+
   @Test
   void updateImage_success() throws Exception {
     Image updated = makeImage();
@@ -147,29 +156,31 @@ class ImageControllerTest {
   }
 
   // ---- DELETE /api/images/{id} ----
-  //  @Test
-  //  void deleteImage_success() throws Exception {
-  //    mvc.perform(MockMvcRequestBuilders.delete("/api/images/" + imgId))
-  //        .andExpect(status().isNoContent());
-  //
-  //    verify(imageService).delete(userId, imgId);
-  //  }
-  //
-  //  @Test
-  //  void deleteImage_notFound() throws Exception {
-  //    doThrow(new NotFoundException("missing")).when(imageService).delete(userId, imgId);
-  //
-  //    mvc.perform(MockMvcRequestBuilders.delete("/api/images/" + imgId))
-  //        .andExpect(status().isNotFound());
-  //  }
-  //
-  //  @Test
-  //  void deleteImage_forbidden() throws Exception {
-  //    doThrow(new ForbiddenException("forbidden")).when(imageService).delete(userId, imgId);
-  //
-  //    mvc.perform(MockMvcRequestBuilders.delete("/api/images/" + imgId))
-  //        .andExpect(status().isForbidden());
-  //  }
+  // Tests are present but commented out in this slice. Uncomment if endpoint
+  // is re-enabled or when behavior needs explicit verification.
+
+  // @Test
+  // void deleteImage_success() throws Exception {
+  //   mvc.perform(MockMvcRequestBuilders.delete("/api/images/" + imgId))
+  //       .andExpect(status().isNoContent());
+  //   verify(imageService).delete(userId, imgId);
+  // }
+
+  // @Test
+  // void deleteImage_notFound() throws Exception {
+  //   doThrow(new NotFoundException("missing")).when(imageService).delete(userId, imgId);
+  //   mvc.perform(MockMvcRequestBuilders.delete("/api/images/" + imgId))
+  //       .andExpect(status().isNotFound());
+  // }
+
+  // @Test
+  // void deleteImage_forbidden() throws Exception {
+  //   doThrow(new ForbiddenException("forbidden")).when(imageService).delete(userId, imgId);
+  //   mvc.perform(MockMvcRequestBuilders.delete("/api/images/" + imgId))
+  //       .andExpect(status().isForbidden());
+  // }
+
+  // ---- POST /api/images/upload ----
 
   @Test
   void upload_success_returns201AndPersistsStoragePath() throws Exception {
@@ -185,12 +196,11 @@ class ImageControllerTest {
     returned.setFilename("pic.png");
     returned.setStoragePath(user + "/" + imgId + "--pic.png");
 
-    // New orchestration path: controller delegates to service.upload(...)
+    // Controller delegates to service.upload(...)
     when(imageService.upload(eq(user), eq("jwt"), any())).thenReturn(returned);
 
-    MockMultipartFile file = new MockMultipartFile(
-        "file", "pic.png", "image/png", "PNGDATA".getBytes()
-    );
+    MockMultipartFile file =
+        new MockMultipartFile("file", "pic.png", "image/png", "PNGDATA".getBytes());
 
     mvc.perform(MockMvcRequestBuilders
         .multipart("/api/images/upload")
@@ -200,6 +210,8 @@ class ImageControllerTest {
       .andExpect(jsonPath("$.filename").value("pic.png"))
         .andExpect(jsonPath("$.userId").value(user.toString()));
   }
+
+  // ---- GET /api/images/{id}/url ----
 
   @Test
   void signedUrl_success_returns200WithUrl() throws Exception {
@@ -217,4 +229,3 @@ class ImageControllerTest {
         .andExpect(jsonPath("$.url").exists());
   }
 }
-
