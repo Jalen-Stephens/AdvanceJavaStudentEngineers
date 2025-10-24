@@ -1762,6 +1762,12 @@ and consistency with Iteration 1 project standards.
 * **Date:** February 23, 2025
 * **Team Member:** Jalen Stephens
 
+### **Commit / Ticket Reference**
+- **Commit:** Update README.md to include Docker setup, full API documentation, and build/run/test details
+- **Ticket:** #42 — chore: update readme.md to fit guidelines
+- **Date:** October 23, 2025
+- **Team Member:** Isaac Schmidt
+
 ---
 
 ### **AI Tool Information**
@@ -1770,6 +1776,10 @@ and consistency with Iteration 1 project standards.
 * **Access Method:** ChatGPT Web (.edu academic access)
 * **Configuration:** Default model settings
 * **Cost:** $0 (no paid API calls)
+- **Tool Used:** OpenAI ChatGPT (GPT-5)
+- **Access Method:** ChatGPT Web (.edu academic access)
+- **Configuration:** Default model settings
+- **Cost:** $0 (no paid API calls)
 
 ---
 
@@ -1778,6 +1788,12 @@ and consistency with Iteration 1 project standards.
 Assisted with expanding documentation coverage for non-controller layers, including entity models,
 DTOs, database/RLS context helpers, and repository interfaces. The goal was to make code self-
 documenting and ensure domain intent is clear to future maintainers.
+ChatGPT assisted with rewriting and expanding the project’s `README.md` to meet grading and documentation guidelines.  
+Specifically, it helped integrate:
+- A new **Docker setup section** (build, run, troubleshoot instructions).
+- Clear **API endpoint documentation** with input/output formats and status codes.
+- Formatted **build/run/test instructions** for both Maven and Docker environments.
+- Verification that the README satisfies all rubric items (API docs, order dependencies, build/test instructions, third-party explanation).
 
 ---
 
@@ -1788,6 +1804,10 @@ documenting and ensure domain intent is clear to future maintainers.
 * Added explanations to `RlsContext` regarding Postgres GUC and RLS enforcement patterns
 * Documented explicit query semantics in repository interfaces
 * Requested a one-line commit message referencing ticket #35
+- *“Create a copy and pastable README.md according to the format of the first file you received.”*
+- *“Create another section in `README.md` about running the file in Docker according to the information from `DOCKER_README.md`.”*
+- *“Does this file fulfill the rubric requirements for API documentation and setup instructions?”*
+- *“Write everything you assisted me with in .md format so that I can copy and paste it into my citations file.”*
 
 ---
 
@@ -1801,6 +1821,18 @@ documenting and ensure domain intent is clear to future maintainers.
   * `Image.java`
   * `AnalysisReportRepository.java`
   * `ImageRepository.java`
+- `README.md` — new full-length Markdown file including:
+  - Local setup & environment instructions (`env.pooler.sh`).
+  - Complete Docker build/run instructions.
+  - Comprehensive API documentation (auth, image, analyze endpoints, with status codes).
+  - Testing and CI/CD sections (Maven, PMD, JaCoCo, Checkstyle).
+  - Third-party tool acknowledgment (`c2patool`).
+- Added/updated “Metadetect Endpoints” section (paste-ready) including:
+  - /auth/signup, /auth/login, /auth/refresh, /auth/me
+  - /api/images (list, get by id, upload multipart, update, delete, signed URL)
+  - /api/analyze (start, status, manifest, compare)
+- Clarified request headers, path/query params, success payloads, and error/status mappings consistent with service-layer behavior.
+- Validation of rubric compliance for README content (build, test, endpoints, ordering, third-party).
 
 ---
 
@@ -1809,6 +1841,10 @@ documenting and ensure domain intent is clear to future maintainers.
 * Manual inspection of generated comments for correctness and clarity
 * Confirmed compilation unchanged — documentation-only modifications
 * Verified repository method signatures and mappings remained intact
+- Manually reviewed the generated README for completeness and clarity.
+- Cross-checked against grading rubric for all 4 requirement categories.
+- Verified command accuracy by comparing against project’s existing Maven and Docker configurations.
+- Confirmed documentation order (setup → Docker → endpoints) for logical flow.
 
 ---
 
@@ -2132,5 +2168,6 @@ Add missing test coverage for security configuration and AnalysisReport entity, 
 ### **Attribution Statement**
 
 > Portions of this commit were generated with assistance from OpenAI ChatGPT (GPT-5) on October 23, 2025. All AI-generated content was reviewed, verified, and finalized by the development team.
+> Portions of this commit and documentation were generated with assistance from OpenAI ChatGPT (GPT-5) on October 23, 2025. All AI-generated content was reviewed, verified, and finalized by the development team before commit.
 
 ---
