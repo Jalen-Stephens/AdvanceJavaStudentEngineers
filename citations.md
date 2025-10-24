@@ -1820,3 +1820,70 @@ documenting and ensure domain intent is clear to future maintainers.
 
 ---
 
+### **Commit / Ticket Reference**
+
+* **Commit:** `docs: add Javadoc and inline comments across service layer and entrypoint (refs #35)`
+* **Ticket:** `#35 — Add Javadoc and inline comments for non-trivial codebase elements`
+* **Date:** February 23, 2025
+* **Team Member:** Jalen Stephens
+
+---
+
+### **AI Tool Information**
+
+* **Tool Used:** OpenAI ChatGPT (GPT-5)
+* **Access Method:** ChatGPT Web (.edu academic access)
+* **Configuration:** Default model settings
+* **Cost:** $0 (no paid API calls)
+
+---
+
+### **Purpose of AI Assistance**
+
+Provided Javadoc and inline explanatory comments across the service layer and the
+Spring Boot entrypoint, improving readability, maintainability, and future onboarding
+clarity without modifying runtime behavior.
+
+---
+
+### **Prompts / Interaction Summary**
+
+* Requested Javadoc for each service with <100 char line wrapping
+* Clarified ownership + RLS enforcement in ImageService
+* Documented lifecycle/pipeline semantics in AnalyzeService
+* Added usage/intent notes for SupabaseStorageService and AuthProxyService
+* Confirmed Jwt→identity semantics in UserService Javadoc
+* Added entrypoint-level project context to MetaDetectApplication
+* Requested one-line commit message referencing ticket #35
+
+---
+
+### **Resulting Artifacts**
+
+* Updated documentation in the following files:
+
+  * `AnalyzeService.java`
+  * `AuthProxyService.java`
+  * `ImageService.java`
+  * `SupabaseStorageService.java`
+  * `UserService.java`
+  * `MetaDetectApplication.java`
+
+---
+
+### **Verification**
+
+* Manual confirmation that Javadoc compiled and rendered correctly
+* No functional or behavioral code changes
+* Application builds and runs normally with all tests passing
+
+---
+
+### **Attribution Statement**
+
+> Portions of this commit were generated with assistance from OpenAI ChatGPT (GPT-5)
+> on February 23, 2025. All generated comments were reviewed, verified, and finalized
+> by the development team.
+
+---
+
