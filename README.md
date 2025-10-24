@@ -67,6 +67,7 @@ From the terminal, run the following CLI commands:
 
 ## Running the Application with Docker
 ---------------------------------------------------------------------
+STILL UNDER DEVELOPMENT - PUSH TO ITERATION 2 - Sulay has been working very hard on this and it's good for next iteration
 
 ### 🐳 What is Docker?
 Docker packages your application and its dependencies into a container so that it runs identically across any environment. It’s a portable and lightweight runtime environment — ideal for ensuring consistent deployments.
@@ -275,6 +276,8 @@ Cd in to code directory
 Ran to generate report:
 $HOME/pmd-bin-7.16.0/bin/pmd check -d src/main/java,src/test/java -R rulesets/java/quickstart.xml -f text -r pmd-report.txt
 
+You can also run `mvn clean verify` to run pmd and test
+
 
 
 ## MetaDetect Endpoints
@@ -468,12 +471,38 @@ I used PMD to perform static analysis on my codebase, see below for the most rec
 
 ![Screenshot of PMD analysis report](reports/pmd-report.png)
 
+## Proof of Multiple Test Users in DB
+We tested with two users uploading the same exact image to see if it caused conflicts, there were no conflicts and images were store sperately within DB.
+
+![Screenshot of DB Table](reports/two-users-proof.jpg)
+
+## Proof of Images stored in Supabase Bucket
+Wanted to show proof of Objects stored in DB.
+
+![Screenshot of DB Bucket with Image](reports/objects-stored-DB.jpg)
+
+## Proof of API Testing using Postman
+Used Postman and Curl to Test our API routes
+
+![Screenshot of Postman Testing](reports/api-testing.png)
+
+## Proof of Self-Documenting Code
+Had a Ticket Dedicated to Going through each file and Ensuring there was javadocs and inline comments:
+[[Chore] - Write JavaDoc comments for all non-trivial code #35](https://github.com/users/Jalen-Stephens/projects/5/views/1?pane=issue&itemId=135291288&issue=Jalen-Stephens%7CAdvanceJavaStudentEngineers%7C35)
+
+## Documentation of AI Resources
+Where AI was used it was heavily documented in the [citations.md](https://github.com/Jalen-Stephens/AdvanceJavaStudentEngineers/blob/main/citations.md)
+
+## Project Management Tool
+We used [Github Projects Kanban Board](https://github.com/users/Jalen-Stephens/projects/5) to Track development.
 
 ## Continuous Integration Report
 ---------------------------------------------------------------------
-This repository using GitHub Actions to perform continous integration, to view the latest results go to the following link: https://github.com/Jalen-Stephens/AdvanceJavaStudentEngineers/actions
+This repository using GitHub Actions to perform continous integration, to view the latest results go to the following link: [AdvanceJavaStudentEngineers/actions](https://github.com/Jalen-Stephens/AdvanceJavaStudentEngineers/actions)
 
 Click on the latest job on the top under "X workflow runs" then Click 'build' under jobs finally click the drop down next to all the action items to read the logs made during their execution.
+
+STILL UNDER DEVELOPMENT - PUSH TO ITERATION 2 - Sulay has been working very hard on this and it's good for next iteration
 
 ## Tools used 
 ---------------------------------------------------------------------
@@ -499,3 +528,8 @@ This section includes notes on tools and technologies used in building this proj
   * Coalition for Content Provenance and Authenticity (C2PA). *c2patool (Version 0.23.4)*.  
   * Content Authenticity Initiative, Adobe Systems, 2024.  
   * Available at: https://github.com/contentauth/c2pa-rs
+* Supabase (Postgres SQL)
+  * We use Supabase as our main Database
+  * It has built in Authentication
+  * We use tables to track metadata of images
+  * Then we use S3 Buckets to store the physical Images within Supabase

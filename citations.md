@@ -1,45 +1,4 @@
 ### **Commit / Ticket Reference**
-- **Commit:** `<your commit message>`
-- **Ticket:** `#<ticket number> — <ticket title>`
-- **Date:** <month day, year>
-- **Team Member:** <name>
-
----
-
-### **AI Tool Information**
-- **Tool Used:** OpenAI ChatGPT (GPT-5)
-- **Access Method:** ChatGPT Web (.edu academic access)
-- **Configuration:** Default model settings
-- **Cost:** $0 (no paid API calls)
-
----
-
-### **Purpose of AI Assistance**
-<Briefly describe what part of the task the AI assisted with — e.g., refactoring, writing docs, fixing errors, setting up build tools, etc.>
-
----
-
-### **Prompts / Interaction Summary**
-<List or paraphrase the key prompts you used.>
-
----
-
-### **Resulting Artifacts**
-<List files, configurations, or code generated/edited with AI help.>
-
----
-
-### **Verification**
-<List how you tested/validated the AI-assisted changes (build, test suite, manual review, etc.).>
-
----
-
-### **Attribution Statement**
-> Portions of this commit or configuration were generated with assistance from OpenAI ChatGPT (GPT-5) on <date>. All AI-generated content was reviewed, verified, and finalized by the development team.
-
----
-
-### **Commit / Ticket Reference**
 
 * **Commit:** `chore(init): renamed project to MetaDetect, updated package structure, pom.xml coordinates, and Spring Boot configuration (#2)`
 * **Ticket:** [#2 — INIT Project Skeleton Code](https://github.com/Jalen-Stephens/AdvanceJavaStudentEngineers/issues/2)
