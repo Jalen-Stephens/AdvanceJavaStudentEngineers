@@ -19,17 +19,32 @@ import org.springframework.security.oauth2.server.resource.authentication.JwtAut
 import org.springframework.web.server.ResponseStatusException;
 
 /**
- * Unit tests for UserService identity extraction from Supabase JWT.
+ * Unit tests for {@link UserService} that verify identity and email extraction
+ * from a Spring Security {@link Jwt}-backed authentication (Supabase flow).
+ * Focus areas:
+ * - Parsing UUID from the JWT "sub" claim
+ * - Handling missing/invalid authentication
+ * - Reading optional "email" claim
+ * Strategy:
+ * - Build synthetic JWTs
+ * - Place them into the SecurityContext
+ * - Call service methods and assert outcomes
  */
 class UserServiceTest {
 
+  /** Instance under test. Stateless; safe to share per-method in JUnit 5. */
   private final UserService service = new UserService();
 
+  /** Ensure no test leaks security state to the next one. */
   @AfterEach
   void clearSecurityContext() {
     SecurityContextHolder.clearContext();
   }
 
+  /**
+   * When a valid JWT is present and the "sub" is a UUID string, the service
+   * should return that UUID.
+   */
   @Test
   void getCurrentUserIdOrThrow_returnsUuid_whenAuthenticated() {
     UUID userId = UUID.randomUUID();
@@ -39,6 +54,10 @@ class UserServiceTest {
     assertEquals(userId, result);
   }
 
+  /**
+   * When no authentication exists in the security context, the service
+   * should throw 401 Unauthorized.
+   */
   @Test
   void getCurrentUserIdOrThrow_throwsUnauthorized_whenNoAuth() {
     SecurityContextHolder.clearContext();
@@ -48,6 +67,10 @@ class UserServiceTest {
     assertEquals(HttpStatus.UNAUTHORIZED, ex.getStatusCode());
   }
 
+  /**
+   * When "sub" exists but is not a valid UUID, the service treats it as
+   * unauthenticated and throws 401 Unauthorized.
+   */
   @Test
   void getCurrentUserIdOrThrow_throwsUnauthorized_whenInvalidSub() {
     setJwtInContext(jwtWithSubAndEmail("not-a-uuid", "user@example.com"));
@@ -57,6 +80,10 @@ class UserServiceTest {
     assertEquals(HttpStatus.UNAUTHORIZED, ex.getStatusCode());
   }
 
+  /**
+   * If the "email" claim is present, {@code getCurrentUserEmail()} should
+   * return a non-empty Optional.
+   */
   @Test
   void getCurrentUserEmail_returnsEmail_whenClaimPresent() {
     UUID userId = UUID.randomUUID();
@@ -67,6 +94,9 @@ class UserServiceTest {
     assertEquals("user@example.com", email.get());
   }
 
+  /**
+   * With no authentication, the email should be empty rather than throwing.
+   */
   @Test
   void getCurrentUserEmail_empty_whenNoAuth() {
     SecurityContextHolder.clearContext();
@@ -75,6 +105,9 @@ class UserServiceTest {
     assertTrue(email.isEmpty());
   }
 
+  /**
+   * With a valid JWT but no "email" claim, the email should be empty.
+   */
   @Test
   void getCurrentUserEmail_empty_whenClaimMissing() {
     UUID userId = UUID.randomUUID();
@@ -82,7 +115,7 @@ class UserServiceTest {
     Map<String, Object> headers = Map.of("alg", "RS256");
     Map<String, Object> claims = new HashMap<>();
     claims.put("sub", userId.toString());
-    // intentionally no "email" claim
+    // no "email" claim on purpose
 
     Jwt jwt = new Jwt(
         "dummy-token",
@@ -97,8 +130,13 @@ class UserServiceTest {
     assertTrue(email.isEmpty());
   }
 
-  // --- helpers ---
+  // --------------------------------------------------------------------------
+  // helpers
+  // --------------------------------------------------------------------------
 
+  /**
+   * Build a synthetic JWT with the given subject and email claims.
+   */
   private static Jwt jwtWithSubAndEmail(String sub, String email) {
     Map<String, Object> headers = Map.of("alg", "RS256");
     Map<String, Object> claims = new HashMap<>();
@@ -114,6 +152,10 @@ class UserServiceTest {
     );
   }
 
+  /**
+   * Put a {@link JwtAuthenticationToken} into the SecurityContext so the
+   * service can read it as if it were a real request.
+   */
   private static void setJwtInContext(Jwt jwt) {
     JwtAuthenticationToken auth = new JwtAuthenticationToken(jwt);
     SecurityContextHolder.getContext().setAuthentication(auth);

@@ -2018,3 +2018,62 @@ Tests were expanded/refined in:
 > by the development team.
 
 ---
+
+### **Commit / Ticket Reference**
+
+* **Commit:** `test: add javadoc and inline documentation for service layer tests refs(#35)`
+* **Ticket:** `#35 — write-javadoc-comments-for-all-non-trivial-code`
+* **Date:** October 23, 2025
+* **Team Member:** Jalen Stephens
+
+---
+
+### **AI Tool Information**
+
+* **Tool Used:** OpenAI ChatGPT (GPT-5)
+* **Access Method:** ChatGPT Web (.edu academic access)
+* **Configuration:** Default model settings
+* **Cost:** $0 (no paid API calls)
+
+---
+
+### **Purpose of AI Assistance**
+
+The AI assisted with drafting concise Javadoc blocks and inline comments in test classes to ensure
+clarity, maintainability, and compliance with project documentation standards. The AI also ensured
+line length and formatting requirements were followed.
+
+---
+
+### **Prompts / Interaction Summary**
+
+* “create javadoc comments and comment …”
+* “don’t use p tags and keep lines under 100 chars”
+* “apply formatting to UserServiceTest”
+* “one line commit message”
+* “fill out commit citation template”
+
+---
+
+### **Resulting Artifacts**
+
+* Updated `UserServiceTest.java` with Javadoc and inline comments
+* Standardized test documentation style for service layer tests
+* Commit message for tracking the change
+
+---
+
+### **Verification**
+
+* Manual review of updated test file
+* Confirmed formatting and line-length rules met
+* Verified no behavioral/test logic changes introduced
+* Build and test suite continue to pass
+
+---
+
+### **Attribution Statement**
+
+> Portions of this commit or configuration were generated with assistance from OpenAI ChatGPT (GPT-5) on October 23, 2025. All AI-generated content was reviewed, verified, and finalized by the development team.
+
+---

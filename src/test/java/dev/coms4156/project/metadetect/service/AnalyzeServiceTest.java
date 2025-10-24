@@ -37,6 +37,14 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
 
+/**
+ * Unit tests for {@link AnalyzeService}.
+ * Strategy:
+ * - Mock external collaborators (C2PA tool, storage, repo, user, image svc).
+ * - Exercise both happy-path and error paths for analysis lifecycle.
+ * - Use fixed Clock for deterministic timestamps.
+ * - Verify ownership checks, error propagation, persistence state, and DTO shape.
+ */
 class AnalyzeServiceTest {
 
   private C2paToolInvoker c2pa;
@@ -64,10 +72,11 @@ class AnalyzeServiceTest {
     service = new AnalyzeService(c2pa, imageService, repo, storage, userService, clock);
 
     when(userService.getCurrentUserIdOrThrow()).thenReturn(userId);
-    // matches your current AnalyzeService.getUserBearerOrThrow()
+    // Bearer required by storage for signed URL generation.
     when(userService.getCurrentBearerOrThrow()).thenReturn("bearer-token");
   }
 
+  /** Creates an owned Image with the provided storage path. */
   private Image ownedImage(String storagePath) {
     Image img = new Image();
     img.setId(imageId);
@@ -76,6 +85,13 @@ class AnalyzeServiceTest {
     return img;
   }
 
+  /**
+   * submitAnalysis happy-path:
+   * - Creates PENDING report.
+   * - Downloads via signed URL.
+   * - Extracts manifest.
+   * - Marks DONE with manifest details.
+   */
   @Test
   void submitAnalysis_happyPath_marksCompleted_andReturnsId() throws Exception {
     when(imageService.getById(userId, imageId)).thenReturn(ownedImage("u/i/file.png"));
@@ -93,6 +109,7 @@ class AnalyzeServiceTest {
     AnalysisReport pending = new AnalysisReport(imageId);
     pending.setCreatedAt(fixedNow);
 
+    // Save returns entity with generated id; later findById reads same row.
     when(repo.save(any(AnalysisReport.class))).thenAnswer(inv -> {
       AnalysisReport ar = inv.getArgument(0);
       ar.setId(analysisId);
@@ -103,6 +120,7 @@ class AnalyzeServiceTest {
     Dtos.AnalyzeStartResponse resp = service.submitAnalysis(imageId);
     assertThat(resp.analysisId()).isEqualTo(analysisId.toString());
 
+    // Capture final save and assert DONE + manifest persisted.
     ArgumentCaptor<AnalysisReport> saved = ArgumentCaptor.forClass(AnalysisReport.class);
     verify(repo, atLeast(1)).save(saved.capture());
     AnalysisReport last = saved.getAllValues().get(saved.getAllValues().size() - 1);
@@ -112,17 +130,24 @@ class AnalyzeServiceTest {
     downloadable.delete();
   }
 
+  /** If image has no storage path, service should fail fast with 400-like error. */
   @Test
   void submitAnalysis_missingStoragePath_throws400() {
     when(imageService.getById(userId, imageId)).thenReturn(ownedImage(null));
+
     assertThrows(MissingStoragePathException.class, () -> service.submitAnalysis(imageId));
     verify(repo, never()).save(any());
   }
 
+  /**
+   * If the signed URL download fails, the report should be marked FAILED and
+   * error JSON should be stored in details.
+   */
   @Test
   void submitAnalysis_downloadFailure_marksFailed() throws Exception {
     when(imageService.getById(userId, imageId)).thenReturn(ownedImage("x/y/z.png"));
-    when(storage.createSignedUrl(eq("x/y/z.png"), anyString())).thenReturn("file:/does/not/exist");
+    when(storage.createSignedUrl(eq("x/y/z.png"), anyString()))
+        .thenReturn("file:/does/not/exist");
 
     UUID analysisId = UUID.randomUUID();
     AnalysisReport pending = new AnalysisReport(imageId);
@@ -145,6 +170,10 @@ class AnalyzeServiceTest {
     assertThat(last.getDetails()).contains("\"error\":");
   }
 
+  /**
+   * If the C2PA tool throws, the report should be marked FAILED and the error
+   * message should be captured into details JSON.
+   */
   @Test
   void submitAnalysis_c2paFailure_marksFailed() throws Exception {
     when(imageService.getById(userId, imageId)).thenReturn(ownedImage("a/b/c.png"));
@@ -181,6 +210,10 @@ class AnalyzeServiceTest {
     downloadable.delete();
   }
 
+  /**
+   * getMetadata returns stored manifest JSON and re-validates ownership by
+   * resolving the associated image.
+   */
   @Test
   void getMetadata_success_returnsManifest_andChecksOwnership() {
     UUID analysisId = UUID.randomUUID();
@@ -188,6 +221,7 @@ class AnalyzeServiceTest {
     report.setId(analysisId);
     report.setDetails("{\"m\":\"v\"}");
     report.setStatus(AnalysisReport.ReportStatus.DONE);
+
     when(repo.findById(analysisId)).thenReturn(Optional.of(report));
     when(imageService.getById(userId, imageId)).thenReturn(ownedImage("s/p.png"));
 
@@ -196,6 +230,7 @@ class AnalyzeServiceTest {
     assertThat(out.manifestJson()).isEqualTo("{\"m\":\"v\"}");
   }
 
+  /** getMetadata should 404 when the analysis row has no manifest details. */
   @Test
   void getMetadata_missing_throws404() {
     UUID analysisId = UUID.randomUUID();
@@ -203,12 +238,14 @@ class AnalyzeServiceTest {
     report.setId(analysisId);
     report.setDetails(null);
     report.setStatus(AnalysisReport.ReportStatus.DONE);
+
     when(repo.findById(analysisId)).thenReturn(Optional.of(report));
     when(imageService.getById(userId, imageId)).thenReturn(ownedImage("x"));
 
     assertThrows(NotFoundException.class, () -> service.getMetadata(analysisId));
   }
 
+  /** getMetadata should 404 when the analysis id does not exist. */
   @Test
   void getMetadata_notFound_throws404() {
     UUID analysisId = UUID.randomUUID();
@@ -216,6 +253,10 @@ class AnalyzeServiceTest {
     assertThrows(NotFoundException.class, () -> service.getMetadata(analysisId));
   }
 
+  /**
+   * getConfidence returns status and score and re-validates ownership via the
+   * linked image.
+   */
   @Test
   void getConfidence_success_returnsStatusAndScore_andChecksOwnership() {
     UUID analysisId = UUID.randomUUID();
@@ -223,6 +264,7 @@ class AnalyzeServiceTest {
     report.setId(analysisId);
     report.setStatus(AnalysisReport.ReportStatus.PENDING);
     report.setConfidence(null);
+
     when(repo.findById(analysisId)).thenReturn(Optional.of(report));
     when(imageService.getById(userId, imageId)).thenReturn(ownedImage("x"));
 
@@ -232,6 +274,10 @@ class AnalyzeServiceTest {
     assertThat(out.score()).isNull();
   }
 
+  /**
+   * compare enforces ownership of both images and returns a stub response
+   * in Iteration 1.
+   */
   @Test
   void compare_enforcesOwnershipOnBothImages() {
     when(imageService.getById(userId, imageId)).thenReturn(ownedImage("x"));
@@ -244,37 +290,48 @@ class AnalyzeServiceTest {
     assertThat(out.note()).contains("stub");
   }
 
+  /** compare should propagate ForbiddenException from left image check. */
   @Test
   void compare_forbiddenOnLeft_propagates() {
     UUID otherImage = UUID.randomUUID();
-    when(imageService.getById(userId, imageId)).thenThrow(new ForbiddenException("nope"));
+    when(imageService.getById(userId, imageId))
+        .thenThrow(new ForbiddenException("nope"));
+
     assertThrows(ForbiddenException.class, () -> service.compare(imageId, otherImage));
   }
 
+  /**
+   * submitAnalysis should propagate ownership errors thrown by ImageService
+   * before any repo writes occur.
+   */
   @Test
   void submitAnalysis_propagatesOwnershipErrors() {
-    // Use doThrow(...) to avoid calling the real method during stubbing
     doThrow(new ForbiddenException("nope"))
-      .when(imageService).getById(eq(userId), eq(imageId));
+        .when(imageService)
+        .getById(eq(userId), eq(imageId));
     assertThrows(ForbiddenException.class, () -> service.submitAnalysis(imageId));
 
-    // Then simulate NotFound path
     doThrow(new NotFoundException("missing"))
-      .when(imageService).getById(eq(userId), eq(imageId));
+        .when(imageService)
+        .getById(eq(userId), eq(imageId));
     assertThrows(NotFoundException.class, () -> service.submitAnalysis(imageId));
   }
 
+  /** truncate(): returns original when under limit. */
   @Test
   void truncate_shorterThanLimit_returnsOriginal() {
     String s = "short json";
     String out = callPrivate(
         service,
         "truncate",
-      new Class<?>[] { String.class, int.class },
-        s, 50);
+        new Class<?>[] { String.class, int.class },
+        s,
+        50
+    );
     assertThat(out).isEqualTo(s);
   }
 
+  /** truncate(): caps to limit when over. */
   @Test
   void truncate_longerThanLimit_isCappedToLimit() {
     String s = "x".repeat(200);
@@ -282,30 +339,36 @@ class AnalyzeServiceTest {
     String out = callPrivate(
         service,
         "truncate",
-      new Class<?>[] { String.class, int.class },
-        s, limit);
+        new Class<?>[] { String.class, int.class },
+        s,
+        limit
+    );
     assertThat(out.length()).isEqualTo(limit);
   }
 
-
+  /**
+   * downloadToTemp(): given a file:// URL, writes to a temp file and returns it.
+   * Verifies byte-for-byte integrity.
+   */
   @Test
   void downloadToTemp_fileUrl_intoProvidedDir_copiesBytes() throws Exception {
     File src = File.createTempFile("src-", ".bin");
-    byte[] payload = "hello-bytes".getBytes(java.nio.charset.StandardCharsets.UTF_8);
-    java.nio.file.Files.write(src.toPath(), payload);
+    byte[] payload = "hello-bytes".getBytes(StandardCharsets.UTF_8);
+    Files.write(src.toPath(), payload);
     String url = src.toURI().toURL().toString();
 
-    File destDir = java.nio.file.Files.createTempDirectory("dl-dir-").toFile();
+    File destDir = Files.createTempDirectory("dl-dir-").toFile();
 
-    // NOTE: return type is File, not String
     File out = callPrivate(
         service,
         "downloadToTemp",
-      new Class<?>[] { String.class, String.class },
-        url, destDir.getAbsolutePath());
+        new Class<?>[] { String.class, String.class },
+        url,
+        destDir.getAbsolutePath()
+    );
 
     assertTrue(out.exists());
-    assertThat(java.nio.file.Files.readAllBytes(out.toPath())).isEqualTo(payload);
+    assertThat(Files.readAllBytes(out.toPath())).isEqualTo(payload);
 
     // cleanup
     out.delete();
@@ -313,43 +376,13 @@ class AnalyzeServiceTest {
     src.delete();
   }
 
-
-  //  @Test
-  //  void runExtractionAndFinalize_longEscapedManifest_isEscapedTruncatedAndMarkedDone() {
-  //    UUID analysisId = UUID.randomUUID();
-  //    AnalysisReport pending = new AnalysisReport(imageId);
-  //    pending.setId(analysisId);
-  //    pending.setCreatedAt(fixedNow);
-  //    pending.setStatus(AnalysisReport.ReportStatus.PENDING);
-  //
-  //    when(repo.findById(analysisId)).thenReturn(Optional.of(pending));
-  //    when(repo.save(any(AnalysisReport.class))).thenAnswer(inv -> inv.getArgument(0));
-  //
-  //    // Use a valid, SMALL JSON manifest (ensures success path)
-  //    String smallValidJson = "{\"key\":\"value\"}";
-  //
-  //    callPrivate(
-  //      service,
-  //      "runExtractionAndFinalize",
-  //      new Class<?>[] { UUID.class, String.class },
-  //      analysisId, smallValidJson);
-  //
-  //    ArgumentCaptor<AnalysisReport> cap = ArgumentCaptor.forClass(AnalysisReport.class);
-  //    verify(repo, atLeast(1)).save(cap.capture());
-  //    AnalysisReport saved = cap.getAllValues().get(cap.getAllValues().size() - 1);
-  //
-  //    // Expect DONE on success
-  //    assertThat(saved.getStatus()).isEqualTo(AnalysisReport.ReportStatus.DONE);
-  //    assertNotNull(saved.getDetails());
-  //    // The implementation may escape/truncate; it's OK if it equals or differs.
-  //    assertThat(saved.getDetails()).contains("key");
-  //  }
-
-
-  // --- reflection helper for private methods ---
+  // Reflection helper used to reach private test targets.
+  // Avoids adding package-private visibility in main code.
   @SuppressWarnings("unchecked")
   private static <T> T callPrivate(Object target,
-                                   String name, Class<?>[] paramTypes, Object... args) {
+                                   String name,
+                                   Class<?>[] paramTypes,
+                                   Object... args) {
     try {
       java.lang.reflect.Method m = target.getClass().getDeclaredMethod(name, paramTypes);
       m.setAccessible(true);
@@ -359,6 +392,3 @@ class AnalyzeServiceTest {
     }
   }
 }
-
-
-
