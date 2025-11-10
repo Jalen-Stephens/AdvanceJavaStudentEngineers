@@ -36,6 +36,9 @@ build/
 .env
 env.local.sh
 env.pooler.sh
+.env.prod.sh
+
+.DS_Store
 
 ### Output.json ###
 output.json
