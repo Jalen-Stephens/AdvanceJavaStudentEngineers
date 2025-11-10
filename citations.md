@@ -346,6 +346,77 @@ The AI assisted in designing the revised database schema to align authentication
 
 ### **Commit / Ticket Reference**
 
+* **Commit:** `feat(Init): Demo UI Setup Initi (#49)`
+* **Ticket:** [#49 — Implement demoable client in same repository](https://github.com/Jalen-Stephens/AdvanceJavaStudentEngineers/issues/49)
+* **Date:** November 10, 2025
+* **Team Member:** Jalen Stephens
+
+---
+
+### **AI Tool Information**
+
+* **Tool Used:** OpenAI ChatGPT (GPT-5)
+* **Access Method:** Codex CLI (local workstation) connected to ChatGPT via academic access
+* **Configuration:** Default reasoning profile; no fine-tuning or paid API usage
+* **Cost:** $0 (covered by institutional access)
+
+---
+
+### **Purpose of AI Assistance**
+
+The assistant helped design and implement the in-repo demo client (“Pulse”) that exercises the MetaDetect auth and media APIs. This included:
+
+* Planning the folder layout under `client/` and deciding on a framework-free static build (HTML/CSS/JS).
+* Creating the login/sign-up experience that proxies `/auth/signup` and `/auth/login`, persists Supabase access tokens, and redirects to the media composer.
+* Building “Pulse Studio,” a social-style posting page that uploads images, annotates captions and hashtags, lists prior uploads, previews signed URLs, and deletes posts.
+* Styling both pages to resemble a polished social app experience while remaining framework-agnostic for easy demoing.
+* Updating `README.md` with hosting instructions, routing behavior, and token-handling notes, plus tightening `.gitignore` for future client tooling.
+
+---
+
+### **Prompts / Interaction Summary**
+
+Representative instructions provided to the AI:
+
+* “Create a social-media inspired login/sign-up UI that hits our `/auth` APIs and show responses inline.”
+* “Build another page where creators can upload images, add captions/hashtags, and delete posts using `/api/images`.”
+* “Automatically store the Supabase access token in the browser and reuse it so users don’t have to paste it.”
+* “Hide the bearer token in the UI but still let me override it if needed.”
+* “Update the README with steps for serving the client and describe Pulse Studio.”
+* “Add a CTA on the login page that jumps to the composer, and auto-redirect to the composer after logging in.”
+
+---
+
+### **Resulting Artifacts**
+
+* `client/index.html`, `client/styles.css`, `client/app.js` — Pulse login/sign-up client with Supabase token persistence and auto-redirect.
+* `client/compose.html`, `client/compose.css`, `client/compose.js` — Pulse Studio composer supporting uploads, captions/labels, feed rendering, signed URL previews, and inline deletes.
+* `client/config.js` — central base-URL configuration for targeting different backend instances.
+* `.gitignore` — ignores future client build outputs (`client/node_modules`, `client/dist`, `.cache`).
+* `README.md` — new “Client Demo (Pulse)” section covering login flow, Studio usage, and hidden-token behavior.
+
+---
+
+### **Verification**
+
+* Manually exercised the login form against a local MetaDetect backend:
+  * Verified successful `/auth/login` response, token persistence to `localStorage`, and automatic redirect to `compose.html`.
+* From Pulse Studio:
+  * Uploaded sample images through `/api/images/upload`, confirmed captions/labels persisted via `/api/images/{id}` `PUT`.
+  * Validated feed refresh hits `/api/images` and that signed URLs render in cards via `/api/images/{id}/url`.
+  * Deleted posts with `/api/images/{id}` `DELETE` and confirmed feed updates.
+* README instructions were followed start-to-finish (serve with `python3 -m http.server 4173 --directory client`) to ensure documentation accuracy.
+
+---
+
+### **Attribution Statement**
+
+> The Pulse demo client (login UI, Pulse Studio composer, token automation, and related documentation) was developed with assistance from **OpenAI ChatGPT (GPT-5)** on November 10, 2025. All generated assets were reviewed, manually tested in the browser, and incorporated into commit `feat(Init): Demo UI Setup Initi (#49)` by the project team.
+
+---
+
+### **Commit / Ticket Reference**
+
 * **Commit:** `feat(security): enable JWT resource server and implement identity resolution from Supabase tokens (refs #10)`
 * **Ticket:** `#10 — Service: Implement UserService core logic (Iteration 1)`
 * **Date:** February 27, 2025

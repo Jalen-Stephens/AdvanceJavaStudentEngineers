@@ -40,5 +40,10 @@ env.pooler.sh
 
 .DS_Store
 
+### Client build artifacts ###
+client/node_modules/
+client/dist/
+client/.cache/
+
 ### Output.json ###
 output.json

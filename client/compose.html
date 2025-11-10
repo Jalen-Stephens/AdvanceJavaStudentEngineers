@@ -1,0 +1,114 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Pulse Studio | Craft a Drop</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Space+Grotesk:wght@500;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="./compose.css">
+  <script defer src="./config.js"></script>
+  <script defer src="./compose.js"></script>
+</head>
+<body>
+  <div class="gradient-glow"></div>
+  <main class="canvas">
+    <section class="story">
+      <header>
+        <p class="eyebrow">Pulse Studio</p>
+        <h1>Create the next drop</h1>
+        <p class="lede">Preview how creators will compose posts on MetaDetect. Attach an image, caption it, and watch it show up in the live feed.</p>
+      </header>
+      <div class="story-actions">
+        <a class="ghost" href="./index.html">← Back to login</a>
+        <div class="instance-pill" id="instance-label"></div>
+      </div>
+      <ul class="highlights">
+        <li>
+          <span>Instant uploads</span>
+          <p>Send multipart uploads directly to `/api/images/upload` and stream the response.</p>
+        </li>
+        <li>
+          <span>Editable captions</span>
+          <p>Studio turns captions into image notes via `/api/images/{id}`.</p>
+        </li>
+        <li>
+          <span>Moderation-ready</span>
+          <p>Delete any post in place using the same bearer token.</p>
+        </li>
+      </ul>
+    </section>
+
+    <section class="workbench">
+      <div class="panel">
+        <div class="panel-header">
+          <div>
+            <p class="eyebrow">Session token</p>
+            <h2>Pulse Studio auto-connects</h2>
+            <p class="hint">Tokens are stored locally after login and attached to every upload automatically.</p>
+          </div>
+          <div class="token-status">
+            <span class="token-badge" id="token-badge">Not linked</span>
+            <button id="edit-token" type="button" class="ghost ghost-compact">Replace token</button>
+            <button id="refresh-feed" type="button" class="ghost ghost-compact">Refresh feed</button>
+          </div>
+        </div>
+        <div class="token-edit hidden" id="token-edit">
+          <label>
+            Use a different token
+            <textarea id="token-input" placeholder="Paste access token" spellcheck="false"></textarea>
+          </label>
+          <div class="token-edit-actions">
+            <button id="save-token" type="button" class="primary">Save token</button>
+            <button id="cancel-token" type="button" class="ghost ghost-compact">Cancel</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="panel">
+        <div class="panel-header">
+          <div>
+            <p class="eyebrow">New post</p>
+            <h2>Upload + caption</h2>
+          </div>
+          <span class="hint">Supports png, jpg, jpeg, webp</span>
+        </div>
+        <form id="upload-form">
+          <label class="media-picker">
+            <input id="file-input" type="file" accept="image/*" hidden>
+            <div class="media-drop">
+              <p>Drop or click to select an image</p>
+              <span id="file-name">No file selected</span>
+            </div>
+          </label>
+          <label>
+            Caption
+            <textarea id="caption-input" rows="3" placeholder="What's happening?" maxlength="240"></textarea>
+          </label>
+          <label>
+            Hashtags (comma separated)
+            <input id="labels-input" type="text" placeholder="#c2pa, #ai-detect" />
+          </label>
+          <button type="submit" class="primary">Post to Pulse</button>
+        </form>
+        <div class="status" id="status" role="status"></div>
+      </div>
+
+      <div class="panel feed-panel">
+        <div class="panel-header">
+          <div>
+            <p class="eyebrow">Creator feed</p>
+            <h2>Your uploads</h2>
+          </div>
+          <span class="hint" id="feed-count">0 posts</span>
+        </div>
+        <div id="feed-grid" class="feed-grid"></div>
+      </div>
+    </section>
+  </main>
+  <footer>
+    <small>Pulse Studio · powered by MetaDetect API</small>
+  </footer>
+</body>
+</html>
