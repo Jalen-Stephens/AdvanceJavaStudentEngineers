@@ -43,6 +43,70 @@ Prompts and questions provided to ChatGPT included:
 
 ### **Resulting Artifacts**
 
+---
+
+### **Commit / Ticket Reference**
+
+* **Commit:** `bug(DB): fixes to help pooler connection limit (#49)`
+* **Ticket:** `#49 — Implement Demoable Client + Pooler Stability`
+* **Date:** October 25, 2025
+* **Team Member:** Jalen Stephens
+
+---
+
+### **AI Tool Information**
+
+* **Tool Used:** OpenAI ChatGPT (GPT-5)
+* **Access Method:** ChatGPT Web (.edu academic access)
+* **Configuration:** Default model settings
+* **Cost:** $0 (no paid API calls)
+
+---
+
+### **Purpose of AI Assistance**
+
+The AI assistant helped diagnose Supabase pooler exhaustion by reviewing how Spring transactions were scoped around long-running storage calls. Guidance focused on:
+
+* Shortening transaction lifetimes in `ImageService` so uploads/deletes don’t hold DB connections while streaming to Supabase Storage.
+* Adding orphan-cleanup logic so failed uploads best-effort delete the metadata row, preventing dangling rows that require manual cleanup.
+* Removing the broad `@Transactional` annotation from `AnalyzeService.submitAnalysis` so the expensive C2PA invocation runs outside the JDBC session.
+* Clarifying how to source `env.pooler.sh` so the smaller pool-size and timeout overrides are consistently applied during local runs.
+
+---
+
+### **Prompts / Interaction Summary**
+
+* “Connections aren’t closing against the pooler—can you check `ImageService` for long transactions?”
+* “How can we make sure upload failures roll back the metadata row even after the storage call throws?”
+* “Should AnalyzeService keep the transaction open while running the C2PA CLI?”
+* “Remind me how to use `env.pooler.sh` so Hikari sees the 2-connection limit.”
+
+---
+
+### **Resulting Artifacts**
+
+* `src/main/java/dev/coms4156/project/metadetect/service/ImageService.java`
+  * Removed class-level `@Transactional` usage from controller entry points; now only the RLS helpers manage transactions.
+  * Introduced `deleteOrphanedImage()` with logging to clean up rows when uploads fail midstream.
+  * Wrapped upload flow in try/catch so DB rows are rolled back before rethrowing storage errors.
+* `src/main/java/dev/coms4156/project/metadetect/service/AnalyzeService.java`
+  * `submitAnalysis` now persists the PENDING row and immediately releases the connection before downloading assets or running C2PA.
+* `env.pooler.sh`
+  * Documented values reiterated so the pooler JDBC URL, credentials, and keepalive hints are sourced for local testing.
+
+---
+
+### **Verification**
+
+* Ran `mvn -DskipTests compile` — build succeeded (only existing Guice `sun.misc.Unsafe` warnings remain).
+* Manual inspection confirmed all repository calls now occur within short-lived RLS-wrapped scopes, preventing Hikari from exceeding the 2-connection pooler cap.
+
+---
+
+### **Attribution Statement**
+
+> Portions of the connection-scope refactor and pooler troubleshooting guidance for this commit were generated with assistance from **OpenAI ChatGPT (GPT-5)** on October 25, 2025. The development team reviewed, tested, and validated all AI-assisted changes prior to committing.
+
 * Updated project structure → `dev/coms4156/project/metadetect`
 * Updated `MetaDetectApplication.java` and `application.properties`
 * Rewritten `pom.xml` with MetaDetect metadata, PMD, Checkstyle, and JaCoCo rules

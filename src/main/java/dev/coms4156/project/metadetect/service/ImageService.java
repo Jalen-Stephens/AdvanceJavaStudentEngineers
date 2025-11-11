@@ -9,10 +9,11 @@ import java.io.IOException;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.http.MediaType;
 import org.springframework.lang.Nullable;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
 /**
@@ -25,6 +26,8 @@ import org.springframework.web.multipart.MultipartFile;
  */
 @Service
 public class ImageService {
+
+  private static final Logger log = LoggerFactory.getLogger(ImageService.class);
 
   private final ImageRepository repo;
   private final RlsContext rls;
@@ -52,41 +55,48 @@ public class ImageService {
    * 3) Upload binary to Supabase using the caller's bearer token.
    * 4) Update DB row with the storage path.
    */
-  @Transactional
   public Image upload(UUID userId, String bearer, MultipartFile file) throws IOException {
     String original = Optional.ofNullable(file.getOriginalFilename())
         .orElse("upload.bin")
         .replaceAll("[/\\\\]", "_");
 
-    // 1) Create DB row under the user identity
-    Image created = rls.asUser(userId, () -> {
-      Image img = new Image();
-      img.setUserId(userId);
-      img.setFilename(original);
-      return repo.save(img);
-    });
+    Image created = null;
+    try {
+      // 1) Create DB row under the user identity
+      created = rls.asUser(userId, () -> {
+        Image img = new Image();
+        img.setUserId(userId);
+        img.setFilename(original);
+        return repo.save(img);
+      });
 
-    // 2) Compute canonical storage key
-    String storageKey = userId + "/" + created.getId() + "--" + original;
+      // 2) Compute canonical storage key
+      String storageKey = userId + "/" + created.getId() + "--" + original;
 
-    // 3) Upload binary to Supabase
-    storage.uploadObject(
-        file.getBytes(),
-        Optional.ofNullable(file.getContentType())
-        .orElse(MediaType.APPLICATION_OCTET_STREAM_VALUE),
-        storageKey,
-        bearer
-    );
+      // 3) Upload binary to Supabase
+      storage.uploadObject(
+          file.getBytes(),
+          Optional.ofNullable(file.getContentType())
+          .orElse(MediaType.APPLICATION_OCTET_STREAM_VALUE),
+          storageKey,
+          bearer
+      );
 
-    // 4) Persist storage path
-    return update(userId, created.getId(), null, storageKey, null, null);
+      // 4) Persist storage path
+      return update(userId, created.getId(), null, storageKey, null, null);
+    } catch (IOException | RuntimeException ex) {
+      if (created != null) {
+        // storage upload failed — remove orphaned DB row best-effort
+        deleteOrphanedImage(userId, created.getId());
+      }
+      throw ex;
+    }
   }
 
   /**
    * Deletes the image (binary + metadata). If deletion from storage fails,
    * the DB row is retained to avoid orphaned state.
    */
-  @Transactional
   public void deleteAndPurge(UUID userId, String bearer, UUID imageId) {
     Image img = getById(userId, imageId);
     String path = img.getStoragePath();
@@ -112,7 +122,6 @@ public class ImageService {
    * Creates an image metadata row owned by the user.
    * (This does not upload any binary data.)
    */
-  @Transactional
   public Image create(UUID userId,
                       String filename,
                       @Nullable String storagePath,
@@ -133,7 +142,6 @@ public class ImageService {
    * Updates mutable metadata fields for an owned image.
    * Null fields are interpreted as "no change".
    */
-  @Transactional
   public Image update(UUID currentUserId,
                       UUID imageId,
                       @Nullable String newFilename,
@@ -197,7 +205,6 @@ public class ImageService {
   /**
    * Permanently removes an owned image metadata row.
    */
-  @Transactional
   public void delete(UUID currentUserId, UUID imageId) {
     rls.asUser(currentUserId, () -> {
       Image img = repo.findById(imageId)
@@ -214,6 +221,21 @@ public class ImageService {
   private static void requireOwner(UUID userId, Image img) {
     if (!img.getUserId().equals(userId)) {
       throw new ForbiddenException("You do not own this image.");
+    }
+  }
+
+  /**
+   * Deletes a newly created image if the upload pipeline fails before completion.
+   * Failures are logged but never override the original exception.
+   */
+  private void deleteOrphanedImage(UUID userId, UUID imageId) {
+    try {
+      rls.asUser(userId, () -> {
+        repo.deleteById(imageId);
+        return null;
+      });
+    } catch (RuntimeException cleanupEx) {
+      log.warn("Failed to roll back orphaned image {} for user {}", imageId, userId, cleanupEx);
     }
   }
 }
