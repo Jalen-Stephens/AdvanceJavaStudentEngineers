@@ -7,13 +7,13 @@ import java.util.Map;
 
 /**
  * Central DTO (Data Transfer Object) definitions for MetaDetect.
- * These records define the request and response shapes used by the controllers.
- * Keeping them in a single file is fine for a small project, and makes it easier
- * to review and modify the API contracts.
+ * These records define the request/response shapes used by controllers and services.
+ * Keeping them in a single file is acceptable for project size at Iteration 1 and
+ * keeps API contracts easy to audit and evolve.
  */
 public final class Dtos {
   private Dtos() {
-    // Prevent instantiation
+    // Prevent instantiation of static container class.
   }
 
   /* -------------------------------------------------------------------------- */
@@ -21,38 +21,38 @@ public final class Dtos {
   /* -------------------------------------------------------------------------- */
 
   /**
-   * Optional flags for controlling analysis modules.
+   * Optional flags allowing callers to enable/disable specific analysis modules.
+   * Future iterations may promote this to a top-level POST payload.
    */
   public record AnalyzeOptions(
       Boolean runMetadata,
       Boolean runPrnu,
       Boolean runGan,
-      Boolean runCompression) {
-  }
+      Boolean runCompression
+  ) { }
 
   /**
-   * Response returned immediately after submitting an analysis for an existing image.
-   * Matches POST /api/analyze/{imageId} -> 202 Accepted.
+   * Returned immediately after an analysis is submitted for an existing image.
+   * Matches POST /api/analyze/{imageId} (202 Accepted).
    */
   public record AnalyzeStartResponse(String analysisId) { }
 
   /**
-   * Pollable view of an analysis job.
+   * Pollable snapshot of an analysis job status.
    * Matches GET /api/analyze/{analysisId}.
    */
   public record AnalysisStatusResponse(
       String analysisId,
       String imageId,
-      String status,            // PENDING | COMPLETED | FAILED
+      String status,          // PENDING | COMPLETED | FAILED
       Instant createdAt,
-      Instant completedAt,      // may be null until terminal state
-      String errorMessage       // present when status == FAILED
+      Instant completedAt,    // nullable until terminal state
+      String errorMessage     // present when status == FAILED
   ) { }
 
   /**
-   * Manifest response for an analysis.
-   * Matches GET /api/analyze/{analysisId}/manifest.
-   * The service stores raw JSON; we surface it as a String to avoid lossy parsing.
+   * Manifest response for a completed analysis.
+   * Raw JSON is returned as a String to avoid lossy re-parsing.
    */
   public record AnalysisManifestResponse(
       String analysisId,
@@ -60,8 +60,8 @@ public final class Dtos {
   ) { }
 
   /**
-   * Confidence/status view (stubbed score for now, but shaped for future ML).
-   * Can back GET /api/analyze/{analysisId} or a dedicated .../confidence route.
+   * Confidence view for an analysis. Currently a stub, but future-compatible with
+   * ML scoring. Can be returned by the same route as status or a dedicated route.
    */
   public record AnalyzeConfidenceResponse(
       String analysisId,
@@ -70,8 +70,8 @@ public final class Dtos {
   ) { }
 
   /**
-   * Stub compare response for GET /api/analyze/compare?left=&right=.
-   * Adds status/note fields while keeping your older CompareResponse available.
+   * Stubbed comparison DTO for GET /api/analyze/compare.
+   * More complete ML-based comparison can reuse this shape.
    */
   public record AnalyzeCompareResponse(
       String status,
@@ -80,49 +80,56 @@ public final class Dtos {
   ) { }
 
   /**
-   * (Legacy/general) Response returned after submitting an analysis job.
-   * Retained for backward compatibility with any callers using this shape.
+   * Legacy/general response used by early prototypes.
+   * Retained temporarily for compatibility with older callers.
    */
   public record AnalyzeResponse(
       String id,
       Double confidence,
       String status,
       Instant createdAt,
-      Map<String, Object> details) {
-  }
+      Map<String, Object> details
+  ) { }
 
   /**
-   * Metadata (EXIF or embedded data) extracted from an image.
+   * Metadata extracted from an image (e.g., EXIF).
    */
-  public record MetadataResponse(String id, Map<String, Object> exifData) {
-  }
+  public record MetadataResponse(
+      String id,
+      Map<String, Object> exifData
+  ) { }
 
   /**
-   * (Legacy/general) Confidence score and processing status for an analysis job.
-   * Kept for callers already using this shape; new endpoints can prefer AnalyzeConfidenceResponse.
+   * Legacy/general confidence DTO from early versions of the pipeline.
+   * Kept until all routes migrate to AnalyzeConfidenceResponse.
    */
-  public record ConfidenceResponse(String id, Double confidence, String status) {
-  }
+  public record ConfidenceResponse(
+      String id,
+      Double confidence,
+      String status
+  ) { }
 
   /**
-   * Request body for comparing two images (by ID).
+   * Request body for comparing two images by ID.
    */
-  public record CompareRequest(String imageIdA, String imageIdB) {
-  }
+  public record CompareRequest(String imageIdA, String imageIdB) { }
 
   /**
-   * (Legacy/general) Response containing similarity score between two images.
-   * New analysis endpoints can prefer AnalyzeCompareResponse.
+   * Legacy/general compare response.
+   * Maintained for backward compatibility only.
    */
-  public record CompareResponse(String imageIdA, String imageIdB, Double similarity) {
-  }
+  public record CompareResponse(
+      String imageIdA,
+      String imageIdB,
+      Double similarity
+  ) { }
 
   /* -------------------------------------------------------------------------- */
   /* IMAGE MANAGEMENT DTOs                                                      */
   /* -------------------------------------------------------------------------- */
 
   /**
-   * Simplified view of an image record.
+   * Public view of an image. Returned by list/get endpoints.
    */
   public record ImageDto(
       String id,
@@ -131,13 +138,15 @@ public final class Dtos {
       OffsetDateTime uploadedAt,
       List<String> labels,
       String note
-  ) {}
+  ) { }
 
   /**
-   * Request body for updating image metadata (labels, note).
+   * Request for updating mutable metadata fields on an image.
    */
-  public record UpdateImageRequest(String note, List<String> labels) {
-  }
+  public record UpdateImageRequest(
+      String note,
+      List<String> labels
+  ) { }
 
   /* -------------------------------------------------------------------------- */
   /* AUTHENTICATION DTOs                                                        */
@@ -146,23 +155,20 @@ public final class Dtos {
   /**
    * Request body for registering a new user.
    */
-  public record RegisterRequest(String email, String password) {
-  }
+  public record RegisterRequest(String email, String password) { }
 
   /**
    * Request body for logging in.
    */
-  public record LoginRequest(String email, String password) {
-  }
+  public record LoginRequest(String email, String password) { }
 
   /**
-   * Response returned after successful login or registration.
+   * Response returned after a successful login or registration.
    */
-  public record AuthResponse(String userId, String token) {
-  }
+  public record AuthResponse(String userId, String token) { }
 
   /**
-   * Request body for refreshing token.
+   * Request body for obtaining a fresh access token.
    */
-  public record RefreshRequest(String refreshToken) {}
+  public record RefreshRequest(String refreshToken) { }
 }

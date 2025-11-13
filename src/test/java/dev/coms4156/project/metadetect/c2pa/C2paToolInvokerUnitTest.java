@@ -15,13 +15,16 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 /**
- * Unit tests for C2paToolInvoker. Ensures correct invocation of the C2PA command-line tool.
- * Tests that need the real tool are guarded with assumes to avoid CI flakiness.
+ * Unit tests for {@link C2paToolInvoker}.
+ * The tests that depend on the native C2PA CLI are guarded with `assumeTrue`,
+ * so they are silently skipped when running in CI or in environments where the
+ * binary is not available. This avoids false negatives without disabling them.
  */
 class C2paToolInvokerUnitTest {
 
   private static final String C2PA_TOOL_PATH = "./tools/c2patool/c2patool";
   private static final String TEST_RESOURCES_DIR = "src/test/resources/mock-images/";
+
   private C2paToolInvoker c2paToolInvoker;
 
   @BeforeEach
@@ -29,12 +32,17 @@ class C2paToolInvokerUnitTest {
     c2paToolInvoker = new C2paToolInvoker(C2PA_TOOL_PATH);
   }
 
+  /**
+   * Happy-path test: requires a working tool and a real sample image.
+   */
   @Test
   void testExtractManifestSuccess() throws IOException {
-    // Requires the real tool and a valid sample image
-    assumeTrue(Files.exists(Path.of(C2PA_TOOL_PATH)), "Skipping: c2patool not installed");
+    assumeTrue(Files.exists(Path.of(C2PA_TOOL_PATH)),
+        "Skipping: c2patool not installed");
+
     File file = new File(TEST_RESOURCES_DIR + "Spaghetti.png");
-    assumeTrue(file.exists(), "Missing test image fixture: " + file.getPath());
+    assumeTrue(file.exists(),
+        "Missing test image fixture: " + file.getPath());
 
     String manifest = c2paToolInvoker.extractManifest(file);
 
@@ -42,25 +50,31 @@ class C2paToolInvokerUnitTest {
     assertFalse(manifest.isEmpty(), "Manifest should not be empty");
   }
 
+  /**
+   * Running the tool on a non-existent file should throw IOException.
+   */
   @Test
   void testExtractManifestFileNotFound() {
-    // Requires the real tool to execute; otherwise behavior differs
-    assumeTrue(Files.exists(Path.of(C2PA_TOOL_PATH)), "Skipping: c2patool not installed");
+    assumeTrue(Files.exists(Path.of(C2PA_TOOL_PATH)),
+        "Skipping: c2patool not installed");
 
     File nonExistentFile = new File("non_existent_image.jpg");
 
     IOException ex = assertThrows(IOException.class,
         () -> c2paToolInvoker.extractManifest(nonExistentFile));
 
-    // Message/content varies by platform; we at least expect an error message
     assertNotNull(ex.getMessage());
-    assertTrue(!ex.getMessage().isBlank(), "IOException should carry a diagnostic message");
+    assertTrue(!ex.getMessage().isBlank(),
+        "IOException should carry a diagnostic message");
   }
 
+  /**
+   * Passing a real but invalid file should surface a failure from the C2PA tool.
+   */
   @Test
   void testExtractManifestInvalidFile() throws IOException {
-    // Requires the real tool to run and fail on invalid input
-    assumeTrue(Files.exists(Path.of(C2PA_TOOL_PATH)), "Skipping: c2patool not installed");
+    assumeTrue(Files.exists(Path.of(C2PA_TOOL_PATH)),
+        "Skipping: c2patool not installed");
 
     File tempInvalidFile = createTempInvalidFile();
 
@@ -68,32 +82,44 @@ class C2paToolInvokerUnitTest {
         () -> c2paToolInvoker.extractManifest(tempInvalidFile));
 
     assertNotNull(ex.getMessage());
-    assertTrue(ex.getMessage().contains("C2PA tool failed") || !ex.getMessage().isBlank());
+    assertTrue(
+        ex.getMessage().contains("C2PA tool failed")
+        || !ex.getMessage().isBlank(),
+        "C2PA failure should propagate usable diagnostic text"
+    );
 
-    // Clean up
     tempInvalidFile.delete();
   }
 
+  /**
+   * If the binary path is bogus, we expect an immediate IOException
+   * rather than a "tool returned error" manifest.
+   */
   @Test
-  void testExtractManifestToolNotFound() throws Exception {
-    // Point to a path that should NOT exist. If it does, skip to avoid false negatives.
+  void testExtractManifestToolNotFound() {
     Path bogusTool = Path.of("./tools/c2patool/definitely-not-installed");
-    assumeTrue(!Files.exists(bogusTool), "Skipping: bogus tool path unexpectedly exists");
+    assumeTrue(!Files.exists(bogusTool),
+        "Skipping: bogus tool path unexpectedly exists");
 
     C2paToolInvoker invoker = new C2paToolInvoker(bogusTool.toString());
+
     File sample = new File(TEST_RESOURCES_DIR + "Spaghetti.png");
-    assumeTrue(sample.exists(), "Missing test image fixture: " + sample.getPath());
+    assumeTrue(sample.exists(),
+        "Missing test image fixture: " + sample.getPath());
 
-    // Behavior we require: trying to run a missing binary throws IOException
-    IOException ex = assertThrows(IOException.class, () -> invoker.extractManifest(sample));
+    IOException ex = assertThrows(IOException.class,
+        () -> invoker.extractManifest(sample));
 
-    // Don’t assert on platform-specific messages. Just ensure there’s *some* message.
     assertNotNull(ex.getMessage());
-    assertTrue(!ex.getMessage().isBlank(), "IOException should carry a diagnostic message");
+    assertTrue(!ex.getMessage().isBlank(),
+        "IOException should carry a diagnostic message");
   }
 
-  // --------- helpers ---------
+  // ---- helpers ----
 
+  /**
+   * Creates a temporary invalid "image" for negative-path testing.
+   */
   private static File createTempInvalidFile() throws IOException {
     File f = File.createTempFile("invalid-", ".img");
     try (FileWriter fw = new FileWriter(f)) {

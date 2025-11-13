@@ -31,6 +31,12 @@ public class AuthController {
   private final UserService userService;
   private final AuthProxyService authProxy;
 
+  /**
+   * Constructs the controller with required collaborators.
+   *
+   * @param userService local user domain service
+   * @param authProxy adaptor that calls Supabase Auth endpoints
+   */
   public AuthController(UserService userService, AuthProxyService authProxy) {
     this.userService = userService;
     this.authProxy = authProxy;
@@ -50,6 +56,7 @@ public class AuthController {
   })
   @PostMapping("/signup")
   public ResponseEntity<String> signup(@RequestBody Dtos.RegisterRequest req) {
+    // Pass-through: do not log raw passwords; the proxy handles HTTP and error codes.
     return authProxy.signup(req.email(), req.password());
   }
 
@@ -66,6 +73,7 @@ public class AuthController {
   })
   @PostMapping("/login")
   public ResponseEntity<String> login(@RequestBody Dtos.LoginRequest req) {
+    // Pass-through: credentials are forwarded to Supabase; no local auth happens here.
     return authProxy.login(req.email(), req.password());
   }
 
