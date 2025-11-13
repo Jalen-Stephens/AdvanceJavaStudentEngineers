@@ -1,5 +1,73 @@
 ### **Commit / Ticket Reference**
 
+* **Commit:** `test(API) wrote controller test after making changes for pooler connection (#49)`
+* **Ticket:** `#49 — Implement Demoable Client + Pooler Stability`
+* **Date:** November 13, 2025
+* **Team Member:** Jalen Stephens
+
+---
+
+### **AI Tool Information**
+
+* **Tool Used:** OpenAI ChatGPT (GPT-5) via Codex CLI
+* **Access Method:** Local Codex CLI session (sandboxed, no paid API usage)
+* **Configuration:** Default model parameters supplied by course tooling
+* **Cost:** $0 (educational access)
+
+---
+
+### **Purpose of AI Assistance**
+
+Used AI to draft and refine the new controller-focused regression tests that restore JaCoCo coverage after the pooler/database changes. Guidance covered:
+
+* Designing slice tests for `AnalyzeController` (submit, status, manifest, compare)
+* Adding `HealthControllerTest` to drive both branches of the DB health ping and metadata endpoint
+* Restructuring `SecurityConfigMvcTest` to avoid datasource/autowire failures while still verifying CORS + JWT rules
+* Capturing the environment tweaks (`application.properties`, Mockito plugin) needed to boot the test slices without pooler credentials
+
+---
+
+### **Prompts / Interaction Summary**
+
+* “write AnalyzeController MockMvc tests that assert JSON payloads and verify service calls”
+* “add HealthController tests without talking to a real DB”
+* “security config test fails because of datasource—convert to WebMvcTest and stub controllers”
+* “how do I stop Mockito inline from requiring the byte-buddy agent in the sandbox?”
+* “fill out the commit citation entry using the standard template”
+
+---
+
+### **Resulting Artifacts**
+
+* Added controller tests:
+  * `src/test/java/dev/coms4156/project/metadetect/controller/AnalyzeControllerTest.java`
+  * `src/test/java/dev/coms4156/project/metadetect/controller/HealthControllerTest.java`
+* Hardened security slice testing:
+  * `src/test/java/dev/coms4156/project/metadetect/config/SecurityConfigMvcTest.java`
+  * `src/test/java/dev/coms4156/project/metadetect/config/SecurityTestControllers.java`
+* Test-only infrastructure:
+  * `src/test/resources/application.properties` (stable Supabase defaults for tests)
+  * `src/test/resources/mockito-extensions/org.mockito.plugins.MockMaker`
+  * `pom.xml` dependency cleanup (removed `mockito-inline`)
+
+---
+
+### **Verification**
+
+* Targeted suite:  
+  `MAVEN_USER_HOME=$PWD/.m2 ./mvnw -q -Dtest=AuthControllerTest,ImageControllerTest,AnalyzeControllerTest,HealthControllerTest,SecurityConfigMvcTest test`
+* All targeted tests pass. Full `./mvnw test` still blocked in `SupabaseStorageServiceTest` / `AuthProxyServiceTest` because the course sandbox forbids binding local sockets for `MockWebServer`; rerun outside the sandbox to regenerate JaCoCo.
+
+---
+
+### **Attribution Statement**
+
+> Portions of this commit were generated with assistance from OpenAI ChatGPT (GPT-5) on November 13, 2025. All AI-generated content was reviewed, tested, and validated by the development team before committing.
+
+---
+
+### **Commit / Ticket Reference**
+
 * **Commit:** `chore(init): renamed project to MetaDetect, updated package structure, pom.xml coordinates, and Spring Boot configuration (#2)`
 * **Ticket:** [#2 — INIT Project Skeleton Code](https://github.com/Jalen-Stephens/AdvanceJavaStudentEngineers/issues/2)
 * **Date:** October 15 2025

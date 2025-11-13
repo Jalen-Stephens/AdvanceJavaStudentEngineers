@@ -87,10 +87,11 @@ From the terminal, run the following CLI commands:
 
 ### Pulse Studio — create/delete posts
 - Open http://localhost:4173/compose.html in the same static server session.
-- After logging in, the access token is automatically saved to your browser and pre-filled in the Studio page (you can still overwrite it manually if needed).
+- After logging in, the access token is automatically saved to your browser and reused by the Studio page.
 - Use the composer to upload images via `/api/images/upload`, add captions/hashtags (mapped to the `note` + `labels` fields), and delete posts inline via `/api/images/{id}`.
 - The feed retrieves your existing uploads with `/api/images` and pulls signed URLs per asset so you can actually preview the media.
-- Tokens stay hidden in the UI for safety, but you can tap **Replace token** in Studio if you need to paste one manually.
+- Each card automatically runs `/api/analyze/{imageId}` and labels posts with an **AI generated** banner whenever the backend reports `status=DONE`.
+- Tokens stay hidden in the UI for safety; log in again from Pulse if you need to refresh credentials.
 
 ---
 

@@ -18,31 +18,26 @@ import java.util.Date;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.autoconfigure.EnableAutoConfiguration;
-import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
-import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.context.annotation.Import;
 import org.springframework.mock.web.MockHttpServletRequest;
 import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.security.oauth2.jwt.JwtDecoder;
 import org.springframework.security.oauth2.jwt.JwtException;
 import org.springframework.test.web.servlet.MockMvc;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.RestController;
 
 /**
  * Tests security rules, CORS, and JWT decoder.
  */
-@SpringBootTest(
+@WebMvcTest(
+    controllers = SecurityTestControllers.class,
     properties = {
       // 32 bytes for HS256
       "metadetect.supabase.jwtSecret=0123456789abcdef0123456789abcdef",
       "metadetect.supabase.url=https://unit.supabase.co"
     }
 )
-@AutoConfigureMockMvc
-@Import({SecurityConfigMvcTest.TestControllers.class, SecurityConfig.class})
-@EnableAutoConfiguration
+@Import(SecurityConfig.class)
 class SecurityConfigMvcTest {
 
   private static final String SECRET_256 =
@@ -135,35 +130,5 @@ class SecurityConfigMvcTest {
     var signer = new MACSigner(secret.getBytes(StandardCharsets.UTF_8));
     jwt.sign(signer);
     return jwt.serialize();
-  }
-
-  // tiny controllers for predictable responses
-  @RestController
-  static class TestControllers {
-
-    @GetMapping("/health")
-    public String health() {
-      return "ok";
-    }
-
-    @GetMapping("/actuator/info")
-    public String info() {
-      return "info";
-    }
-
-    @GetMapping("/auth/login")
-    public String login() {
-      return "login";
-    }
-
-    @GetMapping("/auth/signup")
-    public String signup() {
-      return "signup";
-    }
-
-    @GetMapping("/secured")
-    public String secured() {
-      return "secure";
-    }
   }
 }

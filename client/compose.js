@@ -4,7 +4,6 @@
   const apiBase = config.apiBaseUrl?.replace(/\/$/, '') || DEFAULT_CONFIG.apiBaseUrl;
   const TOKEN_STORAGE_KEY = 'pulse-demo-token';
 
-  const tokenInput = document.getElementById('token-input');
   const fileInput = document.getElementById('file-input');
   const fileName = document.getElementById('file-name');
   const captionInput = document.getElementById('caption-input');
@@ -14,88 +13,17 @@
   const feedGrid = document.getElementById('feed-grid');
   const feedCount = document.getElementById('feed-count');
   const refreshBtn = document.getElementById('refresh-feed');
-  const instanceLabel = document.getElementById('instance-label');
-  const tokenBadge = document.getElementById('token-badge');
-  const editTokenBtn = document.getElementById('edit-token');
-  const tokenEditor = document.getElementById('token-edit');
-  const saveTokenBtn = document.getElementById('save-token');
-  const cancelTokenBtn = document.getElementById('cancel-token');
-
-  instanceLabel.textContent = apiBase.replace(/^https?:\/\//, '');
-  let cachedToken = localStorage.getItem(TOKEN_STORAGE_KEY) || '';
+  const cachedToken = localStorage.getItem(TOKEN_STORAGE_KEY) || '';
 
   const getToken = () => cachedToken.trim();
 
-  const persistToken = (value) => {
-    cachedToken = value.trim();
-    localStorage.setItem(TOKEN_STORAGE_KEY, cachedToken);
-    updateTokenBadge();
-  };
-
-  const updateTokenBadge = () => {
-    const hasToken = !!getToken();
-    if (tokenBadge) {
-      tokenBadge.textContent = hasToken ? 'Linked' : 'Not linked';
-      tokenBadge.classList.toggle('on', hasToken);
-      tokenBadge.classList.toggle('off', !hasToken);
-    }
-  };
-
-  const showTokenEditor = () => {
-    if (!tokenEditor) {
-      return;
-    }
-    tokenInput.value = getToken();
-    tokenInput.classList.remove('error');
-    tokenEditor.classList.remove('hidden');
-  };
-
-  const hideTokenEditor = () => {
-    if (!tokenEditor) {
-      return;
-    }
-    tokenEditor.classList.add('hidden');
-    tokenInput.classList.remove('error');
-  };
-
-  updateTokenBadge();
-
   const ensureToken = () => {
     if (!getToken()) {
-      updateStatus('Log in via Pulse (or add a token) before continuing.', 'error');
-      showTokenEditor();
+      updateStatus('Log in via Pulse before continuing.', 'error');
       return false;
     }
     return true;
   };
-
-  if (editTokenBtn) {
-    editTokenBtn.addEventListener('click', showTokenEditor);
-  }
-
-  if (cancelTokenBtn) {
-    cancelTokenBtn.addEventListener('click', () => {
-      hideTokenEditor();
-    });
-  }
-
-  if (saveTokenBtn) {
-    saveTokenBtn.addEventListener('click', () => {
-      const raw = tokenInput.value.trim();
-      if (!raw) {
-        tokenInput.classList.add('error');
-        return;
-      }
-      persistToken(raw);
-      hideTokenEditor();
-      updateStatus('Token updated locally.', 'success');
-      loadFeed();
-    });
-  }
-
-  tokenInput?.addEventListener('input', () => {
-    tokenInput.classList.remove('error');
-  });
 
   fileInput.addEventListener('change', () => {
     fileName.textContent = fileInput.files?.[0]?.name || 'No file selected';
@@ -170,6 +98,13 @@
     img.src = image.signedUrl || 'data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" width="400" height="300"/%3E';
     media.appendChild(img);
 
+    if (image.isAiGenerated) {
+      const banner = document.createElement('span');
+      banner.className = 'ai-banner';
+      banner.textContent = 'AI generated';
+      media.appendChild(banner);
+    }
+
     const body = document.createElement('div');
     body.className = 'post-body';
 
@@ -227,6 +162,36 @@
     }
   };
 
+  const analyzeImage = async (imageId) => {
+    try {
+      const start = await requestJson(`/api/analyze/${imageId}`, { method: 'POST' });
+      const analysisId = start?.analysisId;
+      if (!analysisId) {
+        return { isAiGenerated: false };
+      }
+
+      const poll = async (attempt = 0) => {
+        const result = await requestJson(`/api/analyze/${analysisId}`);
+        if (result?.status && result.status !== 'PENDING') {
+          const statusString = result.status.toUpperCase();
+          const aiDetected = statusString === 'DONE'
+            || (typeof result.score === 'number' && result.score > 0.5);
+          return { isAiGenerated: aiDetected };
+        }
+        if (attempt >= 3) {
+          return { isAiGenerated: false };
+        }
+        await new Promise((resolve) => setTimeout(resolve, 600));
+        return poll(attempt + 1);
+      };
+
+      return await poll();
+    } catch (err) {
+      console.warn('Analyze failed', err);
+      return { isAiGenerated: false };
+    }
+  };
+
   const loadFeed = async () => {
     if (!ensureToken()) {
       return;
@@ -237,7 +202,8 @@
       const enriched = await Promise.all(
         images.map(async (image) => ({
           ...image,
-          signedUrl: await fetchSignedUrl(image.id)
+          signedUrl: await fetchSignedUrl(image.id),
+          ...(await analyzeImage(image.id))
         }))
       );
       renderFeed(enriched);
