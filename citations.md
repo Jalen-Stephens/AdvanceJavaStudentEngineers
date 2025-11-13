@@ -1,5 +1,73 @@
 ### **Commit / Ticket Reference**
 
+* **Commit:** `test(API) wrote controller test after making changes for pooler connection (#49)`
+* **Ticket:** `#49 — Implement Demoable Client + Pooler Stability`
+* **Date:** November 13, 2025
+* **Team Member:** Jalen Stephens
+
+---
+
+### **AI Tool Information**
+
+* **Tool Used:** OpenAI ChatGPT (GPT-5) via Codex CLI
+* **Access Method:** Local Codex CLI session (sandboxed, no paid API usage)
+* **Configuration:** Default model parameters supplied by course tooling
+* **Cost:** $0 (educational access)
+
+---
+
+### **Purpose of AI Assistance**
+
+Used AI to draft and refine the new controller-focused regression tests that restore JaCoCo coverage after the pooler/database changes. Guidance covered:
+
+* Designing slice tests for `AnalyzeController` (submit, status, manifest, compare)
+* Adding `HealthControllerTest` to drive both branches of the DB health ping and metadata endpoint
+* Restructuring `SecurityConfigMvcTest` to avoid datasource/autowire failures while still verifying CORS + JWT rules
+* Capturing the environment tweaks (`application.properties`, Mockito plugin) needed to boot the test slices without pooler credentials
+
+---
+
+### **Prompts / Interaction Summary**
+
+* “write AnalyzeController MockMvc tests that assert JSON payloads and verify service calls”
+* “add HealthController tests without talking to a real DB”
+* “security config test fails because of datasource—convert to WebMvcTest and stub controllers”
+* “how do I stop Mockito inline from requiring the byte-buddy agent in the sandbox?”
+* “fill out the commit citation entry using the standard template”
+
+---
+
+### **Resulting Artifacts**
+
+* Added controller tests:
+  * `src/test/java/dev/coms4156/project/metadetect/controller/AnalyzeControllerTest.java`
+  * `src/test/java/dev/coms4156/project/metadetect/controller/HealthControllerTest.java`
+* Hardened security slice testing:
+  * `src/test/java/dev/coms4156/project/metadetect/config/SecurityConfigMvcTest.java`
+  * `src/test/java/dev/coms4156/project/metadetect/config/SecurityTestControllers.java`
+* Test-only infrastructure:
+  * `src/test/resources/application.properties` (stable Supabase defaults for tests)
+  * `src/test/resources/mockito-extensions/org.mockito.plugins.MockMaker`
+  * `pom.xml` dependency cleanup (removed `mockito-inline`)
+
+---
+
+### **Verification**
+
+* Targeted suite:  
+  `MAVEN_USER_HOME=$PWD/.m2 ./mvnw -q -Dtest=AuthControllerTest,ImageControllerTest,AnalyzeControllerTest,HealthControllerTest,SecurityConfigMvcTest test`
+* All targeted tests pass. Full `./mvnw test` still blocked in `SupabaseStorageServiceTest` / `AuthProxyServiceTest` because the course sandbox forbids binding local sockets for `MockWebServer`; rerun outside the sandbox to regenerate JaCoCo.
+
+---
+
+### **Attribution Statement**
+
+> Portions of this commit were generated with assistance from OpenAI ChatGPT (GPT-5) on November 13, 2025. All AI-generated content was reviewed, tested, and validated by the development team before committing.
+
+---
+
+### **Commit / Ticket Reference**
+
 * **Commit:** `chore(init): renamed project to MetaDetect, updated package structure, pom.xml coordinates, and Spring Boot configuration (#2)`
 * **Ticket:** [#2 — INIT Project Skeleton Code](https://github.com/Jalen-Stephens/AdvanceJavaStudentEngineers/issues/2)
 * **Date:** October 15 2025
@@ -42,6 +110,70 @@ Prompts and questions provided to ChatGPT included:
 ---
 
 ### **Resulting Artifacts**
+
+---
+
+### **Commit / Ticket Reference**
+
+* **Commit:** `bug(DB): fixes to help pooler connection limit (#49)`
+* **Ticket:** `#49 — Implement Demoable Client + Pooler Stability`
+* **Date:** October 25, 2025
+* **Team Member:** Jalen Stephens
+
+---
+
+### **AI Tool Information**
+
+* **Tool Used:** OpenAI ChatGPT (GPT-5)
+* **Access Method:** ChatGPT Web (.edu academic access)
+* **Configuration:** Default model settings
+* **Cost:** $0 (no paid API calls)
+
+---
+
+### **Purpose of AI Assistance**
+
+The AI assistant helped diagnose Supabase pooler exhaustion by reviewing how Spring transactions were scoped around long-running storage calls. Guidance focused on:
+
+* Shortening transaction lifetimes in `ImageService` so uploads/deletes don’t hold DB connections while streaming to Supabase Storage.
+* Adding orphan-cleanup logic so failed uploads best-effort delete the metadata row, preventing dangling rows that require manual cleanup.
+* Removing the broad `@Transactional` annotation from `AnalyzeService.submitAnalysis` so the expensive C2PA invocation runs outside the JDBC session.
+* Clarifying how to source `env.pooler.sh` so the smaller pool-size and timeout overrides are consistently applied during local runs.
+
+---
+
+### **Prompts / Interaction Summary**
+
+* “Connections aren’t closing against the pooler—can you check `ImageService` for long transactions?”
+* “How can we make sure upload failures roll back the metadata row even after the storage call throws?”
+* “Should AnalyzeService keep the transaction open while running the C2PA CLI?”
+* “Remind me how to use `env.pooler.sh` so Hikari sees the 2-connection limit.”
+
+---
+
+### **Resulting Artifacts**
+
+* `src/main/java/dev/coms4156/project/metadetect/service/ImageService.java`
+  * Removed class-level `@Transactional` usage from controller entry points; now only the RLS helpers manage transactions.
+  * Introduced `deleteOrphanedImage()` with logging to clean up rows when uploads fail midstream.
+  * Wrapped upload flow in try/catch so DB rows are rolled back before rethrowing storage errors.
+* `src/main/java/dev/coms4156/project/metadetect/service/AnalyzeService.java`
+  * `submitAnalysis` now persists the PENDING row and immediately releases the connection before downloading assets or running C2PA.
+* `env.pooler.sh`
+  * Documented values reiterated so the pooler JDBC URL, credentials, and keepalive hints are sourced for local testing.
+
+---
+
+### **Verification**
+
+* Ran `mvn -DskipTests compile` — build succeeded (only existing Guice `sun.misc.Unsafe` warnings remain).
+* Manual inspection confirmed all repository calls now occur within short-lived RLS-wrapped scopes, preventing Hikari from exceeding the 2-connection pooler cap.
+
+---
+
+### **Attribution Statement**
+
+> Portions of the connection-scope refactor and pooler troubleshooting guidance for this commit were generated with assistance from **OpenAI ChatGPT (GPT-5)** on October 25, 2025. The development team reviewed, tested, and validated all AI-assisted changes prior to committing.
 
 * Updated project structure → `dev/coms4156/project/metadetect`
 * Updated `MetaDetectApplication.java` and `application.properties`
@@ -341,6 +473,77 @@ The AI assisted in designing the revised database schema to align authentication
 ### **Attribution Statement**
 
 > Portions of this schema and RLS design were generated with assistance from OpenAI ChatGPT (GPT-5) on February 27, 2025. All AI-generated content was reviewed, validated, and finalized by the development team.
+
+---
+
+### **Commit / Ticket Reference**
+
+* **Commit:** `feat(Init): Demo UI Setup Initi (#49)`
+* **Ticket:** [#49 — Implement demoable client in same repository](https://github.com/Jalen-Stephens/AdvanceJavaStudentEngineers/issues/49)
+* **Date:** November 10, 2025
+* **Team Member:** Jalen Stephens
+
+---
+
+### **AI Tool Information**
+
+* **Tool Used:** OpenAI ChatGPT (GPT-5)
+* **Access Method:** Codex CLI (local workstation) connected to ChatGPT via academic access
+* **Configuration:** Default reasoning profile; no fine-tuning or paid API usage
+* **Cost:** $0 (covered by institutional access)
+
+---
+
+### **Purpose of AI Assistance**
+
+The assistant helped design and implement the in-repo demo client (“Pulse”) that exercises the MetaDetect auth and media APIs. This included:
+
+* Planning the folder layout under `client/` and deciding on a framework-free static build (HTML/CSS/JS).
+* Creating the login/sign-up experience that proxies `/auth/signup` and `/auth/login`, persists Supabase access tokens, and redirects to the media composer.
+* Building “Pulse Studio,” a social-style posting page that uploads images, annotates captions and hashtags, lists prior uploads, previews signed URLs, and deletes posts.
+* Styling both pages to resemble a polished social app experience while remaining framework-agnostic for easy demoing.
+* Updating `README.md` with hosting instructions, routing behavior, and token-handling notes, plus tightening `.gitignore` for future client tooling.
+
+---
+
+### **Prompts / Interaction Summary**
+
+Representative instructions provided to the AI:
+
+* “Create a social-media inspired login/sign-up UI that hits our `/auth` APIs and show responses inline.”
+* “Build another page where creators can upload images, add captions/hashtags, and delete posts using `/api/images`.”
+* “Automatically store the Supabase access token in the browser and reuse it so users don’t have to paste it.”
+* “Hide the bearer token in the UI but still let me override it if needed.”
+* “Update the README with steps for serving the client and describe Pulse Studio.”
+* “Add a CTA on the login page that jumps to the composer, and auto-redirect to the composer after logging in.”
+
+---
+
+### **Resulting Artifacts**
+
+* `client/index.html`, `client/styles.css`, `client/app.js` — Pulse login/sign-up client with Supabase token persistence and auto-redirect.
+* `client/compose.html`, `client/compose.css`, `client/compose.js` — Pulse Studio composer supporting uploads, captions/labels, feed rendering, signed URL previews, and inline deletes.
+* `client/config.js` — central base-URL configuration for targeting different backend instances.
+* `.gitignore` — ignores future client build outputs (`client/node_modules`, `client/dist`, `.cache`).
+* `README.md` — new “Client Demo (Pulse)” section covering login flow, Studio usage, and hidden-token behavior.
+
+---
+
+### **Verification**
+
+* Manually exercised the login form against a local MetaDetect backend:
+  * Verified successful `/auth/login` response, token persistence to `localStorage`, and automatic redirect to `compose.html`.
+* From Pulse Studio:
+  * Uploaded sample images through `/api/images/upload`, confirmed captions/labels persisted via `/api/images/{id}` `PUT`.
+  * Validated feed refresh hits `/api/images` and that signed URLs render in cards via `/api/images/{id}/url`.
+  * Deleted posts with `/api/images/{id}` `DELETE` and confirmed feed updates.
+* README instructions were followed start-to-finish (serve with `python3 -m http.server 4173 --directory client`) to ensure documentation accuracy.
+
+---
+
+### **Attribution Statement**
+
+> The Pulse demo client (login UI, Pulse Studio composer, token automation, and related documentation) was developed with assistance from **OpenAI ChatGPT (GPT-5)** on November 10, 2025. All generated assets were reviewed, manually tested in the browser, and incorporated into commit `feat(Init): Demo UI Setup Initi (#49)` by the project team.
 
 ---
 

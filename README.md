@@ -65,6 +65,36 @@ From the terminal, run the following CLI commands:
 
 ---
 
+## Client Demo (Pulse)
+---------------------------------------------------------------------
+`client/` contains a lightweight social-style demo called **Pulse** that exercises the `/auth/signup` and `/auth/login` endpoints.
+
+1. Start the MetaDetect backend (see steps above) so `http://localhost:8080` is available.
+2. Run a tiny static server from the project root:
+   ```bash
+   python3 -m http.server 4173 --directory client
+   ```
+3. Visit http://localhost:4173 in your browser. Submit either form to see the live API response in the right panel. After a successful login the client automatically routes you to the Pulse Studio page.
+
+### Targeting another deployment
+- Edit `client/config.js` and change `apiBaseUrl` to the host of any MetaDetect instance (e.g., a staging URL or a tunnel).
+- The badge in the form header reflects the active base URL so you always know which backend you are exercising.
+
+### What the demo covers
+- **Sign up**: posts `{ email, password }` to `/auth/signup` and surfaces the raw Supabase JSON for convenient debugging.
+- **Log in**: posts the same shape to `/auth/login`, displaying access/refresh tokens if enabled in your Supabase project.
+- Responses can be copied to the clipboard for quickly pasting into tools like Swagger or HTTP clients.
+
+### Pulse Studio — create/delete posts
+- Open http://localhost:4173/compose.html in the same static server session.
+- After logging in, the access token is automatically saved to your browser and reused by the Studio page.
+- Use the composer to upload images via `/api/images/upload`, add captions/hashtags (mapped to the `note` + `labels` fields), and delete posts inline via `/api/images/{id}`.
+- The feed retrieves your existing uploads with `/api/images` and pulls signed URLs per asset so you can actually preview the media.
+- Each card automatically runs `/api/analyze/{imageId}` and labels posts with an **AI generated** banner whenever the backend reports `status=DONE`.
+- Tokens stay hidden in the UI for safety; log in again from Pulse if you need to refresh credentials.
+
+---
+
 ## Running the Application with Docker
 ---------------------------------------------------------------------
 STILL UNDER DEVELOPMENT - PUSH TO ITERATION 2 - Sulay has been working very hard on this and it's good for next iteration

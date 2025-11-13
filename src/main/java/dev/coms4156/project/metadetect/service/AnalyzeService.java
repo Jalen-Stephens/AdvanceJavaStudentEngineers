@@ -85,7 +85,6 @@ public class AnalyzeService {
    * @throws MissingStoragePathException when storage_path is empty
    * @implNote Synchronous in Iteration 1; consider job queue later.
    */
-  @Transactional
   public Dtos.AnalyzeStartResponse submitAnalysis(UUID imageId) {
     final UUID currentUser = userService.getCurrentUserIdOrThrow();
 
@@ -107,13 +106,10 @@ public class AnalyzeService {
     pending = analysisRepo.save(pending);
     final UUID analysisId = pending.getId();
 
-    // 4) Ensure row visible before heavy work
-    analysisRepo.flush();
-
-    // 5) Run extraction inline (can be moved to async later)
+    // 4) Run extraction inline (can be moved to async later)
     runExtractionAndFinalize(analysisId, storagePath);
 
-    // 6) Return analysisId for polling
+    // 5) Return analysisId for polling
     return new Dtos.AnalyzeStartResponse(analysisId.toString());
   }
 
