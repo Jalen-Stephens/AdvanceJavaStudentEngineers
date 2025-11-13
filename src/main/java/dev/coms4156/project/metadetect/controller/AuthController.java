@@ -5,12 +5,17 @@ import dev.coms4156.project.metadetect.service.AuthProxyService;
 import dev.coms4156.project.metadetect.service.UserService;
 import java.util.LinkedHashMap;
 import java.util.Map;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.tags.Tag;
+import io.swagger.v3.oas.annotations.parameters.RequestBody;
+import io.swagger.v3.oas.annotations.security.SecurityRequirement;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
@@ -18,6 +23,7 @@ import org.springframework.web.bind.annotation.RestController;
  * AuthController proxies signup/login/refresh to Supabase and exposes /auth/me.
  * Registration/login are not implemented locally.
  */
+@Tag(name = "Auth", description = "Authentication endpoints (Supabase proxy) and current-user info")
 @RestController
 @RequestMapping("/auth")
 public class AuthController {
@@ -31,12 +37,33 @@ public class AuthController {
   }
 
   // --- Proxy endpoints (raw Supabase JSON passthrough) ---
-
+  @Operation(
+      summary = "Sign up a new user (proxied to Supabase)",
+      description = "Wraps Supabase Auth sign-up. Accepts an email and password and forwards "
+          + "the request to Supabase. Returns Supabase's raw JSON response."
+  )
+  @ApiResponses({
+      @ApiResponse(responseCode = "200",
+          description = "Signup completed (see Supabase JSON for details)"),
+      @ApiResponse(responseCode = "400",
+          description = "Validation error (from Supabase)")
+  })
   @PostMapping("/signup")
   public ResponseEntity<String> signup(@RequestBody Dtos.RegisterRequest req) {
     return authProxy.signup(req.email(), req.password());
   }
 
+  @Operation(
+    summary = "Login (proxied to Supabase)",
+    description = "Wraps Supabase Auth login. Accepts an email and password and forwards "
+        + "the request to Supabase. Returns Supabase's raw JSON response containing tokens."
+  )
+  @ApiResponses({
+      @ApiResponse(responseCode = "200",
+          description = "Login succeeded (see Supabase JSON for tokens)"),
+      @ApiResponse(responseCode = "400",
+          description = "Invalid credentials or validation error (from Supabase)")
+  })
   @PostMapping("/login")
   public ResponseEntity<String> login(@RequestBody Dtos.LoginRequest req) {
     return authProxy.login(req.email(), req.password());
@@ -54,6 +81,18 @@ public class AuthController {
    * @return 200 with Supabase's raw JSON on success, or
    *         400 {@code {"error":"missing refreshToken"}} if the field is absent
    */
+  @Operation(
+    summary = "Refresh access token (proxied to Supabase)",
+    description = "Exchanges a Supabase refresh token for a new access token. If the "
+        + "`refreshToken` field is missing, returns `400` with a JSON error instead of "
+        + "forwarding the call."
+  )
+  @ApiResponses({
+      @ApiResponse(responseCode = "200",
+          description = "New access token returned (Supabase JSON)"),
+      @ApiResponse(responseCode = "400",
+          description = "Missing `refreshToken` field")
+  })
   @PostMapping(value = "/refresh", produces = MediaType.APPLICATION_JSON_VALUE)
   public ResponseEntity<String> refresh(@RequestBody Dtos.RefreshRequest req) {
     if (req == null || req.refreshToken() == null) {         // adds a branch
@@ -77,7 +116,18 @@ public class AuthController {
    * @return a JSON object containing at least {@code { "id": "<uuid>" }},
    *         and optionally {@code "email"} when present
    */
-
+  @Operation(
+      summary = "Get current authenticated user",
+      description = "Returns the identity of the caller as resolved from the Supabase JWT. "
+          + "Always includes a user `id` and includes `email` when present.",
+      security = { @SecurityRequirement(name = "bearerAuth") }
+  )
+  @ApiResponses({
+      @ApiResponse(responseCode = "200",
+          description = "User identity returned successfully"),
+      @ApiResponse(responseCode = "401",
+          description = "Missing or invalid bearer token")
+  })
   @GetMapping("/me")
   public ResponseEntity<Map<String, Object>> me() {
     var id = userService.getCurrentUserIdOrThrow();

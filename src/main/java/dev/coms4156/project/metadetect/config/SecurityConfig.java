@@ -41,12 +41,17 @@ public class SecurityConfig {
         .requestMatchers("/health", "/actuator/**").permitAll()
         .requestMatchers("/auth/login", "/auth/signup").permitAll()
         .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
+        .requestMatchers(
+                "/v3/api-docs/**",
+                "/swagger-ui.html",
+                "/swagger-ui/**"
+            ).permitAll()
         // Everything else requires auth
         .anyRequest().authenticated()
       )
         // Validate incoming Bearer tokens as JWTs
         .oauth2ResourceServer(oauth -> oauth.jwt(Customizer.withDefaults()));
-
+      
     return http.build();
   }
 

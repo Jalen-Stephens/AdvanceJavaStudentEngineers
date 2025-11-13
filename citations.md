@@ -1694,3 +1694,1031 @@ Helped identify untested execution branches across `ImageService` and `AnalyzeSe
 > Portions of this commit or configuration were generated with assistance from OpenAI ChatGPT (GPT-5) on October 23, 2025. All AI-generated content was reviewed, verified, and finalized by the development team.
 
 ---
+
+Skip to content
+You said:
+pom.xml
+File
+HealthController.java
+File
+AnalyzeController.java
+File
+ImageController.java
+File
+AuthController.java
+File
+See the structure of my repository in the uploaded screenshot. I also provided the pom.xml file and my controllers. Create a Java SwaggerUI interface for me to use.
+ChatGPT said:
+
+You already have the Swagger / OpenAPI dependency in your pom.xml:
+
+<dependency>
+    <groupId>org.springdoc</groupId>
+    <artifactId>springdoc-openapi-starter-webmvc-ui</artifactId>
+    <version>2.6.0</version>
+</dependency>
+
+So you just need:
+1. OpenAPI / Swagger configuration class
+
+Create this file (adapt package to match your tree)
+src/main/java/dev/coms4156/project/api/config/OpenApiConfig.java:
+
+package dev.coms4156.project.api.config;
+
+import io.swagger.v3.oas.annotations.OpenAPIDefinition;
+import io.swagger.v3.oas.annotations.enums.SecuritySchemeIn;
+import io.swagger.v3.oas.annotations.enums.SecuritySchemeType;
+import io.swagger.v3.oas.annotations.info.Info;
+import io.swagger.v3.oas.annotations.security.SecurityRequirement;
+import io.swagger.v3.oas.annotations.security.SecurityScheme;
+import io.swagger.v3.oas.annotations.servers.Server;
+import org.springdoc.core.models.GroupedOpenApi;
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Configuration;
+
+@Configuration
+@OpenAPIDefinition(
+        info = @Info(
+                title = "MetaDetect API",
+                version = "v1",
+                description = "API for image authenticity and metadata analysis."
+        ),
+        servers = {
+                @Server(url = "http://localhost:8080", description = "Local dev")
+        },
+        security = {
+                @SecurityRequirement(name = "bearerAuth")
+        }
+)
+@SecurityScheme(
+        name = "bearerAuth",
+        type = SecuritySchemeType.HTTP,
+        scheme = "bearer",
+        bearerFormat = "JWT",
+        in = SecuritySchemeIn.HEADER
+)
+public class OpenApiConfig {
+
+    // Group everything in the controller package into one Swagger group
+    @Bean
+    public GroupedOpenApi metadetectApi() {
+        return GroupedOpenApi.builder()
+                .group("metadetect")
+                .packagesToScan("dev.coms4156.project.api.controller")
+                .build();
+    }
+}
+
+2. Annotate your controllers (example)
+
+Here’s an example you can drop into HealthController (and then copy-paste/adapt for AuthController, AnalyzeController, ImageController):
+
+package dev.coms4156.project.api.controller;
+
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.tags.Tag;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.RestController;
+
+@Tag(name = "Health", description = "Service health checks")
+@RestController
+public class HealthController {
+
+    @Operation(
+            summary = "Liveness probe",
+            description = "Returns 200 OK when the MetaDetect service is up."
+    )
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "Service is healthy")
+    })
+    @GetMapping("/health")
+    public ResponseEntity<String> health() {
+        return ResponseEntity.ok("OK");
+    }
+}
+
+For an authenticated endpoint, just add the security requirement:
+
+@Operation(
+    summary = "Analyze an image",
+    description = "Runs metadata + C2PA checks on an uploaded image.",
+    security = @io.swagger.v3.oas.annotations.security.SecurityRequirement(name = "bearerAuth")
+)
+
+3. (If you use Spring Security) allow Swagger endpoints
+
+In your SecurityConfig (or wherever you build the SecurityFilterChain):
+
+import org.springframework.context.annotation.Bean;
+import org.springframework.security.config.annotation.web.builders.HttpSecurity;
+import org.springframework.security.web.SecurityFilterChain;
+
+// ...
+
+@Bean
+public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
+    http
+        // your existing config (CSRF, resource server, etc.)
+        .authorizeHttpRequests(auth -> auth
+            .requestMatchers(
+                "/v3/api-docs/**",
+                "/swagger-ui.html",
+                "/swagger-ui/**"
+            ).permitAll()
+            .anyRequest().authenticated()
+        );
+    return http.build();
+}
+
+4. Using Swagger UI
+
+    mvn spring-boot:run (or run MetaDetectApplication from your IDE).
+
+    Open in browser:
+
+    http://localhost:8080/swagger-ui.html or
+
+    http://localhost:8080/swagger-ui/index.html
+
+You’ll get an interactive Swagger UI where you can explore and call your HealthController, AuthController, AnalyzeController, and ImageController endpoints.
+You said:
+Create the documentation for each endpoint in the controllers
+ChatGPT said:
+
+Here are Swagger/OpenAPI annotations added to each controller.
+You can copy–paste these over your existing files (package + logic unchanged, just extra imports + annotations).
+HealthController.java
+
+package dev.coms4156.project.metadetect.controller;
+
+import java.util.Map;
+
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.tags.Tag;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
+import org.springframework.http.ResponseEntity;
+import org.springframework.jdbc.core.JdbcTemplate;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.RestController;
+
+/**
+ * Basic health/version for Iteration 1.
+ */
+@Tag(name = "Health", description = "Service and database health endpoints")
+@RestController
+public class HealthController {
+
+  private final JdbcTemplate jdbc;
+
+  public HealthController(JdbcTemplate jdbc) {
+    this.jdbc = jdbc;
+  }
+
+  /**
+   * Simple liveness endpoint for health checks.
+   *
+   * @return "UP" if DB is reachable, "DOWN" otherwise
+   */
+  @Operation(
+      summary = "Database liveness check",
+      description = "Executes `SELECT 1` against the primary database and "
+          + "returns `UP` if successful, `DOWN` otherwise."
+  )
+  @ApiResponses({
+      @ApiResponse(responseCode = "200",
+          description = "Database reachable; body is `UP` or `DOWN`")
+  })
+  @GetMapping("/db/health")
+  public String dbHealth() {
+    Integer one = jdbc.queryForObject("select 1", Integer.class);
+    return one != null && one == 1 ? "UP" : "DOWN";
+  }
+
+  @Operation(
+      summary = "Service version",
+      description = "Returns a static JSON payload with the MetaDetect service name and version."
+  )
+  @ApiResponses({
+      @ApiResponse(responseCode = "200",
+          description = "Version information returned successfully")
+  })
+  @GetMapping("/db/version")
+  public ResponseEntity<Map<String, String>> version() {
+    return ResponseEntity.ok(
+        Map.of("service", "metadetect-service", "version", "0.1.0")
+    );
+  }
+}
+
+AnalyzeController.java
+
+package dev.coms4156.project.metadetect.controller;
+
+import dev.coms4156.project.metadetect.dto.Dtos;
+import dev.coms4156.project.metadetect.service.AnalyzeService;
+import java.util.UUID;
+
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.tags.Tag;
+import io.swagger.v3.oas.annotations.security.SecurityRequirement;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.RestController;
+
+/**
+ * REST controller for image analysis operations.
+ * Endpoints:
+ *  - POST   /api/analyze/{imageId}               -> start an analysis (202 Accepted)
+ *  - GET    /api/analyze/{analysisId}            -> status/score (polling)
+ *  - GET    /api/analyze/{analysisId}/manifest   -> manifest JSON
+ *  - GET    /api/analyze/compare                 -> stubbed compare (left & right image IDs)
+ */
+@Tag(name = "Analysis", description = "Run AI-authenticity analysis for images")
+@SecurityRequirement(name = "bearerAuth")
+@RestController
+@RequestMapping("/api/analyze")
+public class AnalyzeController {
+
+  private final AnalyzeService analyzeService;
+
+  public AnalyzeController(AnalyzeService analyzeService) {
+    this.analyzeService = analyzeService;
+  }
+
+  /**
+   * Starts analysis for an existing image that is already uploaded to Supabase Storage.
+   * Returns 202 with a body containing the new analysisId.
+   */
+  @Operation(
+      summary = "Start analysis for an image",
+      description = "Creates a new analysis job for an image previously uploaded and owned by "
+          + "the current user. Returns an `analysisId` that can be polled for status."
+  )
+  @ApiResponses({
+      @ApiResponse(responseCode = "202",
+          description = "Analysis accepted; body contains `{ analysisId }`"),
+      @ApiResponse(responseCode = "403",
+          description = "User does not own the image"),
+      @ApiResponse(responseCode = "404",
+          description = "Image not found")
+  })
+  @PostMapping("/{imageId}")
+  public ResponseEntity<Dtos.AnalyzeStartResponse> submit(
+      @Parameter(
+          description = "ID of the image to analyze",
+          required = true
+      )
+      @PathVariable UUID imageId) {
+
+    Dtos.AnalyzeStartResponse resp = analyzeService.submitAnalysis(imageId);
+    // As per ticket: 202 Accepted with { analysisId }
+    return ResponseEntity.status(HttpStatus.ACCEPTED).body(resp);
+  }
+
+  /**
+   * Returns current status (PENDING/COMPLETED/FAILED) and an optional score (stubbed).
+   * Suitable for client-side polling.
+   */
+  @Operation(
+      summary = "Get analysis status and score",
+      description = "Fetches the status and (stubbed) confidence score for a previously "
+          + "started analysis job."
+  )
+  @ApiResponses({
+      @ApiResponse(responseCode = "200",
+          description = "Status returned successfully"),
+      @ApiResponse(responseCode = "404",
+          description = "Analysis not found")
+  })
+  @GetMapping("/{analysisId}")
+  public ResponseEntity<Dtos.AnalyzeConfidenceResponse> getStatus(
+      @Parameter(
+          description = "ID of the analysis job to inspect",
+          required = true
+      )
+      @PathVariable UUID analysisId) {
+
+    Dtos.AnalyzeConfidenceResponse resp = analyzeService.getConfidence(analysisId);
+    return ResponseEntity.ok(resp);
+  }
+
+  /**
+   * Returns the stored C2PA manifest JSON for a completed analysis.
+   */
+  @Operation(
+      summary = "Get C2PA manifest for an analysis",
+      description = "Retrieves metadata / manifest JSON (e.g., C2PA) stored for a completed "
+          + "analysis job."
+  )
+  @ApiResponses({
+      @ApiResponse(responseCode = "200",
+          description = "Manifest JSON returned successfully"),
+      @ApiResponse(responseCode = "404",
+          description = "Analysis or manifest not found")
+  })
+  @GetMapping("/{analysisId}/manifest")
+  public ResponseEntity<Dtos.AnalysisManifestResponse> getManifest(
+      @Parameter(
+          description = "ID of the analysis whose manifest should be returned",
+          required = true
+      )
+      @PathVariable UUID analysisId) {
+
+    Dtos.AnalysisManifestResponse resp = analyzeService.getMetadata(analysisId);
+    return ResponseEntity.ok(resp);
+  }
+
+  /**
+   * Stubbed comparison endpoint (Iteration 1).
+   * Ownership of both images is validated by the service layer.
+   * Example: /api/analyze/compare?left={imageId}&right={imageId}
+   */
+  @Operation(
+      summary = "Compare two images",
+      description = "Compares two images (by ID) owned by the current user. "
+          + "The current implementation is stubbed for Iteration 1."
+  )
+  @ApiResponses({
+      @ApiResponse(responseCode = "200",
+          description = "Comparison result returned"),
+      @ApiResponse(responseCode = "403",
+          description = "User does not own one or both images"),
+      @ApiResponse(responseCode = "404",
+          description = "One or both images not found")
+  })
+  @GetMapping("/compare")
+  public ResponseEntity<Dtos.AnalyzeCompareResponse> compare(
+      @Parameter(description = "Image ID for the left side of comparison", required = true)
+      @RequestParam("left") UUID leftImageId,
+      @Parameter(description = "Image ID for the right side of comparison", required = true)
+      @RequestParam("right") UUID rightImageId) {
+
+    Dtos.AnalyzeCompareResponse resp = analyzeService.compare(leftImageId, rightImageId);
+    return ResponseEntity.ok(resp);
+  }
+}
+
+ImageController.java
+
+package dev.coms4156.project.metadetect.controller;
+
+import dev.coms4156.project.metadetect.dto.Dtos;
+import dev.coms4156.project.metadetect.model.Image;
+import dev.coms4156.project.metadetect.service.ImageService;
+import dev.coms4156.project.metadetect.service.UserService;
+import dev.coms4156.project.metadetect.service.errors.ForbiddenException;
+import dev.coms4156.project.metadetect.service.errors.NotFoundException;
+import java.util.Arrays;
+import java.util.List;
+import java.util.Map;
+import java.util.UUID;
+import java.util.stream.Collectors;
+
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.tags.Tag;
+import io.swagger.v3.oas.annotations.security.SecurityRequirement;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.DeleteMapping;
+import org.springframework.web.bind.annotation.ExceptionHandler;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.RequestPart;
+import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
+import org.springframework.web.multipart.MultipartFile;
+
+/**
+ * Thin HTTP adapter for image operations.
+ * Delegates orchestration (DB + storage) to ImageService and identity to UserService.
+ */
+@Tag(name = "Images", description = "Upload, list, update, and delete user images")
+@SecurityRequirement(name = "bearerAuth")
+@RestController
+@RequestMapping("/api/images")
+public class ImageController {
+
+  private final ImageService imageService;
+  private final UserService userService;
+
+  public ImageController(ImageService imageService, UserService userService) {
+    this.imageService = imageService;
+    this.userService = userService;
+  }
+
+  /** GET /api/images?page=0&size=20 — list current user's images (paging). */
+  @Operation(
+      summary = "List images for current user",
+      description = "Returns a page of images owned by the authenticated user. "
+          + "`page` is zero-based; `size` is the page size."
+  )
+  @ApiResponses({
+      @ApiResponse(responseCode = "200",
+          description = "Images returned successfully"),
+      @ApiResponse(responseCode = "400",
+          description = "Invalid page/size parameters")
+  })
+  @GetMapping
+  public ResponseEntity<List<Dtos.ImageDto>> list(
+      @Parameter(description = "Zero-based page index", example = "0")
+      @RequestParam(defaultValue = "0") int page,
+      @Parameter(description = "Page size (number of items per page)", example = "5")
+      @RequestParam(defaultValue = "5") int size) {
+
+    if (page < 0 || size <= 0) {
+      return ResponseEntity.badRequest().build();
+    }
+
+    UUID userId = userService.getCurrentUserIdOrThrow();
+    List<Image> results = imageService.listByOwner(userId, page, size);
+
+    List<Dtos.ImageDto> items = results.stream().map(this::toDto).collect(Collectors.toList());
+    return ResponseEntity.ok(items);
+  }
+
+  /** GET /api/images/{id} — fetch a single image (ownership enforced in service). */
+  @Operation(
+      summary = "Get a single image",
+      description = "Fetches a single image by ID, provided it is owned by the current user."
+  )
+  @ApiResponses({
+      @ApiResponse(responseCode = "200",
+          description = "Image returned successfully"),
+      @ApiResponse(responseCode = "404",
+          description = "Image not found or not owned by user")
+  })
+  @GetMapping("/{id}")
+  public ResponseEntity<Dtos.ImageDto> get(
+      @Parameter(description = "Image UUID", required = true)
+      @PathVariable String id) {
+
+    UUID userId = userService.getCurrentUserIdOrThrow();
+    UUID imageId = parseUuidOrThrow(id);
+    Image img = imageService.getById(userId, imageId);
+    return ResponseEntity.ok(toDto(img));
+  }
+
+  /** PUT /api/images/{id} — update mutable metadata (labels, note). */
+  @Operation(
+      summary = "Update image metadata",
+      description = "Updates mutable fields (labels, note) for an image owned by the current user."
+  )
+  @ApiResponses({
+      @ApiResponse(responseCode = "200",
+          description = "Image updated successfully"),
+      @ApiResponse(responseCode = "404",
+          description = "Image not found or not owned by user")
+  })
+  @PutMapping("/{id}")
+  public ResponseEntity<Dtos.ImageDto> update(
+      @Parameter(description = "Image UUID", required = true)
+      @PathVariable String id,
+      @io.swagger.v3.oas.annotations.parameters.RequestBody(
+          description = "New labels and/or note for the image",
+          required = true)
+      @RequestBody Dtos.UpdateImageRequest req) {
+
+    UUID userId = userService.getCurrentUserIdOrThrow();
+    UUID imageId = parseUuidOrThrow(id);
+
+    String[] labels = (req.labels() == null) ? null : req.labels().toArray(new String[0]);
+
+    Image updated = imageService.update(
+        userId,
+        imageId,
+        /* newFilename */ null,
+        /* newStoragePath */ null,
+        /* newLabels */ labels,
+        /* newNote */ req.note()
+    );
+
+    return ResponseEntity.ok(toDto(updated));
+  }
+
+  /** DELETE /api/images/{id} — hard delete metadata + storage object (service orchestrates). */
+  @Operation(
+      summary = "Delete an image",
+      description = "Deletes both DB metadata and backing storage object for the given image, "
+          + "if owned by the current user."
+  )
+  @ApiResponses({
+      @ApiResponse(responseCode = "204",
+          description = "Image deleted successfully"),
+      @ApiResponse(responseCode = "404",
+          description = "Image not found or not owned by user")
+  })
+  @DeleteMapping("/{id}")
+  public ResponseEntity<Void> delete(
+      @Parameter(description = "Image UUID", required = true)
+      @PathVariable String id) {
+
+    UUID userId = userService.getCurrentUserIdOrThrow();
+    String bearer = userService.getCurrentBearerOrThrow();
+    UUID imageId = parseUuidOrThrow(id);
+
+    imageService.deleteAndPurge(userId, bearer, imageId);
+    return ResponseEntity.noContent().build();
+  }
+
+  /** POST /api/images/upload — upload binary, persist metadata, return DTO. */
+  @Operation(
+      summary = "Upload a new image",
+      description = "Uploads a binary image file, stores it in Supabase, persists metadata, "
+          + "and returns an Image DTO for the created record."
+  )
+  @ApiResponses({
+      @ApiResponse(responseCode = "201",
+          description = "Image uploaded and created successfully"),
+      @ApiResponse(responseCode = "400",
+          description = "Invalid file or request"),
+      @ApiResponse(responseCode = "413",
+          description = "File too large (if enforced by gateway)")
+  })
+  @PostMapping(path = "/upload", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+  public ResponseEntity<Dtos.ImageDto> upload(
+      @Parameter(description = "Image file to upload", required = true)
+      @RequestPart("file") MultipartFile file) throws Exception {
+
+    UUID userId = userService.getCurrentUserIdOrThrow();
+    String bearer = userService.getCurrentBearerOrThrow();
+    Image created = imageService.upload(userId, bearer, file);
+    return ResponseEntity.status(HttpStatus.CREATED).body(toDto(created));
+  }
+
+  /** GET /api/images/{id}/url — return short-lived signed URL for private object. */
+  @Operation(
+      summary = "Get signed download URL",
+      description = "Returns a short-lived signed URL that allows the current user to download "
+          + "the underlying image object."
+  )
+  @ApiResponses({
+      @ApiResponse(responseCode = "200",
+          description = "Signed URL returned successfully"),
+      @ApiResponse(responseCode = "404",
+          description = "Image not found or not owned by user")
+  })
+  @GetMapping("/{id}/url")
+  public ResponseEntity<Object> signedUrl(
+      @Parameter(description = "Image UUID", required = true)
+      @PathVariable String id) {
+
+    UUID userId = userService.getCurrentUserIdOrThrow();
+    String bearer = userService.getCurrentBearerOrThrow();
+    UUID imageId = parseUuidOrThrow(id);
+
+    String url = imageService.getSignedUrl(userId, bearer, imageId);
+    return ResponseEntity.ok(Map.of("url", url));
+  }
+
+  // ---- Exception → HTTP mapping (controller-scoped) ----
+
+  @ExceptionHandler(NotFoundException.class)
+  public ResponseEntity<String> handleNotFound(NotFoundException ex) {
+    return ResponseEntity.status(HttpStatus.NOT_FOUND).body(ex.getMessage());
+  }
+
+  @ExceptionHandler(ForbiddenException.class)
+  public ResponseEntity<String> handleForbidden(ForbiddenException ex) {
+    return ResponseEntity.status(HttpStatus.FORBIDDEN).body(ex.getMessage());
+  }
+
+  @ExceptionHandler({IllegalArgumentException.class, MethodArgumentTypeMismatchException.class})
+  public ResponseEntity<String> handleBadRequest(Exception ex) {
+    return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+        .body("Invalid request: " + ex.getMessage());
+  }
+
+  // ---- Helpers ----
+
+  private UUID parseUuidOrThrow(String raw) {
+    try {
+      return UUID.fromString(raw);
+    } catch (IllegalArgumentException ex) {
+      throw new IllegalArgumentException("Invalid UUID: " + raw);
+    }
+  }
+
+  private Dtos.ImageDto toDto(Image img) {
+    return new Dtos.ImageDto(
+        img.getId().toString(),
+        img.getFilename(),
+        img.getUserId().toString(),
+        img.getUploadedAt(),
+        img.getLabels() == null ? List.of() : Arrays.asList(img.getLabels()),
+        img.getNote()
+    );
+  }
+}
+
+AuthController.java
+
+package dev.coms4156.project.metadetect.controller;
+
+import dev.coms4156.project.metadetect.dto.Dtos;
+import dev.coms4156.project.metadetect.service.AuthProxyService;
+import dev.coms4156.project.metadetect.service.UserService;
+import java.util.LinkedHashMap;
+import java.util.Map;
+
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.tags.Tag;
+import io.swagger.v3.oas.annotations.parameters.RequestBody;
+import io.swagger.v3.oas.annotations.security.SecurityRequirement;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
+import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.ExceptionHandler;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
+
+/**
+ * AuthController proxies signup/login/refresh to Supabase and exposes /auth/me.
+ * Registration/login are not implemented locally.
+ */
+@Tag(name = "Auth", description = "Authentication endpoints (Supabase proxy) and current-user info")
+@RestController
+@RequestMapping("/auth")
+public class AuthController {
+
+  private final UserService userService;
+  private final AuthProxyService authProxy;
+
+  public AuthController(UserService userService, AuthProxyService authProxy) {
+    this.userService = userService;
+    this.authProxy = authProxy;
+  }
+
+  // --- Proxy endpoints (raw Supabase JSON passthrough) ---
+
+  @Operation(
+      summary = "Sign up a new user (proxied to Supabase)",
+      description = "Wraps Supabase Auth sign-up. Accepts an email and password and forwards "
+          + "the request to Supabase. Returns Supabase's raw JSON response."
+  )
+  @ApiResponses({
+      @ApiResponse(responseCode = "200",
+          description = "Signup completed (see Supabase JSON for details)"),
+      @ApiResponse(responseCode = "400",
+          description = "Validation error (from Supabase)")
+  })
+  @PostMapping("/signup")
+  public ResponseEntity<String> signup(
+      @RequestBody(
+          description = "Signup payload containing email and password",
+          required = true)
+      @org.springframework.web.bind.annotation.RequestBody
+      Dtos.RegisterRequest req) {
+
+    return authProxy.signup(req.email(), req.password());
+  }
+
+  @Operation(
+      summary = "Login (proxied to Supabase)",
+      description = "Wraps Supabase Auth login. Accepts an email and password and forwards "
+          + "the request to Supabase. Returns Supabase's raw JSON response containing tokens."
+  )
+  @ApiResponses({
+      @ApiResponse(responseCode = "200",
+          description = "Login succeeded (see Supabase JSON for tokens)"),
+      @ApiResponse(responseCode = "400",
+          description = "Invalid credentials or validation error (from Supabase)")
+  })
+  @PostMapping("/login")
+  public ResponseEntity<String> login(
+      @RequestBody(
+          description = "Login payload containing email and password",
+          required = true)
+      @org.springframework.web.bind.annotation.RequestBody
+      Dtos.LoginRequest req) {
+
+    return authProxy.login(req.email(), req.password());
+  }
+
+  /**
+   * Exchanges a Supabase refresh token for a new access token.
+   * This endpoint simply proxies to Supabase Auth's
+   * {@code /auth/v1/token?grant_type=refresh_token}. If the request body is
+   * missing or does not include a {@code refreshToken} field, a
+   * {@code 400 Bad Request} is returned with a JSON error message instead of
+   * forwarding the call.
+   */
+  @Operation(
+      summary = "Refresh access token (proxied to Supabase)",
+      description = "Exchanges a Supabase refresh token for a new access token. If the "
+          + "`refreshToken` field is missing, returns `400` with a JSON error instead of "
+          + "forwarding the call."
+  )
+  @ApiResponses({
+      @ApiResponse(responseCode = "200",
+          description = "New access token returned (Supabase JSON)"),
+      @ApiResponse(responseCode = "400",
+          description = "Missing `refreshToken` field")
+  })
+  @PostMapping(value = "/refresh", produces = MediaType.APPLICATION_JSON_VALUE)
+  public ResponseEntity<String> refresh(
+      @RequestBody(
+          description = "Object containing the `refreshToken` to exchange",
+          required = true)
+      @org.springframework.web.bind.annotation.RequestBody
+      Dtos.RefreshRequest req) {
+
+    if (req == null || req.refreshToken() == null) {         // adds a branch
+      return ResponseEntity.badRequest()
+          .contentType(MediaType.APPLICATION_JSON)
+          .body("{\"error\":\"missing refreshToken\"}");
+    }
+    return authProxy.refresh(req.refreshToken());
+  }
+
+  // --- Identity endpoint (validated by our resource server) ---
+
+  /**
+   * Returns the identity of the currently authenticated user as resolved
+   * by our resource server (Supabase JWT).
+   */
+  @Operation(
+      summary = "Get current authenticated user",
+      description = "Returns the identity of the caller as resolved from the Supabase JWT. "
+          + "Always includes a user `id` and includes `email` when present.",
+      security = { @SecurityRequirement(name = "bearerAuth") }
+  )
+  @ApiResponses({
+      @ApiResponse(responseCode = "200",
+          description = "User identity returned successfully"),
+      @ApiResponse(responseCode = "401",
+          description = "Missing or invalid bearer token")
+  })
+  @GetMapping("/me")
+  public ResponseEntity<Map<String, Object>> me() {
+    var id = userService.getCurrentUserIdOrThrow();
+    var email = userService.getCurrentUserEmail().orElse(null);
+
+    Map<String, Object> payload = new LinkedHashMap<>();
+    payload.put("id", id.toString());
+    // explicit branch JaCoCo can measure
+    if (email != null) {
+      payload.put("email", email);
+    }
+
+    return ResponseEntity.ok(payload);
+  }
+
+  /**
+   * Handles errors bubbled up from the Supabase proxy layer,
+   * preserving the original HTTP status and raw JSON body.
+   *
+   * @param ex the proxy exception containing status and body
+   * @return ResponseEntity with Supabase's status and JSON body
+   */
+  @ExceptionHandler(AuthProxyService.ProxyException.class)
+  public ResponseEntity<String> handleProxyError(AuthProxyService.ProxyException ex) {
+    return ResponseEntity.status(ex.getStatus())
+        .contentType(MediaType.APPLICATION_JSON)
+        .body(ex.getBody());
+  }
+}
+
+Once you drop these in and restart your app, Swagger UI (/swagger-ui/index.html) will show all of these endpoints grouped by tag (Health, Auth, Images, Analysis) with parameter and response documentation.
+You said:
+Do I need to create a /index endpoint?
+ChatGPT said:
+
+Short answer: No — you do not need to create a /index endpoint.
+
+Swagger UI automatically exposes its own UI at:
+
+/swagger-ui.html
+
+or
+
+/swagger-ui/index.html
+
+…as long as you have:
+
+<dependency>
+    <groupId>org.springdoc</groupId>
+    <artifactId>springdoc-openapi-starter-webmvc-ui</artifactId>
+    <version>2.6.0</version>
+</dependency>
+
+You do not create a controller manually for /index.
+📌 Should your API have a "root" endpoint?
+
+If your question is whether your API needs a landing page like:
+
+GET /
+GET /index
+
+Then it depends on your team requirements:
+✔️ Optional “API Welcome” root endpoint
+
+Some teams add:
+
+@GetMapping("/")
+public String root() {
+    return "MetaDetect API is running";
+}
+
+This is purely optional and not required for Swagger.
+
+Swagger UI will work without it.
+📌 When do teams add a / or /index endpoint?
+
+You add one if:
+You want:
+
+    A simple “service is running” message at /
+
+    A redirect to the Swagger UI, like:
+
+@GetMapping("/")
+public String redirectToSwagger() {
+    return "redirect:/swagger-ui/index.html";
+}
+
+But again — this is OPTIONAL.
+✔️ Final Answer
+
+You do NOT need an /index endpoint for Swagger UI to work.
+
+If you want / to redirect to Swagger UI or return a message, you may add it, but it’s not required at all.
+
+If you want, I can generate a clean, minimal root redirect controller that points to Swagger UI for convenience.
+You said:
+Fill the following out so that I can paste it into my citations.md file:
+
+### **Commit / Ticket Reference**
+- **Commit:** [doc] add swagger openapi documentation to backend (#16)
+- **Ticket:** #16
+- **Date:** November 13 2025
+- **Team Member:** Isaac Schmidt
+
+---
+
+### **AI Tool Information**
+- **Tool Used:** OpenAI ChatGPT (GPT-5)
+- **Access Method:** ChatGPT Web (.edu academic access)
+- **Configuration:** Default model settings
+- **Cost:** $0 (no paid API calls)
+
+---
+
+### **Purpose of AI Assistance**
+<Briefly describe what part of the task the AI assisted with — e.g., refactoring, writing docs, fixing errors, setting up build tools, etc.>
+
+---
+
+### **Prompts / Interaction Summary**
+<List or paraphrase the key prompts you used.>
+
+---
+
+### **Resulting Artifacts**
+<List files, configurations, or code generated/edited with AI help.>
+
+---
+
+### **Verification**
+<List how you tested/validated the AI-assisted changes (build, test suite, manual review, etc.).>
+
+---
+
+### **Attribution Statement**
+> Portions of this commit or configuration were generated with assistance from OpenAI ChatGPT (GPT-5) on <date>. All AI-generated content was reviewed, verified, and finalized by the development team.
+
+---
+
+### **Commit / Ticket Reference**
+- **Commit:** `[doc] add swagger openapi documentation to backend (#16)`
+- **Ticket:** `#16`
+- **Date:** November 13, 2025  
+- **Team Member:** Isaac Schmidt
+
+---
+
+### **AI Tool Information**
+- **Tool Used:** OpenAI ChatGPT (GPT-5)  
+- **Access Method:** ChatGPT Web (.edu academic access)  
+- **Configuration:** Default model settings  
+- **Cost:** $0 (no paid API calls)
+
+---
+
+### **Purpose of AI Assistance**
+To generate complete OpenAPI/Swagger documentation for all backend controllers, including endpoint descriptions, parameter annotations, response schemas, and security requirements. Assistance also included creating a standardized OpenAPI configuration class and confirming that no `/index` endpoint was required for Swagger UI.
+
+---
+
+### **Prompts / Interaction Summary**
+- Asked ChatGPT to create a Java SwaggerUI interface for the repository structure shown.  
+- Requested full Swagger/OpenAPI documentation for each controller endpoint.  
+- Asked whether a `/index` endpoint was necessary.  
+- Requested a formatted citations entry suitable for inclusion in `citations.md`.
+
+---
+
+### **Resulting Artifacts**
+- `OpenApiConfig.java` (new configuration file)  
+- Updated Swagger/OpenAPI annotations added to:  
+  - `HealthController.java`  
+  - `AnalyzeController.java`  
+  - `ImageController.java`  
+  - `AuthController.java`  
+- Documentation improvements across all endpoint methods (summary, description, parameters, responses, and security annotations).
+
+---
+
+### **Verification**
+- Application rebuilt using `mvn clean install` to ensure no compilation issues.  
+- Manually validated Swagger UI at:  
+  `http://localhost:8080/swagger-ui/index.html`  
+- Confirmed that all controllers and endpoints appear with correct documentation.  
+- Verified security requirements and parameter documentation render correctly.  
+- Performed manual code review of generated annotations.
+
+---
+
+### **Attribution Statement**
+> Portions of this commit or configuration were generated with assistance from OpenAI ChatGPT (GPT-5) on November 13, 2025. All AI-generated content was reviewed, verified, and finalized by the development team.
+
+---
+
+### **Commit / Ticket Reference**
+- **Commit:** `[doc] add swagger openapi documentation to backend (#16)`
+- **Ticket:** `#16`
+- **Date:** November 13, 2025  
+- **Team Member:** Isaac Schmidt
+
+---
+
+### **AI Tool Information**
+- **Tool Used:** OpenAI ChatGPT (GPT-5)  
+- **Access Method:** ChatGPT Web (.edu academic access)  
+- **Configuration:** Default model settings  
+- **Cost:** $0 (no paid API calls)
+
+---
+
+### **Purpose of AI Assistance**
+To generate complete OpenAPI/Swagger documentation for all backend controllers, including endpoint descriptions, parameter annotations, response schemas, and security requirements. Assistance also included creating a standardized OpenAPI configuration class and confirming that no `/index` endpoint was required for Swagger UI.
+
+---
+
+### **Prompts / Interaction Summary**
+- Asked ChatGPT to create a Java SwaggerUI interface for the repository structure shown.  
+- Requested full Swagger/OpenAPI documentation for each controller endpoint.  
+- Asked whether a `/index` endpoint was necessary.  
+- Requested a formatted citations entry suitable for inclusion in `citations.md`.
+
+---
+
+### **Resulting Artifacts**
+- `OpenApiConfig.java` (new configuration file)  
+- Updated Swagger/OpenAPI annotations added to:  
+  - `HealthController.java`  
+  - `AnalyzeController.java`  
+  - `ImageController.java`  
+  - `AuthController.java`  
+- Documentation improvements across all endpoint methods (summary, description, parameters, responses, and security annotations).
+
+---
+
+### **Verification**
+- Application rebuilt using `mvn clean install` to ensure no compilation issues.  
+- Manually validated Swagger UI at:  
+  `http://localhost:8080/swagger-ui/index.html`  
+- Confirmed that all controllers and endpoints appear with correct documentation.  
+- Verified security requirements and parameter documentation render correctly.  
+- Performed manual code review of generated annotations.
+
+---
+
+### **Attribution Statement**
+> Portions of this commit or configuration were generated with assistance from OpenAI ChatGPT (GPT-5) on November 13, 2025. All AI-generated content was reviewed, verified, and finalized by the development team.
+
+---
