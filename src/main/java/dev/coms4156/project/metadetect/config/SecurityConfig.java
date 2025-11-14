@@ -6,6 +6,7 @@ import javax.crypto.spec.SecretKeySpec;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.core.annotation.Order;
 import org.springframework.http.HttpMethod;
 import org.springframework.security.config.Customizer;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
@@ -32,26 +33,20 @@ import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 public class SecurityConfig {
 
   @Bean
-  SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
+  public SecurityFilterChain apiSecurityFilterChain(HttpSecurity http) throws Exception {
     http
-      .csrf(csrf -> csrf.disable())
-      .cors(Customizer.withDefaults())
-      .authorizeHttpRequests(auth -> auth
-        // Public endpoints
-        .requestMatchers("/health", "/actuator/**").permitAll()
-        .requestMatchers("/auth/login", "/auth/signup").permitAll()
-        .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
-        .requestMatchers(
-                "/v3/api-docs/**",
-                "/swagger-ui.html",
-                "/swagger-ui/**"
-            ).permitAll()
-        // Everything else requires auth
-        .anyRequest().authenticated()
-      )
-        // Validate incoming Bearer tokens as JWTs
+        // Only apply this chain to /api/** endpoints
+        .securityMatcher("/api/**")
+        .csrf(csrf -> csrf.disable())
+        .cors(Customizer.withDefaults())
+        .authorizeHttpRequests(auth -> auth
+            // Public API endpoints (if you have any under /api)
+            .requestMatchers("/api/health", "/api/public/**").permitAll()
+            // Everything else under /api/** requires auth
+            .anyRequest().authenticated()
+        )
         .oauth2ResourceServer(oauth -> oauth.jwt(Customizer.withDefaults()));
-      
+
     return http.build();
   }
 

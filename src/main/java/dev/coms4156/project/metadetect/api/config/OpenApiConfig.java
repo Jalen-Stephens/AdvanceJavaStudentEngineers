@@ -34,12 +34,11 @@ import org.springframework.context.annotation.Configuration;
 )
 public class OpenApiConfig {
 
-    // Group everything in the controller package into one Swagger group
     @Bean
     public GroupedOpenApi metadetectApi() {
         return GroupedOpenApi.builder()
                 .group("metadetect")
-                .packagesToScan("dev.coms4156.project.api.controller")
+                .packagesToScan("dev.coms4156.project.metadetect.controller")
                 .build();
     }
 }
