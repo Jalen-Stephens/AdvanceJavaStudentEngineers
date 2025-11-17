@@ -1,9 +1,9 @@
 package dev.coms4156.project.metadetect.controller;
 
 import io.swagger.v3.oas.annotations.Operation;
-import io.swagger.v3.oas.annotations.tags.Tag;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import java.util.Map;
 import org.springframework.http.ResponseEntity;
 import org.springframework.jdbc.core.JdbcTemplate;
@@ -42,8 +42,8 @@ public class HealthController {
    * @return static JSON confirming the service is reachable
    */
   @Operation(
-    summary = "Database liveness check",
-    description = "Executes `SELECT 1` against the primary database and "
+      summary = "Database liveness check",
+      description = "Executes `SELECT 1` against the primary database and "
         + "returns `UP` if successful, `DOWN` otherwise."
   )
   @ApiResponses({
@@ -58,22 +58,17 @@ public class HealthController {
   }
 
   /**
-   * Returns static version/service metadata for smoke tests or rollout tracing.
-   *
-   * @return JSON map containing service name and version
-   */
-  /**
    * Simple version endpoint.
    *
    * @return static JSON with service name and version
    */
   @Operation(
-    summary = "Service version",
-    description = "Returns a static JSON payload with the MetaDetect service name and version."
+      summary = "Service version",
+      description = "Returns a static JSON payload with the MetaDetect service name and version."
   )
   @ApiResponses({
-      @ApiResponse(responseCode = "200",
-          description = "Version information returned successfully")
+    @ApiResponse(responseCode = "200",
+        description = "Version information returned successfully")
   })
   @GetMapping("/db/version")
   public ResponseEntity<Map<String, String>> version() {

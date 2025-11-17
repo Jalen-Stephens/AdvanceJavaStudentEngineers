@@ -6,17 +6,16 @@ import dev.coms4156.project.metadetect.service.ImageService;
 import dev.coms4156.project.metadetect.service.UserService;
 import dev.coms4156.project.metadetect.service.errors.ForbiddenException;
 import dev.coms4156.project.metadetect.service.errors.NotFoundException;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
+import io.swagger.v3.oas.annotations.security.SecurityRequirement;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 import java.util.stream.Collectors;
-import io.swagger.v3.oas.annotations.Operation;
-import io.swagger.v3.oas.annotations.Parameter;
-import io.swagger.v3.oas.annotations.tags.Tag;
-import io.swagger.v3.oas.annotations.security.SecurityRequirement;
-import io.swagger.v3.oas.annotations.responses.ApiResponse;
-import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
@@ -70,8 +69,8 @@ public class ImageController {
    * @return paged list of ImageDto objects
    */
   @Operation(
-    summary = "List images for current user",
-    description = "Returns a page of images owned by the authenticated user. "
+      summary = "List images for current user",
+      description = "Returns a page of images owned by the authenticated user. "
         + "`page` is zero-based; `size` is the page size."
   )
   @ApiResponses({
@@ -100,8 +99,8 @@ public class ImageController {
 
   /** GET /api/images/{id} — fetch a single image (ownership enforced in service). */
   @Operation(
-    summary = "Get a single image",
-    description = "Fetches a single image by ID, provided it is owned by the current user."
+      summary = "Get a single image",
+      description = "Fetches a single image by ID, provided it is owned by the current user."
   )
   @ApiResponses({
       @ApiResponse(responseCode = "200",
@@ -126,8 +125,8 @@ public class ImageController {
    * @return updated image metadata
    */
   @Operation(
-    summary = "Update image metadata",
-    description = "Updates mutable fields (labels, note) for an image owned by the current user."
+      summary = "Update image metadata",
+      description = "Updates mutable fields (labels, note) for an image owned by the current user."
   )
   @ApiResponses({
       @ApiResponse(responseCode = "200",
@@ -167,8 +166,8 @@ public class ImageController {
    * @return 204 if deletion succeeded
    */
   @Operation(
-    summary = "Delete an image",
-    description = "Deletes both DB metadata and backing storage object for the given image, "
+      summary = "Delete an image",
+      description = "Deletes both DB metadata and backing storage object for the given image, "
         + "if owned by the current user."
   )
   @ApiResponses({
@@ -194,8 +193,8 @@ public class ImageController {
    * @return DTO describing the created image
    */
   @Operation(
-    summary = "Upload a new image",
-    description = "Uploads a binary image file, stores it in Supabase, persists metadata, "
+      summary = "Upload a new image",
+      description = "Uploads a binary image file, stores it in Supabase, persists metadata, "
         + "and returns an Image DTO for the created record."
   )
   @ApiResponses({
@@ -223,8 +222,8 @@ public class ImageController {
    * @return signed URL wrapped in a JSON map
    */
   @Operation(
-    summary = "Get signed download URL",
-    description = "Returns a short-lived signed URL that allows the current user to download "
+      summary = "Get signed download URL",
+      description = "Returns a short-lived signed URL that allows the current user to download "
         + "the underlying image object."
   )
   @ApiResponses({

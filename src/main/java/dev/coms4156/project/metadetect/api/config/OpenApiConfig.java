@@ -11,6 +11,11 @@ import org.springdoc.core.models.GroupedOpenApi;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
+/**
+ * OpenAPI (Swagger) configuration for the MetaDetect API.
+ * Sets up API metadata, security schemes, and grouping for documentation generation.
+ * Uses springdoc-openapi for integration with Spring Boot.
+ */
 @Configuration
 @OpenAPIDefinition(
         info = @Info(
@@ -19,10 +24,10 @@ import org.springframework.context.annotation.Configuration;
                 description = "API for image authenticity and metadata analysis."
         ),
         servers = {
-                @Server(url = "http://localhost:8080", description = "Local dev")
+          @Server(url = "http://localhost:8080", description = "Local dev")
         },
         security = {
-                @SecurityRequirement(name = "bearerAuth")
+          @SecurityRequirement(name = "bearerAuth")
         }
 )
 @SecurityScheme(
@@ -32,14 +37,22 @@ import org.springframework.context.annotation.Configuration;
         bearerFormat = "JWT",
         in = SecuritySchemeIn.HEADER
 )
+
+
 public class OpenApiConfig {
 
-    @Bean
-    public GroupedOpenApi metadetectApi() {
-        return GroupedOpenApi.builder()
-                .group("metadetect")
-                .packagesToScan("dev.coms4156.project.metadetect.controller")
-                .build();
-    }
+  /**
+   * Grouped OpenAPI bean for the MetaDetect API.
+   * Scans the controller package to include all API endpoints in the documentation.
+   *
+   * @return GroupedOpenApi instance for MetaDetect API
+  */
+  @Bean
+  public GroupedOpenApi metadetectApi() {
+    return GroupedOpenApi.builder()
+        .group("metadetect")
+        .packagesToScan("dev.coms4156.project.metadetect.controller")
+        .build();
+  }
 }
 

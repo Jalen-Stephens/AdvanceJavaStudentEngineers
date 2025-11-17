@@ -3362,3 +3362,80 @@ To generate complete OpenAPI/Swagger documentation for all backend controllers, 
 > Portions of this commit or configuration were generated with assistance from OpenAI ChatGPT (GPT-5) on November 13, 2025. All AI-generated content was reviewed, verified, and finalized by the development team.
 
 ---
+
+### **Commit / Ticket Reference**
+
+* **Commit:** `[doc] add swagger openapi documentation to backend (#16)`
+* **Ticket:** `#16 — Add Swagger/OpenAPI Documentation`
+* **Date:** November 13, 2025  
+* **Team Member:** Isaac Schmidt
+
+---
+
+### **AI Tool Information**
+
+* **Tool Used:** OpenAI ChatGPT (GPT-5)
+* **Access Method:** ChatGPT Web (.edu academic access)
+* **Configuration:** Default model settings
+* **Cost:** $0 (no paid API calls)
+
+---
+
+### **Purpose of AI Assistance**
+
+Used AI to generate, correct, and integrate full Swagger/OpenAPI documentation across the backend service. Assistance included:
+
+* Creating a complete `OpenApiConfig` class with security schemes and grouped API config  
+* Adding `@Operation`, `@ApiResponse`, `@SecurityRequirement`, and `@Tag` annotations to all controller endpoints (`AuthController`, `ImageController`, `AnalyzeController`, `HealthController`)
+* Debugging 401 authentication issues blocking `/v3/api-docs` and Swagger UI
+* Refactoring `SecurityConfig` to ensure `/api/**` is secured while Swagger routes remain public
+* Fixing incorrect package paths and scan paths, resolving configuration conflicts
+* Walking through troubleshooting steps for Springdoc + Spring Security integration
+
+---
+
+### **Prompts / Interaction Summary**
+
+* “Create the documentation for each endpoint in the controllers.”
+* “Fix Swagger UI — it says ‘Failed to load remote configuration’.”
+* “Is the repo structure causing the issue?”
+* “What security configuration will allow `/v3/api-docs` without auth?”
+* “Rewrite my citations entry in the required markdown format.”
+
+---
+
+### **Resulting Artifacts**
+
+* Fully documented controllers:
+  * `AuthController.java`
+  * `ImageController.java`
+  * `AnalyzeController.java`
+  * `HealthController.java`
+* New or updated configuration files:
+  * `OpenApiConfig.java` (correct package + `packagesToScan`)
+  * `SecurityConfig.java` (path-scoped chain allowing Swagger endpoints)
+* Working Swagger UI at:
+  * `/swagger-ui/index.html`
+  * `/v3/api-docs`
+  * `/v3/api-docs/swagger-config`
+* Cleanup of outdated configs to prevent 401s on OpenAPI endpoints
+
+---
+
+### **Verification**
+
+* Rebuilt project using `mvn clean spring-boot:run`
+* Validated:
+  * `http://localhost:8080/v3/api-docs` returns JSON (no auth required)
+  * `http://localhost:8080/v3/api-docs/swagger-config` loads correctly
+  * `http://localhost:8080/swagger-ui/index.html` renders full documentation
+* Manually inspected all controller documentation in Swagger UI
+* Confirmed that secured `/api/**` endpoints still require valid JWTs
+
+---
+
+### **Attribution Statement**
+
+> Portions of this commit were generated with assistance from OpenAI ChatGPT (GPT-5) on November 13, 2025. All AI-generated content was reviewed, verified, and finalized by the development team.
+
+---

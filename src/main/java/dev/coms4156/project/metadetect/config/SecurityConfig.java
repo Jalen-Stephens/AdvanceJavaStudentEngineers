@@ -6,8 +6,6 @@ import javax.crypto.spec.SecretKeySpec;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.core.annotation.Order;
-import org.springframework.http.HttpMethod;
 import org.springframework.security.config.Customizer;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
@@ -32,6 +30,14 @@ import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 @EnableWebSecurity
 public class SecurityConfig {
 
+  /**
+   * Security filter chain for API endpoints under /api/**.
+   * Enforces JWT authentication via OAuth2 Resource Server.
+   * Public endpoints (e.g. /api/health) are permitted without auth.
+   *
+   * @param http HttpSecury builder
+   * @return configured SecurityFilterChain
+   */
   @Bean
   public SecurityFilterChain apiSecurityFilterChain(HttpSecurity http) throws Exception {
     http
@@ -50,6 +56,15 @@ public class SecurityConfig {
     return http.build();
   }
 
+  /**
+   * JWT decoder configured to validate Supabase-issued access tokens.
+   * Uses the project's JWT secret for HS256 signature validation
+   * and enforces the correct issuer URL.
+   *
+   * @param jwtSecret Supabase project's JWT secret
+   * @param projectBaseUrl Supabase project base URL
+   * @return configured JwtDecoder
+   */
   @Bean
   JwtDecoder jwtDecoder(
       @Value("${metadetect.supabase.jwtSecret}") String jwtSecret,
@@ -73,7 +88,12 @@ public class SecurityConfig {
     return decoder;
   }
 
-  // Permissive CORS for local/dev — restrict for production
+  /**
+   * CORS configuration allowing requests from any origin.
+   * Allows common HTTP methods and headers.
+   *
+   * @return configured CorsConfigurationSource
+   */
   @Bean
   CorsConfigurationSource corsConfigurationSource() {
     var cfg = new CorsConfiguration();

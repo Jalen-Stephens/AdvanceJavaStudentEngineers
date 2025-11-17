@@ -3,14 +3,14 @@ package dev.coms4156.project.metadetect.controller;
 import dev.coms4156.project.metadetect.dto.Dtos;
 import dev.coms4156.project.metadetect.service.AuthProxyService;
 import dev.coms4156.project.metadetect.service.UserService;
-import java.util.LinkedHashMap;
-import java.util.Map;
 import io.swagger.v3.oas.annotations.Operation;
-import io.swagger.v3.oas.annotations.tags.Tag;
 import io.swagger.v3.oas.annotations.parameters.RequestBody;
-import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
+import io.swagger.v3.oas.annotations.security.SecurityRequirement;
+import io.swagger.v3.oas.annotations.tags.Tag;
+import java.util.LinkedHashMap;
+import java.util.Map;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.ExceptionHandler;
@@ -61,8 +61,8 @@ public class AuthController {
   }
 
   @Operation(
-    summary = "Login (proxied to Supabase)",
-    description = "Wraps Supabase Auth login. Accepts an email and password and forwards "
+      summary = "Login (proxied to Supabase)",
+      description = "Wraps Supabase Auth login. Accepts an email and password and forwards "
         + "the request to Supabase. Returns Supabase's raw JSON response containing tokens."
   )
   @ApiResponses({
@@ -90,8 +90,8 @@ public class AuthController {
    *         400 {@code {"error":"missing refreshToken"}} if the field is absent
    */
   @Operation(
-    summary = "Refresh access token (proxied to Supabase)",
-    description = "Exchanges a Supabase refresh token for a new access token. If the "
+      summary = "Refresh access token (proxied to Supabase)",
+      description = "Exchanges a Supabase refresh token for a new access token. If the "
         + "`refreshToken` field is missing, returns `400` with a JSON error instead of "
         + "forwarding the call."
   )

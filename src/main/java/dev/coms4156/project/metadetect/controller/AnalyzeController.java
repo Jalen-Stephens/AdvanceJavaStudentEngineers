@@ -3,11 +3,10 @@ package dev.coms4156.project.metadetect.controller;
 import dev.coms4156.project.metadetect.dto.Dtos;
 import dev.coms4156.project.metadetect.service.AnalyzeService;
 import io.swagger.v3.oas.annotations.Operation;
-import io.swagger.v3.oas.annotations.Parameter;
-import io.swagger.v3.oas.annotations.tags.Tag;
-import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
+import io.swagger.v3.oas.annotations.security.SecurityRequirement;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import java.util.UUID;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -100,8 +99,8 @@ public class AnalyzeController {
    *         caller lacks access (propagated from the service layer)
    */
   @Operation(
-    summary = "Get analysis status and score",
-    description = "Fetches the status and (stubbed) confidence score for a previously "
+      summary = "Get analysis status and score",
+      description = "Fetches the status and (stubbed) confidence score for a previously "
         + "started analysis job."
   )
   @ApiResponses({
@@ -127,8 +126,8 @@ public class AnalyzeController {
    *     may be 404/403 via advice if not accessible
    */
   @Operation(
-    summary = "Get C2PA manifest for an analysis",
-    description = "Retrieves metadata / manifest JSON (e.g., C2PA) stored for a completed "
+      summary = "Get C2PA manifest for an analysis",
+      description = "Retrieves metadata / manifest JSON (e.g., C2PA) stored for a completed "
         + "analysis job."
   )
   @ApiResponses({
@@ -159,8 +158,8 @@ public class AnalyzeController {
    *     if either image is missing or unauthorized
    */
   @Operation(
-    summary = "Compare two images",
-    description = "Compares two images (by ID) owned by the current user. "
+      summary = "Compare two images",
+      description = "Compares two images (by ID) owned by the current user. "
         + "The current implementation is stubbed for Iteration 1."
   )
   @ApiResponses({
