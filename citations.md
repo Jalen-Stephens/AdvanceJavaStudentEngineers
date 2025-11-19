@@ -3439,3 +3439,82 @@ Used AI to generate, correct, and integrate full Swagger/OpenAPI documentation a
 > Portions of this commit were generated with assistance from OpenAI ChatGPT (GPT-5) on November 13, 2025. All AI-generated content was reviewed, verified, and finalized by the development team.
 
 ---
+
+### **Commit / Ticket Reference**
+
+* **Commit:** `[bug/doc] Fix C2PAToolInvoker Error and Repair Swagger UI  (#39)`
+* **Ticket:** `#39 — Handle IO Exception Error in C2paToolInvoker`
+* **NOTE:** `Also repaired Swagger UI so that it behaves correctly`
+* **Date:** November 19, 2025  
+* **Team Member:** Isaac Schmidt
+
+---
+
+### **AI Tool Information**
+
+* **Tool Used:** OpenAI ChatGPT (GPT-5)
+* **Access Method:** ChatGPT Web (.edu academic access)
+* **Configuration:** Default model settings
+* **Cost:** $0 (no paid API calls)
+
+---
+
+### **Purpose of AI Assistance**
+
+Used AI to diagnose and patch key backend issues affecting C2PA tool invocation and Swagger UI functionality. Assistance included:
+
+* Identifying the root cause of a `NullPointerException` in `C2paToolInvoker` and recommending a safe error-handling path that returns a clean “no C2PA data” response instead of storing erroneous error codes.
+* Debugging and fixing Swagger UI authentication behavior, ensuring Bearer tokens are passed correctly and endpoints load via `/v3/api-docs` and `/swagger-ui/index.html`.
+* Correcting misapplied annotations in `AuthController` (`@RequestBody` mix-up between Spring and Swagger) that caused JSON request bodies to deserialize into null fields.
+* Verifying DTO definitions (`RegisterRequest`, `LoginRequest`, `RefreshRequest`) and advising explicit JSON property annotations where necessary.
+* Walking through troubleshooting steps for Spring Security, confirming Swagger’s `Authorize` flow, and validating that uploads (`/api/images/upload`) correctly receive JWTs.
+* Ensuring folder structure, config classes, and OpenAPI definitions (`OpenApiConfig`) were properly wired and not interfering with request handling.
+
+---
+
+### **Prompts / Interaction Summary**
+
+* “Here’s the stack trace — why are email and password null during signup?”
+* “Why is Swagger UI not able to authorize file uploads?”
+* “Is my repository structure causing the Swagger issue?”
+* “Why does C2paToolInvoker throw a NullPointerException when the image has no manifest?”
+* “How do I fix @RequestBody so JSON actually binds to my DTO?”
+* “Write the assistance section in a copy-and-paste .md format.”
+
+---
+
+### **Resulting Artifacts**
+
+* Updated and corrected backend components:
+  * `C2paToolInvoker.java` logic for null-safe error handling.
+  * `AuthController.java` corrected to use Spring’s `@RequestBody`.
+  * `AuthProxyService.java` updated with proper null-safe `escape` logic and logging.
+  * `ImageController.java` verified for proper Swagger + Bearer token behavior.
+* Configuration fixes:
+  * `OpenApiConfig.java` corrected (`@SecurityScheme`, controller scan path).
+  * Validation of existing `SecurityConfig.java` for Swagger compatibility.
+* Swagger UI restored to full functionality:
+  * Correctly loads `/v3/api-docs`
+  * Accepts JWT via **Authorize**
+  * Allows image upload with bearer token
+  * Renders all secured endpoints normally
+
+---
+
+### **Verification**
+
+* Rebuilt project using:
+  ```bash
+  mvn clean spring-boot:run
+  ```
+* Confirmed:
+  * All /auth/* endpoints bind JSON correctly (no null DTO fields).
+  * /auth/signup successfully proxies to Supabase without internal 500s.
+  * C2PA analysis now returns a clean “no C2PA data” message when appropriate.
+  * Swagger UI loads configuration without 401 or “Failed to load remote configuration”.
+  * Bearer token added via Swagger’s Authorize correctly authenticates image uploads.
+  * Manual and log-based verification performed for C2PA execution paths and auth flow.
+
+### **Attribution Statement**
+
+Portions of this commit were generated with assistance from OpenAI ChatGPT (GPT-5) on November 19, 2025. All AI-generated recommendations and code were reviewed, tested, and validated by the development team prior to inclusion.

@@ -1,5 +1,7 @@
 package dev.coms4156.project.metadetect.service;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatusCode;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
@@ -23,6 +25,7 @@ import reactor.core.publisher.Mono;
 public class AuthProxyService {
 
   private final WebClient supabase;
+  private static final Logger log = LoggerFactory.getLogger(AuthProxyService.class);
 
   /**
    * Constructs a proxy service using a preconfigured WebClient that already
@@ -43,6 +46,8 @@ public class AuthProxyService {
    */
   public ResponseEntity<String> signup(String email, String password) {
     String path = "/auth/v1/signup";
+    
+    log.info("signup email={}, passwordNull={}", email, password == null);
     return forwardJson(
       path,
       "{\"email\":\"" + escape(email)
@@ -142,8 +147,11 @@ public class AuthProxyService {
    * performs final validation.
    */
   private static String escape(String s) {
-    return s
-      .replace("\\", "\\\\")
-      .replace("\"", "\\\"");
+    log.debug("escape called: input={}", s);
+    if (s == null) {
+      throw new IllegalArgumentException("value cannot be null");
+    }
+    return s.replace("\\", "\\\\")
+            .replace("\"", "\\\"");
   }
 }

@@ -1,5 +1,6 @@
 package dev.coms4156.project.metadetect.dto;
 
+import com.fasterxml.jackson.annotation.JsonProperty; 
 import java.time.Instant;
 import java.time.OffsetDateTime;
 import java.util.List;
@@ -155,20 +156,32 @@ public final class Dtos {
   /**
    * Request body for registering a new user.
    */
-  public record RegisterRequest(String email, String password) { }
+  public record RegisterRequest(
+      @JsonProperty("email") String email,
+      @JsonProperty("password") String password
+  ) { }
 
   /**
    * Request body for logging in.
    */
-  public record LoginRequest(String email, String password) { }
+  public record LoginRequest(
+      @JsonProperty("email") String email,
+      @JsonProperty("password") String password
+  ) { }
 
   /**
    * Response returned after a successful login or registration.
    */
-  public record AuthResponse(String userId, String token) { }
+  public record AuthResponse(
+      @JsonProperty("userId") String userId,
+      @JsonProperty("token") String token
+  ) { }
 
   /**
    * Request body for obtaining a fresh access token.
    */
-  public record RefreshRequest(String refreshToken) { }
+  public record RefreshRequest(
+      @JsonProperty("refreshToken") String refreshToken
+  ) { }
+
 }
