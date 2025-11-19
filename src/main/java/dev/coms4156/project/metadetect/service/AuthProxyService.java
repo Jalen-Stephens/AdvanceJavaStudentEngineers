@@ -149,7 +149,7 @@ public class AuthProxyService {
   private static String escape(String s) {
     log.debug("escape called: input={}", s);
     if (s == null) {
-        throw new IllegalArgumentException("value cannot be null");
+      throw new IllegalArgumentException("value cannot be null");
     }
     return s.replace("\\", "\\\\")
             .replace("\"", "\\\"");

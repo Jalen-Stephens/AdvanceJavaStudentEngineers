@@ -205,45 +205,45 @@ public class AnalyzeService {
       // 2) Run C2PA extraction
       String manifestJson = c2paToolInvoker.extractManifest(tempFile);
 
-        // 3) Mark COMPLETED (C2PA manifest present)
-        markCompleted(analysisId, manifestJson, /*confidence*/ null);
+      // 3) Mark COMPLETED (C2PA manifest present)
+      markCompleted(analysisId, manifestJson, /*confidence*/ null);
 
-      } catch (IOException ioe) {
-        // Special-case: image has NO C2PA manifest
-        if (C2paToolInvoker.NO_C2PA_MANIFEST_MESSAGE.equals(ioe.getMessage())) {
-          try {
-            var noC2paObj = new java.util.LinkedHashMap<String, Object>();
-            noC2paObj.put("message", "This image does not contain C2PA data");
-            noC2paObj.put("hasC2pa", Boolean.FALSE);
+    } catch (IOException ioe) {
+      // Special-case: image has NO C2PA manifest
+      if (C2paToolInvoker.NO_C2PA_MANIFEST_MESSAGE.equals(ioe.getMessage())) {
+        try {
+          var noC2paObj = new java.util.LinkedHashMap<String, Object>();
+          noC2paObj.put("message", "This image does not contain C2PA data");
+          noC2paObj.put("hasC2pa", Boolean.FALSE);
 
-            String json = objectMapper.writeValueAsString(noC2paObj);
+          String json = objectMapper.writeValueAsString(noC2paObj);
 
-            // Treat as a successfully completed analysis: no C2PA, but we can still
-            // continue with AI image analysis downstream.
-            markCompleted(analysisId, json, /*confidence*/ null);
-          } catch (Exception jsonEx) {
-            // If JSON building fails, still mark as COMPLETED with a simple message
-            markCompleted(
-                analysisId,
-                "{\"message\":\"This image does not contain C2PA data\",\"hasC2pa\":false}",
-                null
-            );
-          }
-        } else {
-          // Any other IOException is a real failure
-          handleGenericFailure(analysisId, storagePath, ioe);
+          // Treat as a successfully completed analysis: no C2PA, but we can still
+          // continue with AI image analysis downstream.
+          markCompleted(analysisId, json, /*confidence*/ null);
+        } catch (Exception jsonEx) {
+          // If JSON building fails, still mark as COMPLETED with a simple message
+          markCompleted(
+              analysisId,
+              "{\"message\":\"This image does not contain C2PA data\",\"hasC2pa\":false}",
+              null
+          );
         }
+      } else {
+        // Any other IOException is a real failure
+        handleGenericFailure(analysisId, storagePath, ioe);
+      }
 
-      } catch (Exception e) {
-        // Non-IO exceptions: treat as failure as before
-        handleGenericFailure(analysisId, storagePath, e);
+    } catch (Exception e) {
+      // Non-IO exceptions: treat as failure as before
+      handleGenericFailure(analysisId, storagePath, e);
 
-      } finally {
-        // Best-effort cleanup of the temp file
-        if (tempFile != null && tempFile.exists()) {
-          //noinspection ResultOfMethodCallIgnored
-          tempFile.delete();
-        }
+    } finally {
+      // Best-effort cleanup of the temp file
+      if (tempFile != null && tempFile.exists()) {
+        //noinspection ResultOfMethodCallIgnored
+        tempFile.delete();
+      }
     }
   }
 
@@ -350,13 +350,14 @@ public class AnalyzeService {
     }
   }
 
-    /**
-     * Handles a generic failure during analysis by marking the analysis as FAILED
-     * and storing the error message in the details field.
-     * @param analysisId
-     * @param storagePath
-     * @param e
-     */
+  /**
+   * Handles a generic failure during analysis by marking the analysis as FAILED
+   * and storing the error message in the details field.
+   *
+   * @param analysisId id of the analysis to mark
+   * @param storagePath storage path of the image being analyzed
+   * @param e the exception that caused the failure
+   */
 
   private void handleGenericFailure(UUID analysisId, String storagePath, Exception e) {
     String errMsg = truncate(e.toString(), 2000);

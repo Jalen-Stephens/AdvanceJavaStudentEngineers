@@ -156,32 +156,32 @@ public final class Dtos {
   /**
    * Request body for registering a new user.
    */
-  public record RegisterRequest(      
-    @JsonProperty("email") String email,
-    @JsonProperty("password") String password
-    ) { }
+  public record RegisterRequest(
+      @JsonProperty("email") String email,
+      @JsonProperty("password") String password
+  ) { }
 
   /**
    * Request body for logging in.
    */
   public record LoginRequest(
-    @JsonProperty("email") String email,
-    @JsonProperty("password") String password
-    ) { }
+      @JsonProperty("email") String email,
+      @JsonProperty("password") String password
+  ) { }
 
   /**
    * Response returned after a successful login or registration.
    */
   public record AuthResponse(
-    @JsonProperty("userId") String userId,
-    @JsonProperty("token") String token
+      @JsonProperty("userId") String userId,
+      @JsonProperty("token") String token
   ) { }
 
   /**
    * Request body for obtaining a fresh access token.
    */
   public record RefreshRequest(
-    @JsonProperty("refreshToken") String refreshToken
+      @JsonProperty("refreshToken") String refreshToken
   ) { }
 
 }

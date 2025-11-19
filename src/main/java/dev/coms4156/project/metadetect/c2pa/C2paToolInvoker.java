@@ -56,8 +56,8 @@ public class C2paToolInvoker {
         
         // Any other non-zero exit is treated as an unexpected C2PA failure.
         String msg = "C2PA tool failed with exit code " + exit
-        + (stderr.isBlank() ? "" : " | stderr: " + stderr);
-            throw new IOException(msg);
+            + (stderr.isBlank() ? "" : " | stderr: " + stderr);
+        throw new IOException(msg);
       }
       return stdout; // should already be JSON from -d
 
