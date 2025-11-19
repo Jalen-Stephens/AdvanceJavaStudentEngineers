@@ -6,6 +6,11 @@ import dev.coms4156.project.metadetect.service.ImageService;
 import dev.coms4156.project.metadetect.service.UserService;
 import dev.coms4156.project.metadetect.service.errors.ForbiddenException;
 import dev.coms4156.project.metadetect.service.errors.NotFoundException;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
+import io.swagger.v3.oas.annotations.security.SecurityRequirement;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
@@ -35,6 +40,8 @@ import org.springframework.web.multipart.MultipartFile;
  * - Ownership and bearer validation handled via UserService and ImageService.
  * - Handles request/response shaping and HTTP-specific error mapping.
  */
+@Tag(name = "Images", description = "Upload, list, update, and delete user images")
+@SecurityRequirement(name = "bearerAuth")
 @RestController
 @RequestMapping("/api/images")
 public class ImageController {
@@ -61,6 +68,17 @@ public class ImageController {
    * @param size number of items per page
    * @return paged list of ImageDto objects
    */
+  @Operation(
+      summary = "List images for current user",
+      description = "Returns a page of images owned by the authenticated user. "
+        + "`page` is zero-based; `size` is the page size."
+  )
+  @ApiResponses({
+      @ApiResponse(responseCode = "200",
+          description = "Images returned successfully"),
+      @ApiResponse(responseCode = "400",
+          description = "Invalid page/size parameters")
+  })
   @GetMapping
   public ResponseEntity<List<Dtos.ImageDto>> list(
       @RequestParam(defaultValue = "0") int page,
@@ -79,13 +97,17 @@ public class ImageController {
     return ResponseEntity.ok(items);
   }
 
-  /**
-   * Returns a single image owned by the authenticated user.
-   * Ownership is enforced at the service layer.
-   *
-   * @param id image identifier (raw string, validated to UUID)
-   * @return 200 with the image if authorized
-   */
+  /** GET /api/images/{id} — fetch a single image (ownership enforced in service). */
+  @Operation(
+      summary = "Get a single image",
+      description = "Fetches a single image by ID, provided it is owned by the current user."
+  )
+  @ApiResponses({
+      @ApiResponse(responseCode = "200",
+          description = "Image returned successfully"),
+      @ApiResponse(responseCode = "404",
+          description = "Image not found or not owned by user")
+  })
   @GetMapping("/{id}")
   public ResponseEntity<Dtos.ImageDto> get(@PathVariable String id) {
     UUID userId = userService.getCurrentUserIdOrThrow();
@@ -102,6 +124,16 @@ public class ImageController {
    * @param req fields to update
    * @return updated image metadata
    */
+  @Operation(
+      summary = "Update image metadata",
+      description = "Updates mutable fields (labels, note) for an image owned by the current user."
+  )
+  @ApiResponses({
+      @ApiResponse(responseCode = "200",
+          description = "Image updated successfully"),
+      @ApiResponse(responseCode = "404",
+          description = "Image not found or not owned by user")
+  })
   @PutMapping("/{id}")
   public ResponseEntity<Dtos.ImageDto> update(
       @PathVariable String id,
@@ -133,6 +165,17 @@ public class ImageController {
    * @param id image identifier
    * @return 204 if deletion succeeded
    */
+  @Operation(
+      summary = "Delete an image",
+      description = "Deletes both DB metadata and backing storage object for the given image, "
+        + "if owned by the current user."
+  )
+  @ApiResponses({
+      @ApiResponse(responseCode = "204",
+          description = "Image deleted successfully"),
+      @ApiResponse(responseCode = "404",
+          description = "Image not found or not owned by user")
+  })
   @DeleteMapping("/{id}")
   public ResponseEntity<Void> delete(@PathVariable String id) {
     UUID userId = userService.getCurrentUserIdOrThrow();
@@ -149,6 +192,19 @@ public class ImageController {
    * @param file multipart file uploaded from the client
    * @return DTO describing the created image
    */
+  @Operation(
+      summary = "Upload a new image",
+      description = "Uploads a binary image file, stores it in Supabase, persists metadata, "
+        + "and returns an Image DTO for the created record."
+  )
+  @ApiResponses({
+      @ApiResponse(responseCode = "201",
+          description = "Image uploaded and created successfully"),
+      @ApiResponse(responseCode = "400",
+          description = "Invalid file or request"),
+      @ApiResponse(responseCode = "413",
+          description = "File too large (if enforced by gateway)")
+  })
   @PostMapping(path = "/upload", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
   public ResponseEntity<Dtos.ImageDto> upload(
       @RequestPart("file") MultipartFile file) throws Exception {
@@ -165,6 +221,17 @@ public class ImageController {
    * @param id image identifier
    * @return signed URL wrapped in a JSON map
    */
+  @Operation(
+      summary = "Get signed download URL",
+      description = "Returns a short-lived signed URL that allows the current user to download "
+        + "the underlying image object."
+  )
+  @ApiResponses({
+      @ApiResponse(responseCode = "200",
+          description = "Signed URL returned successfully"),
+      @ApiResponse(responseCode = "404",
+          description = "Image not found or not owned by user")
+  })
   @GetMapping("/{id}/url")
   public ResponseEntity<Object> signedUrl(@PathVariable String id) {
     UUID userId = userService.getCurrentUserIdOrThrow();

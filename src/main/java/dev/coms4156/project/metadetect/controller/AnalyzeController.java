@@ -2,6 +2,11 @@ package dev.coms4156.project.metadetect.controller;
 
 import dev.coms4156.project.metadetect.dto.Dtos;
 import dev.coms4156.project.metadetect.service.AnalyzeService;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
+import io.swagger.v3.oas.annotations.security.SecurityRequirement;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import java.util.UUID;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -30,6 +35,8 @@ import org.springframework.web.bind.annotation.RestController;
  * Thread-safety
  * - Controller is stateless; relies on Spring-managed, thread-safe collaborators.
  */
+@Tag(name = "Analysis", description = "Run AI-authenticity analysis for images")
+@SecurityRequirement(name = "bearerAuth")
 @RestController
 @RequestMapping("/api/analyze")
 public class AnalyzeController {
@@ -59,6 +66,19 @@ public class AnalyzeController {
    * @throws org.springframework.web.server.ResponseStatusException if the image does not exist or
    *         the caller is not authorized to analyze it (propagated from the service layer)
    */
+  @Operation(
+      summary = "Start analysis for an image",
+      description = "Creates a new analysis job for an image previously uploaded and owned by "
+          + "the current user. Returns an `analysisId` that can be polled for status."
+  )
+  @ApiResponses({
+      @ApiResponse(responseCode = "202",
+          description = "Analysis accepted; body contains `{ analysisId }`"),
+      @ApiResponse(responseCode = "403",
+          description = "User does not own the image"),
+      @ApiResponse(responseCode = "404",
+          description = "Image not found")
+  })
   @PostMapping("/{imageId}")
   public ResponseEntity<Dtos.AnalyzeStartResponse> submit(@PathVariable UUID imageId) {
     // Delegate to service: performs ownership checks, persists analysis row, and schedules work.
@@ -78,6 +98,17 @@ public class AnalyzeController {
    *         if the analysis does not exist or the
    *         caller lacks access (propagated from the service layer)
    */
+  @Operation(
+      summary = "Get analysis status and score",
+      description = "Fetches the status and (stubbed) confidence score for a previously "
+        + "started analysis job."
+  )
+  @ApiResponses({
+      @ApiResponse(responseCode = "200",
+          description = "Status returned successfully"),
+      @ApiResponse(responseCode = "404",
+          description = "Analysis not found")
+  })
   @GetMapping("/{analysisId}")
   public ResponseEntity<Dtos.AnalyzeConfidenceResponse> getStatus(@PathVariable UUID analysisId) {
     // Service encapsulates lookup and authorization; controller simply returns the DTO.
@@ -94,6 +125,17 @@ public class AnalyzeController {
    * @return 200 OK with {@link Dtos.AnalysisManifestResponse};
    *     may be 404/403 via advice if not accessible
    */
+  @Operation(
+      summary = "Get C2PA manifest for an analysis",
+      description = "Retrieves metadata / manifest JSON (e.g., C2PA) stored for a completed "
+        + "analysis job."
+  )
+  @ApiResponses({
+      @ApiResponse(responseCode = "200",
+          description = "Manifest JSON returned successfully"),
+      @ApiResponse(responseCode = "404",
+          description = "Analysis or manifest not found")
+  })
   @GetMapping("/{analysisId}/manifest")
   public ResponseEntity<Dtos.AnalysisManifestResponse> getManifest(@PathVariable UUID analysisId) {
     // The service is responsible for ensuring the analysis is complete and manifest exists or
@@ -115,6 +157,19 @@ public class AnalyzeController {
    * @throws org.springframework.web.server.ResponseStatusException
    *     if either image is missing or unauthorized
    */
+  @Operation(
+      summary = "Compare two images",
+      description = "Compares two images (by ID) owned by the current user. "
+        + "The current implementation is stubbed for Iteration 1."
+  )
+  @ApiResponses({
+      @ApiResponse(responseCode = "200",
+          description = "Comparison result returned"),
+      @ApiResponse(responseCode = "403",
+          description = "User does not own one or both images"),
+      @ApiResponse(responseCode = "404",
+          description = "One or both images not found")
+  })
   @GetMapping("/compare")
   public ResponseEntity<Dtos.AnalyzeCompareResponse> compare(
       @RequestParam("left") UUID leftImageId,
