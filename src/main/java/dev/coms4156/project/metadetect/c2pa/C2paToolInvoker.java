@@ -10,6 +10,8 @@ import java.util.Scanner;
 public class C2paToolInvoker {
     
   private final String c2paToolPath;
+  public static final String NO_C2PA_MANIFEST_MESSAGE = 
+      "This image does not contain C2PA data (no C2PA manifest found).";
 
   public C2paToolInvoker(String c2paToolPath) {
     this.c2paToolPath = c2paToolPath;
@@ -43,11 +45,22 @@ public class C2paToolInvoker {
       String stderr = se.useDelimiter("\\A").hasNext() ? se.next() : "";
 
       if (exit != 0) {
+        // Special-case: images with *no* C2PA manifest. c2patool will
+        // typically return a non-zero exit code with a "no manifest found"
+        // message on stderr. We normalize that into a user-friendly message
+        // so callers can distinguish "no C2PA data" from a hard failure.
+        String lowerStderr = stderr == null ? "" : stderr.toLowerCase();
+        if (!lowerStderr.isBlank() && lowerStderr.contains("no claim found")) {
+          throw new IOException(NO_C2PA_MANIFEST_MESSAGE);
+        }
+        
+        // Any other non-zero exit is treated as an unexpected C2PA failure.
         String msg = "C2PA tool failed with exit code " + exit
-            + (stderr.isBlank() ? "" : " | stderr: " + stderr);
-        throw new IOException(msg);
+        + (stderr.isBlank() ? "" : " | stderr: " + stderr);
+            throw new IOException(msg);
       }
       return stdout; // should already be JSON from -d
+
     } catch (InterruptedException ie) {
       Thread.currentThread().interrupt();
       throw new IOException("C2PA tool execution was interrupted", ie);
