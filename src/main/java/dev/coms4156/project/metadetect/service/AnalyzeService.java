@@ -193,6 +193,9 @@ public class AnalyzeService {
   /**
    * Downloads the asset, runs C2PA, and finalizes the report.
    * Converts any thrown errors into a FAILED report with error JSON.
+   *
+   * For C2PA specifically, hard failures are converted to a C2paMetadata
+   * object with c2pa_errorFlag = 1, so the analysis flow is not broken.
    */
   private void runExtractionAndFinalize(UUID analysisId, String storagePath) {
     File tempFile = null;
@@ -202,37 +205,18 @@ public class AnalyzeService {
       String signed = storage.createSignedUrl(storagePath, bearer);
       tempFile = downloadToTemp(signed, storagePath);
 
-      // 2) Run C2PA extraction
-      String manifestJson = c2paToolInvoker.extractManifest(tempFile);
+      // 2) Run C2PA extraction into ML-ready metadata
+      C2paToolInvoker.C2paMetadata meta = c2paToolInvoker.extractMetadata(tempFile);
 
-      // 3) Mark COMPLETED (C2PA manifest present)
-      markCompleted(analysisId, manifestJson, /*confidence*/ null);
+      // 3) Serialize metadata and mark COMPLETED
+      String json = objectMapper.writeValueAsString(meta);
 
-    } catch (IOException ioe) {
-      // Special-case: image has NO C2PA manifest
-      if (C2paToolInvoker.NO_C2PA_MANIFEST_MESSAGE.equals(ioe.getMessage())) {
-        try {
-          var noC2paObj = new java.util.LinkedHashMap<String, Object>();
-          noC2paObj.put("message", "This image does not contain C2PA data");
-          noC2paObj.put("hasC2pa", Boolean.FALSE);
+      // The details field now stores the C2PA metadata schema, not raw manifest JSON.
+      markCompleted(analysisId, json, /*confidence*/ null);
 
-          String json = objectMapper.writeValueAsString(noC2paObj);
-
-          // Treat as a successfully completed analysis: no C2PA, but we can still
-          // continue with AI image analysis downstream.
-          markCompleted(analysisId, json, /*confidence*/ null);
-        } catch (Exception jsonEx) {
-          // If JSON building fails, still mark as COMPLETED with a simple message
-          markCompleted(
-              analysisId,
-              "{\"message\":\"This image does not contain C2PA data\",\"hasC2pa\":false}",
-              null
-          );
-        }
-      } else {
-        // Any other IOException is a real failure
-        handleGenericFailure(analysisId, storagePath, ioe);
-      }
+    } catch (java.io.IOException ioe) {
+      // IO-level failures (download, JSON serialization) are genuine failures.
+      handleGenericFailure(analysisId, storagePath, ioe);
 
     } catch (Exception e) {
       // Non-IO exceptions: treat as failure as before
