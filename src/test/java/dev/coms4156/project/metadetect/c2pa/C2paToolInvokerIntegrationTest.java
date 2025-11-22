@@ -1,6 +1,9 @@
 package dev.coms4156.project.metadetect.c2pa;
 
-import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import dev.coms4156.project.metadetect.c2pa.C2paToolInvoker.C2paMetadata;
 import java.io.File;
@@ -14,7 +17,6 @@ import org.junit.jupiter.api.io.TempDir;
 /**
  * Integration-style tests for C2paToolInvoker using the repository-local
  * c2patool binary stored at ./tools/c2patool/c2patool.
- *
  * IMPORTANT:
  * Place these files in src/test/resources/mock-images/:
  *   - ai_dawg_valid.png
@@ -50,22 +52,19 @@ public class C2paToolInvokerIntegrationTest {
     assertNotNull(meta);
 
     // Expected for valid AI-generated image
-    assertEquals(1, meta.getC2pa_hasManifest(), "Manifest should be present");
-    assertTrue(meta.getC2pa_manifestCount() >= 1, "Should detect >= 1 manifest");
-    assertEquals(0, meta.getC2pa_errorFlag(), "Should not be marked as error");
-    assertNull(meta.getC2pa_errorMessage(), "No error expected");
+    assertEquals(1, meta.getc2paHasManifest(), "Manifest should be present");
+    assertTrue(meta.getc2paManifestCount() >= 1, "Should detect >= 1 manifest");
+    assertEquals(0, meta.getc2paErrorFlag(), "Should not be marked as error");
+    assertNull(meta.getc2paErrorMessage(), "No error expected");
 
     // AI detection (once claimGenerator_info fix is applied)
-    assertNotNull(meta.getC2pa_claimGenerator(), "claimGenerator should be present");
-    assertEquals(1, meta.getC2pa_claimGeneratorIsAI(),
+    assertNotNull(meta.getc2paClaimGenerator(), "claimGenerator should be present");
+    assertEquals(1, meta.getc2paClaimGeneratorIsAi(),
         "AI claim generator should be detected");
   }
 
   @Test
   void tamperedAiImage_stillHasManifest_butSameSchema(@TempDir Path tmp) throws IOException {
-
-    File tool = resolveLocalTool();
-    C2paToolInvoker invoker = new C2paToolInvoker(tool.getAbsolutePath());
 
     File validImage = resolveResource("ai_dawg_valid.png");
 
@@ -79,24 +78,26 @@ public class C2paToolInvokerIntegrationTest {
     data[idx] ^= 0x01;
     Files.write(tamperedPath, data);
 
+    File tool = resolveLocalTool();
+    C2paToolInvoker invoker = new C2paToolInvoker(tool.getAbsolutePath());
     C2paMetadata meta = invoker.extractMetadata(tamperedPath.toFile());
 
     assertNotNull(meta);
 
     // Still should detect that a manifest exists
-    assertEquals(1, meta.getC2pa_hasManifest(),
+    assertEquals(1, meta.getc2paHasManifest(),
         "Tampered version should still appear to have a manifest");
 
-    assertTrue(meta.getC2pa_manifestCount() >= 1,
+    assertTrue(meta.getc2paManifestCount() >= 1,
         "Manifest count should be unchanged");
 
     // Soft-success case: no CLI error, so errorFlag should still be 0
-    assertEquals(0, meta.getC2pa_errorFlag(),
+    assertEquals(0, meta.getc2paErrorFlag(),
         "Logical invalidity is not yet surfaced as an ML 'error'");
 
     // AI-origin should still be detected
-    assertNotNull(meta.getC2pa_claimGenerator());
-    assertEquals(1, meta.getC2pa_claimGeneratorIsAI(),
+    assertNotNull(meta.getc2paClaimGenerator());
+    assertEquals(1, meta.getc2paClaimGeneratorIsAi(),
         "Tampered copy should still show AI claim generator");
   }
 
@@ -113,11 +114,11 @@ public class C2paToolInvokerIntegrationTest {
     assertNotNull(meta);
 
     // No C2PA:
-    assertEquals(0, meta.getC2pa_hasManifest());
-    assertEquals(0, meta.getC2pa_manifestCount());
+    assertEquals(0, meta.getc2paHasManifest());
+    assertEquals(0, meta.getc2paManifestCount());
 
     // No errors (soft success)
-    assertEquals(0, meta.getC2pa_errorFlag());
-    assertNull(meta.getC2pa_errorMessage());
+    assertEquals(0, meta.getc2paErrorFlag());
+    assertNull(meta.getc2paErrorMessage());
   }
 }

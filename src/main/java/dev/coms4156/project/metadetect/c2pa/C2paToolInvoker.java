@@ -58,7 +58,7 @@ public class C2paToolInvoker {
    *   <li>Never throws to callers.</li>
    *   <li>Always returns a fully populated {@link C2paMetadata} instance.</li>
    *   <li>"No claim found" is treated as a soft success (no manifest, no error).</li>
-   *   <li>Unexpected CLI / JSON errors set {@code c2pa_errorFlag = 1}.</li>
+   *   <li>Unexpected CLI / JSON errors set {@code c2paErrorFlag = 1}.</li>
    * </ul>
    */
   public C2paMetadata extractMetadata(File imageFile) {
@@ -144,7 +144,7 @@ public class C2paToolInvoker {
       int manifestCount = 0;
       int hasManifest = 0;
       String claimGenerator = null;
-      int claimGeneratorIsAI = 0;
+      int claimGeneratorIsAi = 0;
 
       // Count manifests
       JsonNode manifestsNode = root.get("manifests");
@@ -181,14 +181,14 @@ public class C2paToolInvoker {
           // 1) New standard location: claim.claim_generator_info.name
           JsonNode genInfo = claimNode.get("claim_generator_info");
           if (genInfo != null && genInfo.has("name")) {
-              claimGenerator = genInfo.get("name").asText(null);
+            claimGenerator = genInfo.get("name").asText(null);
           }
           // 2) Legacy location: claim.claim_generator
           if (claimGenerator == null) {
-              JsonNode cgLegacy = claimNode.get("claim_generator");
-              if (cgLegacy != null && !cgLegacy.isNull()) {
-                  claimGenerator = cgLegacy.asText(null);
-              }
+            JsonNode cgLegacy = claimNode.get("claim_generator");
+            if (cgLegacy != null && !cgLegacy.isNull()) {
+              claimGenerator = cgLegacy.asText(null);
+            }
           }
         }
       } else {
@@ -197,18 +197,18 @@ public class C2paToolInvoker {
 
       if (claimGenerator != null && !claimGenerator.isBlank()
           && isAiClaimGenerator(claimGenerator)) {
-        claimGeneratorIsAI = 1;
+        claimGeneratorIsAi = 1;
       } else {
-        claimGeneratorIsAI = 0;
+        claimGeneratorIsAi = 0;
       }
 
       return new C2paMetadata(
           hasManifest,
           manifestCount,
           claimGenerator,
-          claimGeneratorIsAI,
-          /*c2pa_errorFlag*/ 0,
-          /*c2pa_errorMessage*/ null
+          claimGeneratorIsAi,
+          /*c2paErrorFlag*/ 0,
+          /*c2paErrorMessage*/ null
       );
     } catch (Exception e) {
       String msg = "Failed to parse c2patool JSON output: " + e;
@@ -234,86 +234,100 @@ public class C2paToolInvoker {
   // ML-ready metadata schema for future model integration.
   // ---------------------------------------------------------------------------
 
+  /**
+   * C2PA metadata schema suitable for ML ingestion.
+   * All fields are always populated per contract.
+   */
   @JsonInclude(JsonInclude.Include.ALWAYS)
   @JsonPropertyOrder({
-      "c2pa_hasManifest",
-      "c2pa_manifestCount",
-      "c2pa_claimGenerator",
-      "c2pa_claimGeneratorIsAI",
-      "c2pa_errorFlag",
-      "c2pa_errorMessage"
+      "c2paHasManifest",
+      "c2paManifestCount",
+      "c2paClaimGenerator",
+      "c2paClaimGeneratorIsAi",
+      "c2paErrorFlag",
+      "c2paErrorMessage"
   })
   public static final class C2paMetadata {
 
-    private final int c2pa_hasManifest;
-    private final int c2pa_manifestCount;
-    private final String c2pa_claimGenerator;
-    private final int c2pa_claimGeneratorIsAI;
-    private final int c2pa_errorFlag;
-    private final String c2pa_errorMessage;
+    private final int c2paHasManifest;
+    private final int c2paManifestCount;
+    private final String c2paClaimGenerator;
+    private final int c2paClaimGeneratorIsAi;
+    private final int c2paErrorFlag;
+    private final String c2paErrorMessage;
 
+    /**
+     * Constructs a C2PA metadata instance with all fields populated.
+     *
+     * @param c2paHasManifest integer flag: 1 if manifest present, 0 if not
+     * @param c2paManifestCount number of manifests detected in the file
+     * @param c2paClaimGenerator claim generator string from the active manifest
+     * @param c2paClaimGeneratorIsAi integer flag: 1 if AI generator detected, 0 if not
+     * @param c2paErrorFlag integer flag: 1 if error occurred, 0 if no error
+     * @param c2paErrorMessage error message if errorFlag=1, null otherwise
+     */
     public C2paMetadata(
-        int c2pa_hasManifest,
-        int c2pa_manifestCount,
-        String c2pa_claimGenerator,
-        int c2pa_claimGeneratorIsAI,
-        int c2pa_errorFlag,
-        String c2pa_errorMessage) {
+        int c2paHasManifest,
+        int c2paManifestCount,
+        String c2paClaimGenerator,
+        int c2paClaimGeneratorIsAi,
+        int c2paErrorFlag,
+        String c2paErrorMessage) {
 
-      this.c2pa_hasManifest = c2pa_hasManifest;
-      this.c2pa_manifestCount = c2pa_manifestCount;
-      this.c2pa_claimGenerator = c2pa_claimGenerator;
-      this.c2pa_claimGeneratorIsAI = c2pa_claimGeneratorIsAI;
-      this.c2pa_errorFlag = c2pa_errorFlag;
-      this.c2pa_errorMessage = c2pa_errorMessage;
+      this.c2paHasManifest = c2paHasManifest;
+      this.c2paManifestCount = c2paManifestCount;
+      this.c2paClaimGenerator = c2paClaimGenerator;
+      this.c2paClaimGeneratorIsAi = c2paClaimGeneratorIsAi;
+      this.c2paErrorFlag = c2paErrorFlag;
+      this.c2paErrorMessage = c2paErrorMessage;
     }
 
     /** Factory for the “no manifest” soft-success case. */
     public static C2paMetadata noManifest() {
       return new C2paMetadata(
-          /*c2pa_hasManifest*/ 0,
-          /*c2pa_manifestCount*/ 0,
-          /*c2pa_claimGenerator*/ null,
-          /*c2pa_claimGeneratorIsAI*/ 0,
-          /*c2pa_errorFlag*/ 0,
-          /*c2pa_errorMessage*/ null
+          /*c2paHasManifest*/ 0,
+          /*c2paManifestCount*/ 0,
+          /*c2paClaimGenerator*/ null,
+          /*c2paClaimGeneratorIsAi*/ 0,
+          /*c2paErrorFlag*/ 0,
+          /*c2paErrorMessage*/ null
       );
     }
 
     /** Factory for hard failures (CLI / JSON / unexpected). */
     public static C2paMetadata error(String message) {
       return new C2paMetadata(
-          /*c2pa_hasManifest*/ 0,
-          /*c2pa_manifestCount*/ 0,
-          /*c2pa_claimGenerator*/ null,
-          /*c2pa_claimGeneratorIsAI*/ 0,
-          /*c2pa_errorFlag*/ 1,
-          /*c2pa_errorMessage*/ message
+          /*c2paHasManifest*/ 0,
+          /*c2paManifestCount*/ 0,
+          /*c2paClaimGenerator*/ null,
+          /*c2paClaimGeneratorIsAi*/ 0,
+          /*c2paErrorFlag*/ 1,
+          /*c2paErrorMessage*/ message
       );
     }
 
-    public int getC2pa_hasManifest() {
-      return c2pa_hasManifest;
+    public int getc2paHasManifest() {
+      return c2paHasManifest;
     }
 
-    public int getC2pa_manifestCount() {
-      return c2pa_manifestCount;
+    public int getc2paManifestCount() {
+      return c2paManifestCount;
     }
 
-    public String getC2pa_claimGenerator() {
-      return c2pa_claimGenerator;
+    public String getc2paClaimGenerator() {
+      return c2paClaimGenerator;
     }
 
-    public int getC2pa_claimGeneratorIsAI() {
-      return c2pa_claimGeneratorIsAI;
+    public int getc2paClaimGeneratorIsAi() {
+      return c2paClaimGeneratorIsAi;
     }
 
-    public int getC2pa_errorFlag() {
-      return c2pa_errorFlag;
+    public int getc2paErrorFlag() {
+      return c2paErrorFlag;
     }
 
-    public String getC2pa_errorMessage() {
-      return c2pa_errorMessage;
+    public String getc2paErrorMessage() {
+      return c2paErrorMessage;
     }
   }
 }
