@@ -66,7 +66,7 @@ public class SecurityConfig {
   @Bean
   @Order(2)
   public SecurityFilterChain webSecurityFilterChain(HttpSecurity http) throws Exception {
-      http
+    http
           .csrf(csrf -> csrf.disable())
           .cors(Customizer.withDefaults())
           .authorizeHttpRequests(auth -> auth
@@ -95,9 +95,9 @@ public class SecurityConfig {
 
               // Everything else (non-API) is allowed
               .anyRequest().permitAll()
-          );
+        );
 
-      return http.build();
+    return http.build();
   }
 
 
