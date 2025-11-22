@@ -193,7 +193,6 @@ public class AnalyzeService {
   /**
    * Downloads the asset, runs C2PA, and finalizes the report.
    * Converts any thrown errors into a FAILED report with error JSON.
-   *
    * For C2PA specifically, hard failures are converted to a C2paMetadata
    * object with c2pa_errorFlag = 1, so the analysis flow is not broken.
    */
@@ -214,7 +213,7 @@ public class AnalyzeService {
       // The details field now stores the C2PA metadata schema, not raw manifest JSON.
       markCompleted(analysisId, json, /*confidence*/ null);
 
-    } catch (java.io.IOException ioe) {
+    } catch (IOException ioe) {
       // IO-level failures (download, JSON serialization) are genuine failures.
       handleGenericFailure(analysisId, storagePath, ioe);
 
@@ -350,7 +349,7 @@ public class AnalyzeService {
       var errorObj = new java.util.LinkedHashMap<String, Object>();
       errorObj.put("error", errMsg);
       // optionally include more context:
-      // errorObj.put("storagePath", storagePath);
+      errorObj.put("storagePath", storagePath);
       String errorJson = objectMapper.writeValueAsString(errorObj);
       markFailed(analysisId, errorJson);
     } catch (Exception jsonEx) {

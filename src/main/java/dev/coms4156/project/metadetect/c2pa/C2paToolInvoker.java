@@ -52,37 +52,35 @@ public class C2paToolInvoker {
 
 
 
-    /**
+  /**
    * Backwards-compatible wrapper used by existing code/tests.
-   *
    * Historically, the service used a plain JSON string "manifest" coming
    * from c2patool. We now normalize that into {@link C2paMetadata}, but
    * expose this helper for callers that still expect a String.
-   *
    * Contract:
    * - Never throws.
    * - Returns a JSON serialization of {@link C2paMetadata}.
    */
-    @Deprecated
-    public String extractManifest(File imageFile) {
-      C2paMetadata metadata = extractMetadata(imageFile);
+  @Deprecated
+  public String extractManifest(File imageFile) {
+    C2paMetadata metadata = extractMetadata(imageFile);
+    try {
+      ObjectMapper mapper = new ObjectMapper();
+      return mapper.writeValueAsString(metadata);
+    } catch (Exception e) {
+      String msg = "Failed to serialize C2PA metadata to JSON: " + e;
+      log.warn(msg, e);
+      C2paMetadata error = C2paMetadata.error(msg);
       try {
         ObjectMapper mapper = new ObjectMapper();
-        return mapper.writeValueAsString(metadata);
-      } catch (Exception e) {
-        String msg = "Failed to serialize C2PA metadata to JSON: " + e;
-        log.warn(msg, e);
-        C2paMetadata error = C2paMetadata.error(msg);
-        try {
-          ObjectMapper mapper = new ObjectMapper();
-          return mapper.writeValueAsString(error);
-        } catch (Exception inner) {
-          log.warn("Secondary failure serializing error C2PA metadata: {}", inner.toString());
-          // Last-resort JSON so callers never get null
-          return "{\"c2paErrorFlag\":1,\"c2paErrorMessage\":\"serialization failure\"}";
-        }
+        return mapper.writeValueAsString(error);
+      } catch (Exception inner) {
+        log.warn("Secondary failure serializing error C2PA metadata: {}", inner.toString());
+        // Last-resort JSON so callers never get null
+        return "{\"c2paErrorFlag\":1,\"c2paErrorMessage\":\"serialization failure\"}";
       }
     }
+  }
   
   /**
    * Executes the C2PA tool and converts its output into ML-ready metadata.
@@ -192,7 +190,7 @@ public class C2paToolInvoker {
         // Resolve active manifest (preferred) or fall back to first manifest.
         JsonNode activeManifestField = root.get("active_manifest");
         String activeManifestId =
-            (activeManifestField != null && !activeManifestField.isNull())
+            activeManifestField != null && !activeManifestField.isNull()
                 ? activeManifestField.asText(null)
                 : null;
 
