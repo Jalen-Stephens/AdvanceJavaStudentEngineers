@@ -3518,3 +3518,146 @@ Used AI to diagnose and patch key backend issues affecting C2PA tool invocation 
 ### **Attribution Statement**
 
 Portions of this commit were generated with assistance from OpenAI ChatGPT (GPT-5) on November 19, 2025. All AI-generated recommendations and code were reviewed, tested, and validated by the development team prior to inclusion.
+
+
+### **Commit / Ticket Reference**
+
+* **Commit:** `[feat] Prepare C2PAtool for integration into ML model (#55)`
+* **Ticket:** `#55 —  [Feature] Modify C2PATool for Future ML Model Integration`
+* **NOTE:** `Also created integration tests for C2paToolInvoker replacing previous unit tests`
+* **Date:** November 22, 2025  
+* **Team Member:** Isaac Schmidt
+
+---
+
+### **AI Tool Information**
+
+* **Tool Used:** OpenAI ChatGPT (GPT-5.1 Thinking)
+* **Access Method:** ChatGPT Web (.edu academic access)
+* **Configuration:** Default model settings  
+* **Cost:** $0 (no paid API calls)
+
+---
+
+### **Purpose of AI Assistance**
+
+Used AI to design and implement a C2PA metadata extraction layer that is future-proof for ML integration and resilient to tool/manifest failures. Assistance included:
+
+* Defining a stable, ML-friendly output schema for C2PA metadata with primitive fields:
+  * `c2pa_hasManifest`, `c2pa_manifestCount`, `c2pa_claimGenerator`,
+    `c2pa_claimGeneratorIsAI`, `c2pa_errorFlag`, `c2pa_errorMessage`.
+* Refactoring `C2paToolInvoker` from a raw JSON-returning method to an API that always returns a fully-populated metadata object instead of throwing on common failure cases (e.g., “no claim found”).
+* Designing soft-failure semantics so missing manifests and CLI errors are represented as numeric flags instead of exceptions, making the pipeline safe for later logistic regression / feature-vector work.
+* Planning how this C2PA metadata will become the first feature block in a larger computer-vision + ML pipeline, with OpenCV-derived features to be appended later.
+
+---
+
+### **Prompts / Interaction Summary**
+
+* “Can AI produce images with metadata indicating the image was taken on a camera?”
+* “Does C2patool work with HEIC images / does iPhone use C2PA data / does Instagram retain C2PA data?”
+* “How would I generate a test case for a 'present but invalid' manifest? Also which exit code can I expect from C2patool for this response?”
+* “Ensure that it fulfills this ticket description. It will be integrated into a Logarithmic regression model in the next iteration.”
+* “Modify C2paToolInvoker so every invocation returns ML-ready metadata instead of throwing on ‘no claim found’.”
+* “Generate an AI image that will fail C2patool via invalid manifest” → guidance on tampering a valid C2PA-signed image.
+* “Create the unit test” → requested JUnit 5 tests using the repo-local `./tools/c2patool/c2patool` binary.
+* “This is the output I received once uploading an AI generated image with a valid manifest…” → diagnosing why `c2pa_claimGenerator` was null and how to read `claim_generator_info`.
+
+---
+
+### **Resulting Artifacts**
+
+* **New ML-ready C2PA metadata schema** implemented in `C2paToolInvoker`:
+  * Introduced `C2paMetadata` value type with fields:
+    * `int c2pa_hasManifest`
+    * `int c2pa_manifestCount`
+    * `String c2pa_claimGenerator`
+    * `int c2pa_claimGeneratorIsAI`
+    * `int c2pa_errorFlag`
+    * `String c2pa_errorMessage`
+  * Added factory methods:
+    * `C2paMetadata.noManifest()` for the soft “no claim found” case.
+    * `C2paMetadata.error(String message)` for hard CLI/JSON failures.
+* **Refactored C2PA invocation logic**:
+  * Replaced the old `extractManifest(File)` (throwing `IOException` on errors) with `extractMetadata(File)` that:
+    * Invokes `./tools/c2patool/c2patool` with `-d` for detailed JSON.
+    * Interprets non-zero exit codes with `"no claim found"` as a **soft success** (no manifest, no error).
+    * Converts all other CLI/IO/JSON issues into `c2pa_errorFlag = 1` and a populated `c2pa_errorMessage`.
+    * Logs raw JSON from c2patool at debug level for local debugging without exposing it to the ML layer.
+* **JSON parsing and claim generator extraction**:
+  * Implemented a JSON parser that:
+    * Counts manifests via the top-level `manifests` object to populate `c2pa_manifestCount`.
+    * Uses `active_manifest` to identify the primary manifest, with a fallback to the first manifest.
+    * Extracts the generator from the modern field:
+      * `claim.claim_generator_info.name`
+    * Falls back to legacy `claim.claim_generator` if present.
+    * Applies a configurable keyword list to set `c2pa_claimGeneratorIsAI` (e.g., matches “ChatGPT”, “DALL·E”, “midjourney”, “stable diffusion”, “gpt”, etc. via lowercase substring matching).
+* **Integration with analysis pipeline (`AnalyzeService`)**:
+  * Updated `runExtractionAndFinalize` to:
+    * Call `c2paToolInvoker.extractMetadata(tempFile)` instead of returning raw manifest JSON.
+    * Serialize `C2paMetadata` to JSON via `ObjectMapper` and store it in `AnalysisReport.details`.
+    * Treat C2PA-related issues as:
+      * **DONE** with soft “no manifest” metadata when appropriate.
+      * **FAILED** only for IO-level or unexpected exceptions (e.g., download errors), reusing the existing `handleGenericFailure` path.
+* **Test scaffolding and integration tests**:
+  * Designed JUnit 5 tests (`C2paToolInvokerIntegrationTest`) that:
+    * Use repo-local c2patool at `./tools/c2patool/c2patool` (no system install required).
+    * Expect test images under `src/test/resources/c2pa/`:
+      * `valid_ai.png` — AI-generated image with a valid C2PA manifest.
+      * `no_manifest.jpg` — ordinary image with no C2PA provenance.
+    * Generate a tampered image in a temporary directory by flipping a byte in the file to simulate “manifest present but invalid”.
+  * Each test asserts that:
+    * Valid AI image → `c2pa_hasManifest = 1`, `c2pa_manifestCount >= 1`, `c2pa_errorFlag = 0`, non-null `c2pa_claimGenerator`, and `c2pa_claimGeneratorIsAI = 1`.
+    * Tampered AI image → still reports `c2pa_hasManifest = 1` and a consistent schema; reserved for future “manifestValid” flag extension.
+    * No-manifest image → `c2pa_hasManifest = 0`, `c2pa_manifestCount = 0`, `c2pa_errorFlag = 0`, and `c2pa_errorMessage = null`.
+
+---
+
+### **Verification**
+
+* **Local functional verification**:
+  * Ran the updated analysis pipeline with:
+    * AI-generated image containing a valid C2PA manifest → observed JSON like:
+      ```json
+      {
+        "c2pa_hasManifest": 1,
+        "c2pa_manifestCount": 2,
+        "c2pa_claimGenerator": "ChatGPT",
+        "c2pa_claimGeneratorIsAI": 1,
+        "c2pa_errorFlag": 0,
+        "c2pa_errorMessage": null
+      }
+      ```
+    * Same image after byte-level tampering → manifest still detected as present, schema stable, reserved for future “manifest validity” feature.
+    * A plain image with no C2PA data → confirmed it returns:
+      ```json
+      {
+        "c2pa_hasManifest": 0,
+        "c2pa_manifestCount": 0,
+        "c2pa_claimGenerator": null,
+        "c2pa_claimGeneratorIsAI": 0,
+        "c2pa_errorFlag": 0,
+        "c2pa_errorMessage": null
+      }
+      ```
+  * Verified that no exceptions are thrown to the caller for C2PA-specific issues; all errors are converted into numeric flags.
+* **Build and test flow**:
+  * Maven build and tests:
+    ```bash
+    mvn clean test
+    ```
+  * Confirmed:
+    * `C2paToolInvoker` runs successfully using `./tools/c2patool/c2patool`.
+    * `AnalyzeService` stores the new C2PA metadata schema in `AnalysisReport.details`.
+    * “No manifest” and other C2PA edge cases no longer cause FAILED reports unless there is a true IO or unexpected runtime error.
+* **Manual inspection / logging**:
+  * Reviewed debug logs containing raw c2patool JSON output to confirm:
+    * `manifests` and `active_manifest` are parsed correctly.
+    * `claim_generator_info.name` is correctly mapped to `c2pa_claimGenerator`.
+    * AI keyword matching behaves as expected (e.g., “ChatGPT” → `c2pa_claimGeneratorIsAI = 1`).
+
+---
+
+### **Attribution Statement**
+
+Portions of this commit were generated and refined with assistance from OpenAI ChatGPT (GPT-5.1 Thinking) on November 22, 2025. All AI-generated code, tests, and design recommendations were reviewed, adapted, and validated by the developer (Isaac Schmidt) before being committed to the repository.
