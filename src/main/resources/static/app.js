@@ -1,7 +1,6 @@
 (() => {
-  const DEFAULT_CONFIG = { apiBaseUrl: 'http://localhost:8080' };
-  const config = Object.assign({}, DEFAULT_CONFIG, window.APP_CONFIG || {});
-  const apiBase = config.apiBaseUrl?.replace(/\/$/, '') || DEFAULT_CONFIG.apiBaseUrl;
+  // Since frontend is now served by Spring Boot, just use same-origin API calls.
+  const apiBase = ''; // empty prefix = same domain + same port
   const TOKEN_STORAGE_KEY = 'pulse-demo-token';
 
   const tabs = document.querySelectorAll('.tab');
@@ -12,7 +11,8 @@
   const copyButton = document.getElementById('copy-response');
   const instanceLabel = document.getElementById('instance-label');
 
-  instanceLabel.textContent = apiBase.replace(/^https?:\/\//, '');
+  // Show current origin (e.g., meta-detect.herokuapp.com)
+  instanceLabel.textContent = window.location.host;
 
   const setMode = (mode) => {
     tabs.forEach((tab) => {
@@ -56,7 +56,9 @@
   };
 
   const postJson = async (path, body) => {
+    // path example: "/auth/login"
     const url = `${apiBase}${path}`;
+
     const response = await fetch(url, {
       method: 'POST',
       headers: {
@@ -67,28 +69,27 @@
 
     const text = await response.text();
     let parsed = text;
+
     try {
       parsed = JSON.parse(text);
-    } catch (err) {
-      // plain text; leave as-is
-    }
+    } catch (_) {}
 
     return { response, parsed };
   };
 
   const saveAccessTokenIfPresent = (payload) => {
-    if (!payload || typeof payload !== 'object') {
-      return false;
-    }
+    if (!payload || typeof payload !== 'object') return false;
+
     const direct = payload.access_token || payload.accessToken;
     const nested = payload.session?.access_token || payload.session?.accessToken;
     const token = direct || nested;
+
     if (token) {
       try {
         localStorage.setItem(TOKEN_STORAGE_KEY, token);
         return true;
       } catch (err) {
-        console.warn('Unable to persist token', err);
+        console.warn('Cannot store token', err);
       }
     }
     return false;
@@ -97,6 +98,7 @@
   const handleAuthSubmit = async (event, mode) => {
     event.preventDefault();
     const form = event.currentTarget;
+
     const data = new FormData(form);
     const email = (data.get('email') || '').toString().trim();
     const password = data.get('password')?.toString();
@@ -109,7 +111,7 @@
     if (mode === 'signup') {
       const confirm = data.get('confirm')?.toString();
       if (password !== confirm) {
-        updateStatus('Passwords must match before continuing.', 'error');
+        updateStatus('Passwords must match.', 'error');
         return;
       }
     }
@@ -120,9 +122,11 @@
     try {
       const path = mode === 'login' ? '/auth/login' : '/auth/signup';
       const { response, parsed } = await postJson(path, { email, password });
+
       const tokenSaved = response.ok ? saveAccessTokenIfPresent(parsed) : false;
       const prefix = response.ok ? 'Success' : `Error ${response.status}`;
-      const suffix = tokenSaved ? ' — access token saved for Pulse Studio' : '';
+      const suffix = tokenSaved ? ' — token saved for Pulse Studio' : '';
+
       updateStatus(`${prefix}: ${response.statusText}${suffix}`, response.ok ? 'success' : 'error');
       updateResponse(parsed);
 
@@ -131,30 +135,26 @@
           window.location.href = './compose.html';
         }, 600);
       }
-    } catch (error) {
-      console.error(error);
-      updateStatus('Network error — confirm the API is running on the configured host.', 'error');
-      updateResponse(error.message);
+    } catch (err) {
+      console.error(err);
+      updateStatus('Network error — backend is not reachable.', 'error');
+      updateResponse(err.message);
     } finally {
       toggleFormDisabled(form, false);
     }
   };
 
-  loginForm.addEventListener('submit', (event) => handleAuthSubmit(event, 'login'));
-  signupForm.addEventListener('submit', (event) => handleAuthSubmit(event, 'signup'));
+  loginForm.addEventListener('submit', (e) => handleAuthSubmit(e, 'login'));
+  signupForm.addEventListener('submit', (e) => handleAuthSubmit(e, 'signup'));
 
   copyButton.addEventListener('click', async () => {
     try {
       await navigator.clipboard.writeText(responseOutput.textContent);
       copyButton.textContent = 'Copied!';
-      setTimeout(() => {
-        copyButton.textContent = 'Copy';
-      }, 1500);
+      setTimeout(() => { copyButton.textContent = 'Copy'; }, 1500);
     } catch (err) {
       copyButton.textContent = 'Unable to copy';
-      setTimeout(() => {
-        copyButton.textContent = 'Copy';
-      }, 1500);
+      setTimeout(() => { copyButton.textContent = 'Copy'; }, 1500);
     }
   });
 

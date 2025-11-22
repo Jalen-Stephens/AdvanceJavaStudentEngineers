@@ -1,7 +1,6 @@
 (() => {
-  const DEFAULT_CONFIG = { apiBaseUrl: 'http://localhost:8080' };
-  const config = Object.assign({}, DEFAULT_CONFIG, window.APP_CONFIG || {});
-  const apiBase = config.apiBaseUrl?.replace(/\/$/, '') || DEFAULT_CONFIG.apiBaseUrl;
+  // Use same-origin API base (works locally and on Heroku)
+  const apiBase = '';
   const TOKEN_STORAGE_KEY = 'pulse-demo-token';
 
   const fileInput = document.getElementById('file-input');
