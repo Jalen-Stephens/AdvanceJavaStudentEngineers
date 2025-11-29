@@ -244,7 +244,7 @@
                 <version>0.8.12</version>
                 <executions>
                     <execution>
-                        <id>prepare-agent</id>
+                        <!-- Attach JaCoCo agent to test phase to collect coverage -->
                         <goals>
                             <goal>prepare-agent</goal>
                         </goals>
