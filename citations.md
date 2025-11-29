@@ -42,6 +42,65 @@
 
 ### **Commit / Ticket Reference**
 
+* **Commit:** _pending_ (live E2E hardening and Pulse UX tweaks)
+* **Ticket:** _none_ (stability/QA task)
+* **Date:** November 29, 2025
+* **Team Member:** Jalen Stephens
+
+---
+
+### **AI Tool Information**
+
+* **Tool Used:** OpenAI ChatGPT (GPT-5) via Codex CLI
+* **Access Method:** Local Codex CLI session (sandboxed; no paid API calls)
+* **Configuration:** Default model settings
+* **Cost:** $0 (course-provided access)
+
+---
+
+### **Purpose of AI Assistance**
+
+Hardened the live end-to-end test flow and client UX:
+* Adjusted the live E2E upload to use the real `spaghetti.png`, added multipart size overrides, and instrumented logging for 413s.
+* Refined Pulse auth flow to auto-redirect after signup when a token is returned.
+* Documented live E2E setup/behavior in README.
+
+---
+
+### **Prompts / Interaction Summary**
+
+* “413 on live E2E upload—switch back to mock image and add logs.”
+* “Increase multipart limits for live profile.”
+* “Remove fallback to tiny payload once image upload succeeds.”
+* “Update Pulse so signup redirects like login when token is present.”
+* “Document how to run the live E2E in README.”
+
+---
+
+### **Resulting Artifacts**
+
+* `src/test/java/dev/coms4156/project/metadetect/e2e/ClientServiceLiveE2eTest.java` (image upload, logging, no fallback)
+* `src/test/resources/application-e2e-live.properties` (multipart size limits)
+* `src/main/resources/static/app.js` (Pulse signup redirect when token saved)
+* `README.md` (live E2E instructions and payload description)
+
+---
+
+### **Verification**
+
+* Live run: `LIVE_E2E=true mvn -Dtest=dev.coms4156.project.metadetect.e2e.ClientServiceLiveE2eTest test` (passes with `spaghetti.png` upload in current environment).
+* Manual browser check: signup now redirects to compose when Supabase returns a token.
+
+---
+
+### **Attribution Statement**
+
+> Portions of this work were generated with assistance from OpenAI ChatGPT (GPT-5) on November 29, 2025. All AI-generated content was reviewed and validated by the development team.
+
+---
+
+### **Commit / Ticket Reference**
+
 * **Commit:** `test(API) wrote controller test after making changes for pooler connection (#49)`
 * **Ticket:** `#49 — Implement Demoable Client + Pooler Stability`
 * **Date:** November 13, 2025
@@ -2850,4 +2909,3 @@ AI assistance was used to design, debug, and generate the complete `FeatureExtra
 > Portions of this commit or configuration were generated with assistance from OpenAI ChatGPT (GPT-5) on November 23 2025. All AI-generated content was reviewed, validated, and finalized by the development team.
 
 ---
-

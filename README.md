@@ -40,6 +40,25 @@ From the terminal, run the following CLI commands:
     ## OR
     mvn checkstyle:check
 ```
+
+# End-to-End Testing
+---------------------------------------------------------------------
+- **Live E2E against real Supabase + DB (opt-in):**  
+  Requires environment variables for your real stack (`SPRING_DATASOURCE_URL`, `SPRING_DATASOURCE_USERNAME`, `SPRING_DATASOURCE_PASSWORD`, `SUPABASE_URL`, `SUPABASE_ANON_KEY`, `SUPABASE_JWT_SECRET`, `SUPABASE_STORAGE_BUCKET`). Runs only when `LIVE_E2E=true` is set to avoid accidental external calls.
+  ```bash
+  LIVE_E2E=true mvn -Dtest=dev.coms4156.project.metadetect.e2e.ClientServiceLiveE2eTest test
+  ```
+  This flow signs up a unique email, logs in via Supabase Auth, uploads `Spaghetti.png` from `src/test/resources/mock-images/Spaghetti.png`, lists images, and deletes the upload—exercising real DB/storage paths. If signup/login fail (e.g., Supabase creds misconfigured), the test will skip with the upstream error text to avoid red builds while still surfacing the root cause.
+
+- **Manual Pulse checklist (against a running backend):**
+  1. Start MetaDetect (`mvn spring-boot:run`) with valid Supabase env vars loaded.
+  2. Open http://localhost:8080/ (Pulse landing page served from `src/main/resources/static`).
+  3. Submit the **Join Pulse** form with a fresh email/password; confirm the Supabase JSON response shows your email.
+  4. Log in with the same credentials; verify the response shows tokens and the UI saves the token banner.
+  5. Navigate to Pulse Studio (auto-redirect or http://localhost:8080/compose.html) and upload a sample image (e.g., `src/test/resources/mock-images/Spaghetti.png`) with a caption/labels.
+  6. Confirm the feed shows your new post and that the signed URL preview loads.
+  7. Delete the post from the feed; ensure the API returns 204 and the card disappears.
+  8. (Optional) Watch the AI banner on the card; it polls `/api/analyze/{imageId}` and should flip to **AI generated** once the backend marks the analysis `DONE`.
 ## How to Run
 ---------------------------------------------------------------------
 
