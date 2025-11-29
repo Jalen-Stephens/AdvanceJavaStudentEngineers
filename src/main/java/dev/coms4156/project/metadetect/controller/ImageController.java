@@ -6,6 +6,11 @@ import dev.coms4156.project.metadetect.service.ImageService;
 import dev.coms4156.project.metadetect.service.UserService;
 import dev.coms4156.project.metadetect.service.errors.ForbiddenException;
 import dev.coms4156.project.metadetect.service.errors.NotFoundException;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
+import io.swagger.v3.oas.annotations.security.SecurityRequirement;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
@@ -29,9 +34,14 @@ import org.springframework.web.method.annotation.MethodArgumentTypeMismatchExcep
 import org.springframework.web.multipart.MultipartFile;
 
 /**
- * Thin HTTP adapter for image operations.
- * Delegates orchestration (DB + storage) to ImageService and identity to UserService.
+ * HTTP adapter for image operations owned by the authenticated user.
+ * Responsibilities:
+ * - Thin controller, delegates orchestration to ImageService.
+ * - Ownership and bearer validation handled via UserService and ImageService.
+ * - Handles request/response shaping and HTTP-specific error mapping.
  */
+@Tag(name = "Images", description = "Upload, list, update, and delete user images")
+@SecurityRequirement(name = "bearerAuth")
 @RestController
 @RequestMapping("/api/images")
 public class ImageController {
@@ -39,12 +49,36 @@ public class ImageController {
   private final ImageService imageService;
   private final UserService userService;
 
+  /**
+   * Constructs the controller with its required collaborators.
+   *
+   * @param imageService service providing DB + storage orchestration
+   * @param userService service for retrieving caller identity/bearer
+   */
   public ImageController(ImageService imageService, UserService userService) {
     this.imageService = imageService;
     this.userService = userService;
   }
 
-  /** GET /api/images?page=0&size=20 — list current user's images (paging). */
+  /**
+   * Lists the current user's images using simple paging.
+   * Validates page bounds up front to avoid service calls with invalid args.
+   *
+   * @param page zero-based page index
+   * @param size number of items per page
+   * @return paged list of ImageDto objects
+   */
+  @Operation(
+      summary = "List images for current user",
+      description = "Returns a page of images owned by the authenticated user. "
+        + "`page` is zero-based; `size` is the page size."
+  )
+  @ApiResponses({
+      @ApiResponse(responseCode = "200",
+          description = "Images returned successfully"),
+      @ApiResponse(responseCode = "400",
+          description = "Invalid page/size parameters")
+  })
   @GetMapping
   public ResponseEntity<List<Dtos.ImageDto>> list(
       @RequestParam(defaultValue = "0") int page,
@@ -57,11 +91,23 @@ public class ImageController {
     UUID userId = userService.getCurrentUserIdOrThrow();
     List<Image> results = imageService.listByOwner(userId, page, size);
 
-    List<Dtos.ImageDto> items = results.stream().map(this::toDto).collect(Collectors.toList());
+    List<Dtos.ImageDto> items =
+        results.stream().map(this::toDto).collect(Collectors.toList());
+
     return ResponseEntity.ok(items);
   }
 
   /** GET /api/images/{id} — fetch a single image (ownership enforced in service). */
+  @Operation(
+      summary = "Get a single image",
+      description = "Fetches a single image by ID, provided it is owned by the current user."
+  )
+  @ApiResponses({
+      @ApiResponse(responseCode = "200",
+          description = "Image returned successfully"),
+      @ApiResponse(responseCode = "404",
+          description = "Image not found or not owned by user")
+  })
   @GetMapping("/{id}")
   public ResponseEntity<Dtos.ImageDto> get(@PathVariable String id) {
     UUID userId = userService.getCurrentUserIdOrThrow();
@@ -70,7 +116,24 @@ public class ImageController {
     return ResponseEntity.ok(toDto(img));
   }
 
-  /** PUT /api/images/{id} — update mutable metadata (labels, note). */
+  /**
+   * Updates mutable metadata fields for a stored image (labels/note).
+   * Filename and storage path are intentionally not client-editable here.
+   *
+   * @param id image identifier
+   * @param req fields to update
+   * @return updated image metadata
+   */
+  @Operation(
+      summary = "Update image metadata",
+      description = "Updates mutable fields (labels, note) for an image owned by the current user."
+  )
+  @ApiResponses({
+      @ApiResponse(responseCode = "200",
+          description = "Image updated successfully"),
+      @ApiResponse(responseCode = "404",
+          description = "Image not found or not owned by user")
+  })
   @PutMapping("/{id}")
   public ResponseEntity<Dtos.ImageDto> update(
       @PathVariable String id,
@@ -79,21 +142,40 @@ public class ImageController {
     UUID userId = userService.getCurrentUserIdOrThrow();
     UUID imageId = parseUuidOrThrow(id);
 
-    String[] labels = (req.labels() == null) ? null : req.labels().toArray(new String[0]);
+    // DTO exposes labels as a List<String>, convert to String[]
+    String[] labels =
+      (req.labels() == null) ? null : req.labels().toArray(new String[0]);
 
     Image updated = imageService.update(
         userId,
         imageId,
-        /* newFilename */ null,     // FIX: your DTO doesn't expose filename()
-        /* newStoragePath */ null,
-        /* newLabels */ labels,
-        /* newNote */ req.note()
+        null,  // filename not editable via this DTO
+        null,  // storage path immutable here
+        labels,
+        req.note()
     );
 
     return ResponseEntity.ok(toDto(updated));
   }
 
-  /** DELETE /api/images/{id} — hard delete metadata + storage object (service orchestrates). */
+  /**
+   * Deletes metadata + underlying storage object in Supabase.
+   * Service performs auth and RLS alignment.
+   *
+   * @param id image identifier
+   * @return 204 if deletion succeeded
+   */
+  @Operation(
+      summary = "Delete an image",
+      description = "Deletes both DB metadata and backing storage object for the given image, "
+        + "if owned by the current user."
+  )
+  @ApiResponses({
+      @ApiResponse(responseCode = "204",
+          description = "Image deleted successfully"),
+      @ApiResponse(responseCode = "404",
+          description = "Image not found or not owned by user")
+  })
   @DeleteMapping("/{id}")
   public ResponseEntity<Void> delete(@PathVariable String id) {
     UUID userId = userService.getCurrentUserIdOrThrow();
@@ -104,17 +186,52 @@ public class ImageController {
     return ResponseEntity.noContent().build();
   }
 
-  /** POST /api/images/upload — upload binary, persist metadata, return DTO. */
+  /**
+   * Uploads a new image binary + metadata, returning the created resource.
+   *
+   * @param file multipart file uploaded from the client
+   * @return DTO describing the created image
+   */
+  @Operation(
+      summary = "Upload a new image",
+      description = "Uploads a binary image file, stores it in Supabase, persists metadata, "
+        + "and returns an Image DTO for the created record."
+  )
+  @ApiResponses({
+      @ApiResponse(responseCode = "201",
+          description = "Image uploaded and created successfully"),
+      @ApiResponse(responseCode = "400",
+          description = "Invalid file or request"),
+      @ApiResponse(responseCode = "413",
+          description = "File too large (if enforced by gateway)")
+  })
   @PostMapping(path = "/upload", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
-  public ResponseEntity<Dtos.ImageDto> upload(@RequestPart("file") MultipartFile file)
-      throws Exception {
+  public ResponseEntity<Dtos.ImageDto> upload(
+      @RequestPart("file") MultipartFile file) throws Exception {
+
     UUID userId = userService.getCurrentUserIdOrThrow();
     String bearer = userService.getCurrentBearerOrThrow();
     Image created = imageService.upload(userId, bearer, file);
     return ResponseEntity.status(HttpStatus.CREATED).body(toDto(created));
   }
 
-  /** GET /api/images/{id}/url — return short-lived signed URL for private object. */
+  /**
+   * Returns a short-lived signed URL for the private storage object.
+   *
+   * @param id image identifier
+   * @return signed URL wrapped in a JSON map
+   */
+  @Operation(
+      summary = "Get signed download URL",
+      description = "Returns a short-lived signed URL that allows the current user to download "
+        + "the underlying image object."
+  )
+  @ApiResponses({
+      @ApiResponse(responseCode = "200",
+          description = "Signed URL returned successfully"),
+      @ApiResponse(responseCode = "404",
+          description = "Image not found or not owned by user")
+  })
   @GetMapping("/{id}/url")
   public ResponseEntity<Object> signedUrl(@PathVariable String id) {
     UUID userId = userService.getCurrentUserIdOrThrow();
@@ -125,7 +242,9 @@ public class ImageController {
     return ResponseEntity.ok(Map.of("url", url));
   }
 
-  // ---- Exception → HTTP mapping (controller-scoped) ----
+  // ---------------------------------------------------------------------------
+  // Exception mapping
+  // ---------------------------------------------------------------------------
 
   @ExceptionHandler(NotFoundException.class)
   public ResponseEntity<String> handleNotFound(NotFoundException ex) {
@@ -137,14 +256,22 @@ public class ImageController {
     return ResponseEntity.status(HttpStatus.FORBIDDEN).body(ex.getMessage());
   }
 
-  @ExceptionHandler({IllegalArgumentException.class, MethodArgumentTypeMismatchException.class})
+  @ExceptionHandler({
+    IllegalArgumentException.class,
+    MethodArgumentTypeMismatchException.class
+  })
   public ResponseEntity<String> handleBadRequest(Exception ex) {
     return ResponseEntity.status(HttpStatus.BAD_REQUEST)
-        .body("Invalid request: " + ex.getMessage());
+      .body("Invalid request: " + ex.getMessage());
   }
 
-  // ---- Helpers ----
+  // ---------------------------------------------------------------------------
+  // Helpers
+  // ---------------------------------------------------------------------------
 
+  /**
+   * Parses a raw string to UUID or throws a client-facing 400.
+   */
   private UUID parseUuidOrThrow(String raw) {
     try {
       return UUID.fromString(raw);
@@ -153,6 +280,9 @@ public class ImageController {
     }
   }
 
+  /**
+   * Maps domain Image to an API-facing DTO.
+   */
   private Dtos.ImageDto toDto(Image img) {
     return new Dtos.ImageDto(
       img.getId().toString(),

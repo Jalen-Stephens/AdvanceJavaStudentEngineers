@@ -9,18 +9,25 @@ import java.io.IOException;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.http.MediaType;
 import org.springframework.lang.Nullable;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
 /**
- * Orchestrates image lifecycle across DB (metadata) and Supabase Storage (binary).
- * All repository access flows through RLS via {@link RlsContext}.
+ * Coordinates image metadata persistence (DB) and binary object storage
+ * (Supabase Storage). Repository calls execute inside {@link RlsContext}
+ * for user-scoped visibility consistent with Postgres RLS.
+ * Ownership is enforced by combining:
+ *  - RLS-scoped queries
+ *  - explicit owner checks (requireOwner)
  */
 @Service
 public class ImageService {
+
+  private static final Logger log = LoggerFactory.getLogger(ImageService.class);
 
   private final ImageRepository repo;
   private final RlsContext rls;
@@ -30,9 +37,9 @@ public class ImageService {
    * Constructs the service that coordinates repository access under RLS and
    * integrates with Supabase Storage for binary uploads/deletes.
    *
-   * @param repo image JPA repository
-   * @param rls row-level security context helper to impersonate the current user
-   * @param storage Supabase storage client for object operations
+   * @param repo Spring Data repository for Image entities
+   * @param rls RLS context wrapper to force `request.jwt.claims` during queries
+   * @param storage Supabase Storage integration for uploads/deletes
    */
   public ImageService(ImageRepository repo, RlsContext rls, SupabaseStorageService storage) {
     this.repo = repo;
@@ -41,80 +48,67 @@ public class ImageService {
   }
 
   /**
-   * Uploads an image file on behalf of {@code userId} and persists metadata.
-   * <ol>
-   *   <li>Create the Image row under RLS to establish ownership.</li>
-   *   <li>Build a stable storage key {@code userId/imageId--filename}.</li>
-   *   <li>Upload bytes using the caller's bearer token.</li>
-   *   <li>Update the row with the storage path and return the updated entity.</li>
-   * </ol>
-   *
-   * @param userId the owner performing the upload
-   * @param bearer the user's JWT used for Supabase storage policies
-   * @param file the multipart file to upload
-   * @return the persisted {@link Image} including the storage path
-   * @throws IOException if reading the multipart bytes fails
+   * Uploads a file for the given user and persists its metadata.
+   * Steps:
+   * 1) Create DB row (under RLS) to establish ownership.
+   * 2) Compute a stable storage key: userId/imageId--filename.
+   * 3) Upload binary to Supabase using the caller's bearer token.
+   * 4) Update DB row with the storage path.
    */
-  @Transactional
   public Image upload(UUID userId, String bearer, MultipartFile file) throws IOException {
     String original = Optional.ofNullable(file.getOriginalFilename())
         .orElse("upload.bin")
         .replaceAll("[/\\\\]", "_");
 
-    // 1) Create row under RLS
-    Image created = rls.asUser(userId, () -> {
-      Image img = new Image();
-      img.setUserId(userId);
-      img.setFilename(original);
-      return repo.save(img);
-    });
+    Image created = null;
+    try {
+      // 1) Create DB row under the user identity
+      created = rls.asUser(userId, () -> {
+        Image img = new Image();
+        img.setUserId(userId);
+        img.setFilename(original);
+        return repo.save(img);
+      });
 
-    // 2) Storage key derived from DB id (stable & unique)
-    String storageKey = userId + "/" + created.getId() + "--" + original;
+      // 2) Compute canonical storage key
+      String storageKey = userId + "/" + created.getId() + "--" + original;
 
-    // 3) Upload to Supabase
-    storage.uploadObject(
-        file.getBytes(),
-        Optional.ofNullable(file.getContentType()).orElse(MediaType.APPLICATION_OCTET_STREAM_VALUE),
-        storageKey,
-        bearer
-    );
+      // 3) Upload binary to Supabase
+      storage.uploadObject(
+          file.getBytes(),
+          Optional.ofNullable(file.getContentType())
+          .orElse(MediaType.APPLICATION_OCTET_STREAM_VALUE),
+          storageKey,
+          bearer
+      );
 
-    // 4) Persist storage path
-    return update(userId, created.getId(), null, storageKey, null, null);
+      // 4) Persist storage path
+      return update(userId, created.getId(), null, storageKey, null, null);
+    } catch (IOException | RuntimeException ex) {
+      if (created != null) {
+        // storage upload failed — remove orphaned DB row best-effort
+        deleteOrphanedImage(userId, created.getId());
+      }
+      throw ex;
+    }
   }
 
   /**
-   * Deletes the image both from storage and the database. Storage delete is attempted first;
-   * if it fails, the DB row is not removed to avoid silent orphaning.
-   *
-   * @param userId the current user (must own the image)
-   * @param bearer bearer JWT used for storage deletion
-   * @param imageId id of the image to delete
-   * @throws NotFoundException if the image does not exist
-   * @throws ForbiddenException if the user does not own the image
+   * Deletes the image (binary + metadata). If deletion from storage fails,
+   * the DB row is retained to avoid orphaned state.
    */
-  @Transactional
   public void deleteAndPurge(UUID userId, String bearer, UUID imageId) {
-    Image img = getById(userId, imageId); // enforces ownership
-    String storagePath = img.getStoragePath();
+    Image img = getById(userId, imageId);
+    String path = img.getStoragePath();
 
-    if (storagePath != null && !storagePath.isBlank()) {
-      storage.deleteObject(storagePath, bearer);
+    if (path != null && !path.isBlank()) {
+      storage.deleteObject(path, bearer);
     }
-
     delete(userId, imageId);
   }
 
   /**
-   * Produces a short-lived signed URL for the caller to access a private image.
-   *
-   * @param userId the current user (must own the image)
-   * @param bearer bearer JWT used by the storage service to sign the URL
-   * @param imageId id of the image to sign
-   * @return a time-limited HTTPS URL
-   * @throws NotFoundException if the image has no storage object
-   * @throws ForbiddenException if the user does not own the image
+   * Returns a short-lived signed URL for private image access.
    */
   public String getSignedUrl(UUID userId, String bearer, UUID imageId) {
     Image img = getById(userId, imageId);
@@ -125,16 +119,9 @@ public class ImageService {
   }
 
   /**
-   * Creates a new image metadata row owned by {@code userId}.
-   *
-   * @param userId owner id
-   * @param filename logical filename to display
-   * @param storagePath optional storage path (may be null at creation)
-   * @param labels optional labels/tag array
-   * @param note optional user note
-   * @return the persisted {@link Image}
+   * Creates an image metadata row owned by the user.
+   * (This does not upload any binary data.)
    */
-  @Transactional
   public Image create(UUID userId,
                       String filename,
                       @Nullable String storagePath,
@@ -152,25 +139,16 @@ public class ImageService {
   }
 
   /**
-   * Updates mutable fields on an image, enforcing ownership under RLS.
-   *
-   * @param currentUserId the acting user
-   * @param imageId the image id to modify
-   * @param newFilename optional new filename (ignored if null/blank)
-   * @param newStoragePath optional new storage path (ignored if null/blank)
-   * @param newLabels optional replacement labels array (null = no change)
-   * @param newNote optional replacement note (null = no change)
-   * @return the updated {@link Image}
-   * @throws NotFoundException if the image does not exist
-   * @throws ForbiddenException if the user does not own the image
+   * Updates mutable metadata fields for an owned image.
+   * Null fields are interpreted as "no change".
    */
-  @Transactional
   public Image update(UUID currentUserId,
                       UUID imageId,
                       @Nullable String newFilename,
                       @Nullable String newStoragePath,
                       @Nullable String[] newLabels,
                       @Nullable String newNote) {
+
     return rls.asUser(currentUserId, () -> {
       Image img = repo.findById(imageId)
           .orElseThrow(() -> new NotFoundException("Image not found: " + imageId));
@@ -193,13 +171,8 @@ public class ImageService {
   }
 
   /**
-   * Fetches an image by id if and only if the user owns it (enforced via RLS + check).
-   *
-   * @param currentUserId acting user id
-   * @param imageId target image id
-   * @return the owned {@link Image}
-   * @throws NotFoundException if the image does not exist
-   * @throws ForbiddenException if the user does not own the image
+   * Fetches an image by id if the user owns it. Both RLS and a
+   * local owner check are performed for defense-in-depth.
    */
   public Image getById(UUID currentUserId, UUID imageId) {
     return rls.asUser(currentUserId, () -> {
@@ -211,21 +184,18 @@ public class ImageService {
   }
 
   /**
-   * Lists images owned by the current user, newest first. Uses repository method
-   * without {@code Pageable}; falls back to safe in-memory paging.
-   *
-   * @param currentUserId acting user id
-   * @param page zero-based page index
-   * @param size page size (must be &gt; 0)
-   * @return a sub-list representing the requested page
-   * @throws IllegalArgumentException if {@code page} or {@code size} are invalid
+   * Returns images owned by the user, newest first.
+   * Uses in-memory paging for simplicity at Iteration 1 size.
    */
   public List<Image> listByOwner(UUID currentUserId, int page, int size) {
     if (page < 0 || size <= 0) {
       throw new IllegalArgumentException("Invalid paging arguments");
     }
-    List<Image> all = rls.asUser(currentUserId,
-        () -> repo.findAllByUserIdOrderByUploadedAtDesc(currentUserId));
+
+    List<Image> all = rls.asUser(
+        currentUserId,
+        () -> repo.findAllByUserIdOrderByUploadedAtDesc(currentUserId)
+    );
 
     int from = Math.min(page * size, all.size());
     int to = Math.min(from + size, all.size());
@@ -233,14 +203,8 @@ public class ImageService {
   }
 
   /**
-   * Permanently deletes the image row after verifying ownership.
-   *
-   * @param currentUserId acting user id
-   * @param imageId id to delete
-   * @throws NotFoundException if the image does not exist
-   * @throws ForbiddenException if the user does not own the image
+   * Permanently removes an owned image metadata row.
    */
-  @Transactional
   public void delete(UUID currentUserId, UUID imageId) {
     rls.asUser(currentUserId, () -> {
       Image img = repo.findById(imageId)
@@ -250,18 +214,28 @@ public class ImageService {
     });
   }
 
-  // ---- Helpers ----
-
   /**
-   * Ensures the supplied {@code userId} matches the image owner.
-   *
-   * @param userId expected owner id
-   * @param img image to check
-   * @throws ForbiddenException if ownership does not match
+   * Required ownership check used after an RLS-scoped lookup.
+   * Throws ForbiddenException if mismatched.
    */
   private static void requireOwner(UUID userId, Image img) {
     if (!img.getUserId().equals(userId)) {
       throw new ForbiddenException("You do not own this image.");
+    }
+  }
+
+  /**
+   * Deletes a newly created image if the upload pipeline fails before completion.
+   * Failures are logged but never override the original exception.
+   */
+  private void deleteOrphanedImage(UUID userId, UUID imageId) {
+    try {
+      rls.asUser(userId, () -> {
+        repo.deleteById(imageId);
+        return null;
+      });
+    } catch (RuntimeException cleanupEx) {
+      log.warn("Failed to roll back orphaned image {} for user {}", imageId, userId, cleanupEx);
     }
   }
 }

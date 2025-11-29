@@ -5,7 +5,6 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
 /** Configuation class to provide constants to other processes. */
-
 @Configuration
 public class AppConfig {
 
@@ -16,7 +15,6 @@ public class AppConfig {
   *
   * @return a C2paToolInvoker instance configured with the tool path.
   */
-
   @Bean
   public C2paToolInvoker c2paToolInvoker() {
     // Path to the C2PA tool binary
