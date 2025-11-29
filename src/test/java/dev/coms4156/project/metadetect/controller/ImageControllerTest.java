@@ -1,10 +1,8 @@
 package dev.coms4156.project.metadetect.controller;
 
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.ArgumentMatchers.isNull;
-import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
@@ -12,21 +10,18 @@ import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
+import static org.hamcrest.Matchers.containsString;
 
 import dev.coms4156.project.metadetect.dto.Dtos;
 import dev.coms4156.project.metadetect.model.Image;
-import dev.coms4156.project.metadetect.service.AuthProxyService;
 import dev.coms4156.project.metadetect.service.ImageService;
-import dev.coms4156.project.metadetect.service.SupabaseStorageService;
 import dev.coms4156.project.metadetect.service.UserService;
 import dev.coms4156.project.metadetect.service.errors.ForbiddenException;
 import dev.coms4156.project.metadetect.service.errors.NotFoundException;
-import java.time.Instant;
 import java.util.List;
 import java.util.UUID;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.mockito.Mockito;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
@@ -102,6 +97,13 @@ class ImageControllerTest {
         .andExpect(content().json("[]"));
   }
 
+  @Test
+  void listImages_invalidPaging_returnsBadRequest() throws Exception {
+    mvc.perform(MockMvcRequestBuilders.get("/api/images?page=-1&size=0"))
+        .andExpect(status().isBadRequest());
+    verify(imageService, times(0)).listByOwner(any(), any(Integer.class), any(Integer.class));
+  }
+
   // ---- GET /api/images/{id} ----
 
   @Test
@@ -131,6 +133,13 @@ class ImageControllerTest {
         .andExpect(status().isForbidden());
   }
 
+  @Test
+  void getImage_invalidUuid_returnsBadRequest() throws Exception {
+    mvc.perform(MockMvcRequestBuilders.get("/api/images/not-a-uuid"))
+        .andExpect(status().isBadRequest())
+        .andExpect(content().string(containsString("Invalid UUID")));
+  }
+
   // ---- PUT /api/images/{id} ----
 
   @Test
@@ -155,30 +164,58 @@ class ImageControllerTest {
         .andExpect(jsonPath("$.labels[0]").value("new1"));
   }
 
+  @Test
+  void updateImage_nullLabels_branchCovered() throws Exception {
+    Image updated = makeImage();
+    updated.setNote("note-only");
+    updated.setLabels(null);
+
+    when(imageService.update(eq(userId), eq(imgId), eq(null), eq(null),
+        isNull(), eq("note-only"))).thenReturn(updated);
+
+    mvc.perform(MockMvcRequestBuilders.put("/api/images/" + imgId)
+        .contentType(MediaType.APPLICATION_JSON)
+        .content("""
+          {
+            "note": "note-only"
+          }
+          """))
+      .andExpect(status().isOk())
+      .andExpect(jsonPath("$.note").value("note-only"))
+      .andExpect(jsonPath("$.labels").isArray())
+      .andExpect(jsonPath("$.labels").isEmpty());
+  }
+
   // ---- DELETE /api/images/{id} ----
-  // Tests are present but commented out in this slice. Uncomment if endpoint
-  // is re-enabled or when behavior needs explicit verification.
+  @Test
+  void deleteImage_success() throws Exception {
+    when(userService.getCurrentBearerOrThrow()).thenReturn("jwt");
 
-  // @Test
-  // void deleteImage_success() throws Exception {
-  //   mvc.perform(MockMvcRequestBuilders.delete("/api/images/" + imgId))
-  //       .andExpect(status().isNoContent());
-  //   verify(imageService).delete(userId, imgId);
-  // }
+    mvc.perform(MockMvcRequestBuilders.delete("/api/images/" + imgId))
+        .andExpect(status().isNoContent());
 
-  // @Test
-  // void deleteImage_notFound() throws Exception {
-  //   doThrow(new NotFoundException("missing")).when(imageService).delete(userId, imgId);
-  //   mvc.perform(MockMvcRequestBuilders.delete("/api/images/" + imgId))
-  //       .andExpect(status().isNotFound());
-  // }
+    verify(imageService).deleteAndPurge(userId, "jwt", imgId);
+  }
 
-  // @Test
-  // void deleteImage_forbidden() throws Exception {
-  //   doThrow(new ForbiddenException("forbidden")).when(imageService).delete(userId, imgId);
-  //   mvc.perform(MockMvcRequestBuilders.delete("/api/images/" + imgId))
-  //       .andExpect(status().isForbidden());
-  // }
+  @Test
+  void deleteImage_notFound() throws Exception {
+    when(userService.getCurrentBearerOrThrow()).thenReturn("jwt");
+    doThrow(new NotFoundException("missing")).when(imageService)
+        .deleteAndPurge(userId, "jwt", imgId);
+
+    mvc.perform(MockMvcRequestBuilders.delete("/api/images/" + imgId))
+        .andExpect(status().isNotFound());
+  }
+
+  @Test
+  void deleteImage_forbidden() throws Exception {
+    when(userService.getCurrentBearerOrThrow()).thenReturn("jwt");
+    doThrow(new ForbiddenException("forbidden")).when(imageService)
+        .deleteAndPurge(userId, "jwt", imgId);
+
+    mvc.perform(MockMvcRequestBuilders.delete("/api/images/" + imgId))
+        .andExpect(status().isForbidden());
+  }
 
   // ---- POST /api/images/upload ----
 
