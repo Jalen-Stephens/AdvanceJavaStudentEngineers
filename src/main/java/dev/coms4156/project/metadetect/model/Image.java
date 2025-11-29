@@ -8,8 +8,13 @@ import org.springframework.data.relational.core.mapping.Column;
 import org.springframework.data.relational.core.mapping.Table;
 
 /**
- * Entity representing a stored image and its associated metadata.
- * Persisted in the Postgres database via JPA.
+ * Domain entity representing an uploaded image and its metadata.
+ * This is a Spring Data JDBC model (not JPA). The row is stored in the
+ * `images` table and is used for authorization checks (ownership) as
+ * well as metadata queries. The binary object itself lives in remote
+ * storage (e.g., Supabase Storage), referenced by `storagePath`.
+ * `uploadedAt` is populated by Postgres using its default timestamp,
+ * so the field is annotated read-only to prevent accidental overwrite.
  */
 @Table("images")
 public class Image {
@@ -25,18 +30,28 @@ public class Image {
   @Column("storage_path")
   private String storagePath;
 
-  // Postgres text[] <-> List<String> works well in Spring Data JDBC
+  /**
+   * Stored as Postgres text[].
+   * Spring Data JDBC handles the array conversion automatically.
+   */
   private String[] labels;
 
   private String note;
 
+  /**
+   * Timestamp when the image record was inserted.
+   * Managed entirely by Postgres (`timezone('utc', now())`).
+   */
   @Column("uploaded_at")
-  @ReadOnlyProperty // let DB default timezone('utc', now()) set this
+  @ReadOnlyProperty
   private OffsetDateTime uploadedAt;
 
-  public Image() {}
+  public Image() {
+    // Default constructor for Spring Data
+  }
 
-  // Getters/setters
+  /* --------------------- Getters / setters --------------------- */
+
   public UUID getId() {
     return id;
   }
@@ -88,5 +103,5 @@ public class Image {
   public OffsetDateTime getUploadedAt() {
     return uploadedAt;
   }
-  // no setter: DB populates it (read-only)
+  // no setter: populated by DB
 }

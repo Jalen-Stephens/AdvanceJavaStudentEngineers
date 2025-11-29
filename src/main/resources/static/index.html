@@ -1,0 +1,110 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Pulse | MetaDetect Social Login</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+
+  <!-- Static assets served from src/main/resources/static -->
+  <link rel="stylesheet" href="/styles.css">
+  <script defer src="/config.js"></script>
+  <script defer src="/app.js"></script>
+</head>
+<body>
+  <div class="noise"></div>
+  <main class="shell">
+    <section class="hero">
+      <header>
+        <div class="logo">Pulse</div>
+        <p class="tagline">MetaDetect's social layer — preview the experience your users will see when authenticating.</p>
+      </header>
+      <ul class="selling-points">
+        <li>
+          <div class="point-icon">✨</div>
+          <div>
+            <h3>Frictionless onboarding</h3>
+            <p>Use Supabase-backed sign up flows without writing any extra backend code.</p>
+          </div>
+        </li>
+        <li>
+          <div class="point-icon">🔒</div>
+          <div>
+            <h3>Secure sessions</h3>
+            <p>Every request is routed through MetaDetect's resource server to issue trusted JWTs.</p>
+          </div>
+        </li>
+        <li>
+          <div class="point-icon">🌐</div>
+          <div>
+            <h3>Multiple deployments</h3>
+            <p>Point the client at any running instance by editing <code>client/config.js</code>.</p>
+          </div>
+        </li>
+      </ul>
+      <div class="cta-row">
+        <a class="ghost-link" href="./compose.html">Open Pulse Studio →</a>
+      </div>
+    </section>
+
+    <section class="auth-panel">
+      <div class="panel-header">
+        <div>
+          <p class="eyebrow">MetaDetect Demo Client</p>
+          <h1>Jump back into the feed</h1>
+        </div>
+        <span class="instance-label" id="instance-label"></span>
+      </div>
+
+      <div class="tab-bar" role="tablist">
+        <button class="tab active" data-mode="login" role="tab" aria-selected="true">Log In</button>
+        <button class="tab" data-mode="signup" role="tab" aria-selected="false">Join Pulse</button>
+      </div>
+
+      <form id="login-form" class="auth-form" aria-live="polite">
+        <label>
+          Email address
+          <input type="email" name="email" placeholder="alex@pulse.app" required autocomplete="email">
+        </label>
+        <label>
+          Password
+          <input type="password" name="password" placeholder="••••••••" minlength="8" required autocomplete="current-password">
+        </label>
+        <button type="submit" class="primary">Log In</button>
+      </form>
+
+      <form id="signup-form" class="auth-form hidden" aria-live="polite">
+        <label>
+          Email address
+          <input type="email" name="email" placeholder="newcreator@pulse.app" required autocomplete="email">
+        </label>
+        <label>
+          Password
+          <input type="password" name="password" placeholder="Create a password" minlength="8" required autocomplete="new-password">
+        </label>
+        <label>
+          Confirm password
+          <input type="password" name="confirm" placeholder="Repeat password" minlength="8" required autocomplete="new-password">
+        </label>
+        <button type="submit" class="primary">Create Account</button>
+      </form>
+
+      <div class="status" id="status" role="status" aria-live="polite"></div>
+
+      <div class="response-box">
+        <div class="response-header">
+          <strong>Latest API response</strong>
+          <button id="copy-response" type="button">Copy</button>
+        </div>
+        <pre id="response-output">Submit a request to see server output.</pre>
+      </div>
+    </section>
+  </main>
+
+  <footer>
+    <small>Powered by MetaDetect API &middot; Social demo client</small>
+  </footer>
+</body>
+</html>

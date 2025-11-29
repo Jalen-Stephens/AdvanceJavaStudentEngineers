@@ -17,9 +17,15 @@ import org.springframework.web.util.UriComponentsBuilder;
 import reactor.core.publisher.Mono;
 
 /**
- * Minimal Supabase Storage client (private bucket).
- * Upload: PUT /storage/v1/object/{bucket}/{path}
- * Sign:   POST /storage/v1/object/sign/{bucket}/{path}  { "expiresIn": "seconds" }
+ * Minimal client for Supabase Storage (private bucket).
+ * Endpoints used:
+ * - Upload: PUT  /storage/v1/object/{bucket}/{path}
+ * - Sign:   POST /storage/v1/object/sign/{bucket}/{path}  body: {"expiresIn": seconds}
+ * - Delete: DELETE /storage/v1/object/{bucket}/{path}
+ * Notes:
+ * - This service expects a WebClient already pointed at the project base URL and
+ *   with sane timeouts. It supplies auth headers per request.
+ * - For deletes, some gateways reject a DELETE with Content-Type, so we strip it.
  */
 @Service
 public class SupabaseStorageService {
@@ -27,21 +33,22 @@ public class SupabaseStorageService {
   private static final Logger log = LoggerFactory.getLogger(SupabaseStorageService.class);
 
   private final WebClient supabase;
-  private final String projectBase;         // e.g. https://xyz.supabase.co
-  private final String bucket;              // e.g. metadetect-images
-  private final int signedUrlTtlSeconds;    // e.g. 600
-  private final String supabaseAnonKey;     // required for Storage API
+  private final String projectBase;       // e.g., https://xyz.supabase.co
+  private final String bucket;            // e.g., metadetect-images
+  private final int signedUrlTtlSeconds;  // e.g., 600
+  private final String supabaseAnonKey;   // required by Storage API
 
+  // Variant of WebClient that removes Content-Type on DELETE requests.
   private final WebClient supabaseNoCtOnDelete;
 
-
   /**
-   * Constructs a Supabase-backed storage service for image uploads and signed URL retrieval.
+   * Constructs a Supabase Storage adapter used for upload/sign/delete operations.
    *
-   * @param supabaseWebClient configured WebClient pointing at the Supabase REST endpoint
-   * @param projectBase the Supabase base URL (project URL)
-   * @param bucket the storage bucket name used for persistence
-   * @param signedUrlTtlSeconds TTL in seconds for generated signed download URLs
+   * @param supabaseWebClient base WebClient for the Supabase project
+   * @param projectBase Supabase project URL (no trailing slash required)
+   * @param bucket storage bucket name
+   * @param signedUrlTtlSeconds TTL, in seconds, for signed download URLs
+   * @param supabaseAnonKey anon/service key sent as `apikey` to Storage API
    */
   public SupabaseStorageService(
       WebClient supabaseWebClient,
@@ -56,6 +63,7 @@ public class SupabaseStorageService {
     this.signedUrlTtlSeconds = signedUrlTtlSeconds;
     this.supabaseAnonKey = supabaseAnonKey;
 
+    // Filter that removes Content-Type header for DELETE requests.
     ExchangeFilterFunction stripCtOnDelete = (req, next) -> {
       if (req.method() == HttpMethod.DELETE) {
         ClientRequest mutated = ClientRequest.from(req)
@@ -71,13 +79,24 @@ public class SupabaseStorageService {
       .build();
   }
 
-  /** Uploads bytes to /storage/v1/object/{bucket}/{path}. Returns the path used. */
+  /**
+   * Uploads bytes to: PUT /storage/v1/object/{bucket}/{path}.
+   * Path handling:
+   * - Each segment is URL-encoded (defensive against spaces or special chars).
+   * - Caller provides the logical `objectPath`, e.g. "userId/imageId--filename".
+   *
+   * @param bytes file contents
+   * @param contentType MIME type (defaults to application/octet-stream)
+   * @param objectPath storage key within the bucket
+   * @param bearerJwt caller's user JWT for RLS/policy checks
+   * @return the objectPath that was written
+   */
   public String uploadObject(byte[] bytes,
                              String contentType,
-                             String objectPath,   // "<userId>/<imageId>--<filename>"
+                             String objectPath,
                              String bearerJwt) {
 
-    // URL-encode each path segment to avoid 400s from special chars
+    // URL-encode segments to avoid 400s on special characters.
     String encoded = UriComponentsBuilder.newInstance()
         .pathSegment(objectPath.split("/"))
         .build()
@@ -93,7 +112,7 @@ public class SupabaseStorageService {
         .uri(url)
         .header(HttpHeaders.AUTHORIZATION, "Bearer " + bearerJwt)
         .header("apikey", supabaseAnonKey)
-        .header("x-upsert", "true") // allow overwrite if same key
+        .header("x-upsert", "true") // allow overwrite if the same key is reused
         .contentType(MediaType.parseMediaType(
           contentType == null || contentType.isBlank()
             ? MediaType.APPLICATION_OCTET_STREAM_VALUE
@@ -107,14 +126,22 @@ public class SupabaseStorageService {
           return Mono.error(ex);
         })
           .block();
-      return objectPath; // we uploaded to this path
+
+      return objectPath;
     } catch (WebClientResponseException e) {
-      // Re-throw with a concise message; upstream logs already have details
+      // Upstream logs include status/body; rethrow concise summary.
       throw new RuntimeException("Supabase upload failed: " + e.getStatusCode(), e);
     }
   }
 
-  /** Creates a signed URL for a private object. Returns an absolute https URL. */
+  /**
+   * Creates a signed URL via.
+   * POST /storage/v1/object/sign/{bucket}/{path} body: {"expiresIn": seconds}
+   *
+   * @param storagePath object key inside the bucket
+   * @param userBearerJwt caller's user JWT for Storage policy
+   * @return absolute https URL suitable for direct client download
+   */
   public String createSignedUrl(String storagePath, String userBearerJwt) {
     String url = projectBase + "/storage/v1/object/sign/" + bucket + "/" + storagePath;
     String bodyJson = "{\"expiresIn\":" + signedUrlTtlSeconds + "}";
@@ -130,37 +157,41 @@ public class SupabaseStorageService {
         .timeout(Duration.ofSeconds(10))
         .map(SupabaseStorageService::extractSignedUrlFromJson)
         .block();
-    // System.out.println(signedFromApi);
 
+    // Supabase returns a path like "/storage/v1/object/sign/..."; make it absolute.
     return projectBase + "/storage/v1" + signedFromApi;
   }
 
-
-  // Supabase returns: {"signedURL":"/storage/v1/object/sign/..."}
+  /**
+   * Extracts "signedURL" from a minimal Supabase JSON response.
+   * Expected shape: {"signedURL":"/storage/v1/object/sign/..."}
+   * This avoids pulling a JSON library into this tiny class.
+   */
   private static String extractSignedUrlFromJson(String json) {
-
     if (json == null) {
       return null;
     }
-
     int i = json.indexOf("\"signedURL\"");
-
     if (i < 0) {
       return null;
     }
-
     int colon = json.indexOf(':', i);
     int q1 = json.indexOf('"', colon + 1);
     int q2 = json.indexOf('"', q1 + 1);
-
     if (q1 < 0 || q2 < 0) {
       return null;
     }
-
     return json.substring(q1 + 1, q2);
   }
 
-  /** Deletes one object via POST /storage/v1/object/{bucket}/remove. */
+  /**
+   * Deletes one object via: DELETE /storage/v1/object/{bucket}/{path}.
+   * If the object is missing (404), deletion is considered idempotent and
+   * succeeds silently. Other errors are logged and rethrown.
+   *
+   * @param objectPath object key to delete
+   * @param bearer caller's user JWT for Storage policy
+   */
   public void deleteObject(String objectPath, String bearer) {
     if (objectPath == null || objectPath.isBlank()) {
       return;
@@ -185,6 +216,7 @@ public class SupabaseStorageService {
             e.getStatusCode(), e.getMessage(), e.getResponseBodyAsString());
         throw new RuntimeException("Supabase delete failed: " + e.getStatusCode(), e);
       }
+      // else: 404 treated as successful idempotent delete
     }
   }
 }

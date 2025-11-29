@@ -48,6 +48,25 @@ From the terminal, run the following CLI commands:
     ## OR
     mvn checkstyle:check
 ```
+
+# End-to-End Testing
+---------------------------------------------------------------------
+- **Live E2E against real Supabase + DB (opt-in):**  
+  Requires environment variables for your real stack (`SPRING_DATASOURCE_URL`, `SPRING_DATASOURCE_USERNAME`, `SPRING_DATASOURCE_PASSWORD`, `SUPABASE_URL`, `SUPABASE_ANON_KEY`, `SUPABASE_JWT_SECRET`, `SUPABASE_STORAGE_BUCKET`). Runs only when `LIVE_E2E=true` is set to avoid accidental external calls.
+  ```bash
+  LIVE_E2E=true mvn -Dtest=dev.coms4156.project.metadetect.e2e.ClientServiceLiveE2eTest test
+  ```
+  This flow signs up a unique email, logs in via Supabase Auth, uploads `Spaghetti.png` from `src/test/resources/mock-images/Spaghetti.png`, lists images, and deletes the upload—exercising real DB/storage paths. If signup/login fail (e.g., Supabase creds misconfigured), the test will skip with the upstream error text to avoid red builds while still surfacing the root cause.
+
+- **Manual Pulse checklist (against a running backend):**
+  1. Start MetaDetect (`mvn spring-boot:run`) with valid Supabase env vars loaded.
+  2. Open http://localhost:8080/ (Pulse landing page served from `src/main/resources/static`).
+  3. Submit the **Join Pulse** form with a fresh email/password; confirm the Supabase JSON response shows your email.
+  4. Log in with the same credentials; verify the response shows tokens and the UI saves the token banner.
+  5. Navigate to Pulse Studio (auto-redirect or http://localhost:8080/compose.html) and upload a sample image (e.g., `src/test/resources/mock-images/Spaghetti.png`) with a caption/labels.
+  6. Confirm the feed shows your new post and that the signed URL preview loads.
+  7. Delete the post from the feed; ensure the API returns 204 and the card disappears.
+  8. (Optional) Watch the AI banner on the card; it polls `/api/analyze/{imageId}` and should flip to **AI generated** once the backend marks the analysis `DONE`.
 ## How to Run
 ---------------------------------------------------------------------
 
@@ -73,8 +92,39 @@ From the terminal, run the following CLI commands:
 
 ---
 
+## Client Demo (Pulse)
+---------------------------------------------------------------------
+`client/` contains a lightweight social-style demo called **Pulse** that exercises the `/auth/signup` and `/auth/login` endpoints.
+
+1. Start the MetaDetect backend (see steps above) so `http://localhost:8080` is available.
+2. Run a tiny static server from the project root:
+   ```bash
+   python3 -m http.server 4173 --directory client
+   ```
+3. Visit http://localhost:4173 in your browser. Submit either form to see the live API response in the right panel. After a successful login the client automatically routes you to the Pulse Studio page.
+
+### Targeting another deployment
+- Edit `client/config.js` and change `apiBaseUrl` to the host of any MetaDetect instance (e.g., a staging URL or a tunnel).
+- The badge in the form header reflects the active base URL so you always know which backend you are exercising.
+
+### What the demo covers
+- **Sign up**: posts `{ email, password }` to `/auth/signup` and surfaces the raw Supabase JSON for convenient debugging.
+- **Log in**: posts the same shape to `/auth/login`, displaying access/refresh tokens if enabled in your Supabase project.
+- Responses can be copied to the clipboard for quickly pasting into tools like Swagger or HTTP clients.
+
+### Pulse Studio — create/delete posts
+- Open http://localhost:4173/compose.html in the same static server session.
+- After logging in, the access token is automatically saved to your browser and reused by the Studio page.
+- Use the composer to upload images via `/api/images/upload`, add captions/hashtags (mapped to the `note` + `labels` fields), and delete posts inline via `/api/images/{id}`.
+- The feed retrieves your existing uploads with `/api/images` and pulls signed URLs per asset so you can actually preview the media.
+- Each card automatically runs `/api/analyze/{imageId}` and labels posts with an **AI generated** banner whenever the backend reports `status=DONE`.
+- Tokens stay hidden in the UI for safety; log in again from Pulse if you need to refresh credentials.
+
+---
+
 ## Running the Application with Docker
 ---------------------------------------------------------------------
+STILL UNDER DEVELOPMENT - PUSH TO ITERATION 2 - Sulay has been working very hard on this and it's good for next iteration
 
 ### 🐳 What is Docker?
 Docker packages your application and its dependencies into a container so that it runs identically across any environment. It’s a portable and lightweight runtime environment — ideal for ensuring consistent deployments.
@@ -283,6 +333,8 @@ Cd in to code directory
 Ran to generate report:
 $HOME/pmd-bin-7.16.0/bin/pmd check -d src/main/java,src/test/java -R rulesets/java/quickstart.xml -f text -r pmd-report.txt
 
+You can also run `mvn clean verify` to run pmd and test
+
 
 
 ## MetaDetect Endpoints
@@ -476,12 +528,38 @@ I used PMD to perform static analysis on my codebase, see below for the most rec
 
 ![Screenshot of PMD analysis report](reports/pmd-report.png)
 
+## Proof of Multiple Test Users in DB
+We tested with two users uploading the same exact image to see if it caused conflicts, there were no conflicts and images were store sperately within DB.
+
+![Screenshot of DB Table](reports/two-users-proof.jpg)
+
+## Proof of Images stored in Supabase Bucket
+Wanted to show proof of Objects stored in DB.
+
+![Screenshot of DB Bucket with Image](reports/objects-stored-DB.jpg)
+
+## Proof of API Testing using Postman
+Used Postman and Curl to Test our API routes
+
+![Screenshot of Postman Testing](reports/api-testing.png)
+
+## Proof of Self-Documenting Code
+Had a Ticket Dedicated to Going through each file and Ensuring there was javadocs and inline comments:
+[[Chore] - Write JavaDoc comments for all non-trivial code #35](https://github.com/users/Jalen-Stephens/projects/5/views/1?pane=issue&itemId=135291288&issue=Jalen-Stephens%7CAdvanceJavaStudentEngineers%7C35)
+
+## Documentation of AI Resources
+Where AI was used it was heavily documented in the [citations.md](https://github.com/Jalen-Stephens/AdvanceJavaStudentEngineers/blob/main/citations.md)
+
+## Project Management Tool
+We used [Github Projects Kanban Board](https://github.com/users/Jalen-Stephens/projects/5) to Track development.
 
 ## Continuous Integration Report
 ---------------------------------------------------------------------
-This repository using GitHub Actions to perform continous integration, to view the latest results go to the following link: https://github.com/Jalen-Stephens/AdvanceJavaStudentEngineers/actions
+This repository using GitHub Actions to perform continous integration, to view the latest results go to the following link: [AdvanceJavaStudentEngineers/actions](https://github.com/Jalen-Stephens/AdvanceJavaStudentEngineers/actions)
 
 Click on the latest job on the top under "X workflow runs" then Click 'build' under jobs finally click the drop down next to all the action items to read the logs made during their execution.
+
+STILL UNDER DEVELOPMENT - PUSH TO ITERATION 2 - Sulay has been working very hard on this and it's good for next iteration
 
 ## Tools used 
 ---------------------------------------------------------------------
@@ -507,3 +585,8 @@ This section includes notes on tools and technologies used in building this proj
   * Coalition for Content Provenance and Authenticity (C2PA). *c2patool (Version 0.23.4)*.  
   * Content Authenticity Initiative, Adobe Systems, 2024.  
   * Available at: https://github.com/contentauth/c2pa-rs
+* Supabase (Postgres SQL)
+  * We use Supabase as our main Database
+  * It has built in Authentication
+  * We use tables to track metadata of images
+  * Then we use S3 Buckets to store the physical Images within Supabase

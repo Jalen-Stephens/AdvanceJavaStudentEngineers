@@ -7,7 +7,9 @@ import org.springframework.context.annotation.Bean;
 
 /**
  * Entry point for the MetaDetect AI Image Detection Service.
- * This class starts the Spring Boot application.
+ * Bootstraps the Spring Boot application and exposes shared infrastructure
+ * beans (such as {@link Clock}) used across the service for deterministic and
+ * testable timestamps.
  */
 @SpringBootApplication
 public class MetaDetectApplication {
@@ -16,6 +18,10 @@ public class MetaDetectApplication {
     SpringApplication.run(MetaDetectApplication.class, args);
   }
 
+  /**
+   * System UTC clock used for consistent timestamp generation across
+   * services (injection-friendly for tests).
+   */
   @Bean
   public Clock clock() {
     return Clock.systemUTC();
