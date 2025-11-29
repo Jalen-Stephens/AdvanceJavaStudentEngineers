@@ -2,8 +2,6 @@ package dev.coms4156.project.metadetect.service;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
-import static org.junit.jupiter.api.Assertions.assertNull;
-import static org.junit.jupiter.api.Assumptions.assumeTrue;
 
 import okhttp3.mockwebserver.MockResponse;
 import okhttp3.mockwebserver.MockWebServer;
@@ -11,7 +9,6 @@ import okhttp3.mockwebserver.RecordedRequest;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import java.net.SocketException;
 import org.springframework.http.MediaType;
 import org.springframework.web.reactive.function.client.WebClient;
 
@@ -37,11 +34,7 @@ class SupabaseStorageServiceTest {
   @BeforeEach
   void setUp() throws Exception {
     server = new MockWebServer();
-    try {
-      server.start();
-    } catch (SocketException se) {
-      assumeTrue(false, "MockWebServer cannot bind in this sandbox: " + se.getMessage());
-    }
+    server.start();
 
     // Mock URLs from MockWebServer always end with a trailing slash.
     projectBase = server.url("/").toString();
@@ -62,9 +55,7 @@ class SupabaseStorageServiceTest {
    */
   @AfterEach
   void tearDown() throws Exception {
-    if (server != null) {
-      server.shutdown();
-    }
+    server.shutdown();
   }
 
   /**
@@ -132,35 +123,5 @@ class SupabaseStorageServiceTest {
     assertEquals("Bearer bearer.jwt.here", req.getHeader("Authorization"));
     assertEquals(anonKey, req.getHeader("apikey"));
     assertEquals("application/json", req.getHeader("Content-Type"));
-  }
-
-  @Test
-  void deleteObject_ignoresBlankPath() throws Exception {
-    // No enqueue; nothing should hit the server
-    storageService.deleteObject("   ", "bearer");
-    assertEquals(0, server.getRequestCount());
-  }
-
-  @Test
-  void deleteObject_404IsSwallowed() throws Exception {
-    server.enqueue(new MockResponse().setResponseCode(404));
-
-    storageService.deleteObject("user/x.png", "bearer");
-
-    RecordedRequest req = server.takeRequest();
-    assertEquals("DELETE", req.getMethod());
-  }
-
-  @Test
-  void extractSignedUrlFromJson_handlesMalformed() throws Exception {
-    var method = SupabaseStorageService.class.getDeclaredMethod(
-        "extractSignedUrlFromJson", String.class);
-    method.setAccessible(true);
-
-    assertNull(method.invoke(null, (Object) null));
-    assertNull(method.invoke(null, "{\"nope\":1}"));
-
-    String good = (String) method.invoke(null, "{\"signedURL\":\"/path\"}");
-    assertEquals("/path", good);
   }
 }

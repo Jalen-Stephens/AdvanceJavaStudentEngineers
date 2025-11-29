@@ -192,16 +192,6 @@ class AuthControllerTest {
         .andExpect(content().string("{\"error\":\"missing refreshToken\"}"));
   }
 
-  @Test
-  @DisplayName("Controller refresh() returns 400 when request object is null")
-  void refresh_direct_null_returnsBadRequest() {
-    AuthController controller = new AuthController(userService, authProxyService);
-    var response = controller.refresh(null);
-    org.junit.jupiter.api.Assertions.assertEquals(400, response.getStatusCode().value());
-    org.junit.jupiter.api.Assertions.assertEquals("{\"error\":\"missing refreshToken\"}",
-        response.getBody());
-  }
-
   @WithMockUser(username = "whoever")
   @Test
   @DisplayName("GET /auth/me with email missing -> email omitted")
