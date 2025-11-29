@@ -85,7 +85,7 @@ class AnalyzeServiceTest {
     return img;
   }
 
-  /**
+  /*
    * submitAnalysis happy-path:
    * - Creates PENDING report.
    * - Downloads via signed URL.
@@ -170,7 +170,7 @@ class AnalyzeServiceTest {
     assertThat(last.getDetails()).contains("\"error\":");
   }
 
-  /**
+  /*
    * If the C2PA tool throws, the report should be marked FAILED and the error
    * message should be captured into details JSON.
    */

@@ -130,10 +130,12 @@
       updateStatus(`${prefix}: ${response.statusText}${suffix}`, response.ok ? 'success' : 'error');
       updateResponse(parsed);
 
-      if (response.ok && mode === 'login') {
+      if (response.ok && tokenSaved) {
         setTimeout(() => {
           window.location.href = './compose.html';
         }, 600);
+      } else if (response.ok && !tokenSaved) {
+        updateStatus('Signed up, but no access token returned. Please log in to continue.', 'success');
       }
     } catch (err) {
       console.error(err);
