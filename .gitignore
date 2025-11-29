@@ -47,3 +47,5 @@ client/.cache/
 
 ### Output.json ###
 output.json
+
+.DS_Store
