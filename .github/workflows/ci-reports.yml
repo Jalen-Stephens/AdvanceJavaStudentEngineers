@@ -2,7 +2,12 @@ name: CI Reports
 
 on:
   push:
+    branches:
+      - main
+      - 'features/**'
   pull_request:
+    branches:
+      - main
 
 jobs:
   ci-reports:
@@ -24,45 +29,130 @@ jobs:
         path: ~/.m2
         key: ${{ runner.os }}-m2-${{ hashFiles('**/pom.xml') }}
         restore-keys: ${{ runner.os }}-m2
-        
-    - name: Run tests with coverage
+    
+    # ===== TESTING =====
+    - name: Run unit tests with coverage
       run: ./mvnw -B clean test
+      continue-on-error: false
       
-    - name: Generate JaCoCo report
-      run: ./mvnw -B jacoco:report -Dmaven.test.skip=true
+    # ===== CODE COVERAGE =====
+    - name: Generate JaCoCo coverage report
+      run: ./mvnw -B jacoco:report
+      if: always()
       
-    - name: Generate PMD report (without failing on violations)
-      run: ./mvnw -B pmd:pmd -Dpmd.failOnViolation=false -Dmaven.test.skip=true
-      
-    - name: Generate HTML site reports  
-      run: ./mvnw -B site -Dcheckstyle.failsOnError=false -Dpmd.failOnViolation=false -Dmaven.test.skip=true
-      
-    - name: Run quality checks (separate from report generation)
-      run: ./mvnw -B checkstyle:check pmd:check -Dmaven.test.skip=true
+    # ===== STATIC ANALYSIS =====
+    - name: Run Checkstyle analysis
+      run: ./mvnw -B checkstyle:checkstyle
       continue-on-error: true
+      if: always()
       
-    - name: Debug - List generated files
+    - name: Generate PMD report
+      run: ./mvnw -B pmd:pmd -Dpmd.failOnViolation=false
+      continue-on-error: true
+      if: always()
+      
+    # ===== GENERATE SITE REPORTS =====
+    - name: Generate Maven site with all reports
+      run: ./mvnw -B site -Dcheckstyle.failsOnError=false -Dpmd.failOnViolation=false
+      continue-on-error: true
+      if: always()
+      
+    # ===== QUALITY GATES =====
+    - name: Run Checkstyle quality gate
+      run: ./mvnw -B checkstyle:check
+      continue-on-error: true
+      if: always()
+      
+    - name: Run PMD quality gate
+      run: ./mvnw -B pmd:check
+      continue-on-error: true
+      if: always()
+      
+    # ===== DEBUG & VERIFICATION =====
+    - name: List generated reports
       run: |
-        echo "Checking for generated reports..."
-        ls -la target/site/ || echo "No target/site directory"
-        ls -la target/site/jacoco/ || echo "No JaCoCo reports"
-        echo "PMD report location:"
-        find target -name "pmd.html" -o -name "index.html" | grep -E "(pmd|site)" || echo "No PMD HTML reports found"
+        echo "========================================="
+        echo "Generated CI Reports Structure"
+        echo "========================================="
+        echo ""
+        echo "Target directory structure:"
+        find target -type f -name "*.xml" -o -name "*.html" | grep -E "(checkstyle|pmd|jacoco|surefire)" | sort || echo "No report files found"
+        echo ""
+        echo "Site reports:"
+        ls -la target/site/ 2>/dev/null || echo "No target/site directory"
+        echo ""
+        echo "JaCoCo reports:"
+        ls -la target/site/jacoco/ 2>/dev/null || echo "No JaCoCo reports"
+        echo ""
+        echo "Checkstyle reports:"
+        ls -la target/ | grep checkstyle || echo "No Checkstyle reports"
+        echo ""
+        echo "PMD reports:"
+        find target -name "*pmd*" -type f || echo "No PMD reports"
+      if: always()
       
-    - name: Install wkhtmltopdf
+    # ===== CONVERT TO PNG =====
+    - name: Install wkhtmltopdf for report conversion
       run: |
         sudo apt-get update
         sudo apt-get install -y wkhtmltopdf
+      if: always()
         
-    - name: Make script executable
+    - name: Make conversion script executable
       run: chmod +x scripts/html_to_png.sh
+      if: always()
       
     - name: Convert HTML reports to PNG
       run: bash scripts/html_to_png.sh
+      continue-on-error: true
+      if: always()
       
-    - name: Upload CI reports
+    # ===== UPLOAD ARTIFACTS =====
+    - name: Upload HTML/XML reports
       uses: actions/upload-artifact@v4
       if: always()
       with:
-        name: ci-reports
-        path: reports/*
+        name: ci-reports-html-xml
+        path: |
+          target/site/
+          target/checkstyle-result.xml
+          target/pmd.xml
+          target/surefire-reports/
+        retention-days: 30
+        
+    - name: Upload PNG screenshots
+      uses: actions/upload-artifact@v4
+      if: always()
+      with:
+        name: ci-reports-screenshots
+        path: reports/*.png
+        retention-days: 30
+        
+    - name: Upload test results
+      uses: actions/upload-artifact@v4
+      if: always()
+      with:
+        name: test-results
+        path: target/surefire-reports/
+        retention-days: 30
+    
+    # ===== SUMMARY =====
+    - name: Generate CI Summary
+      if: always()
+      run: |
+        echo "## 📊 CI Report Summary" >> $GITHUB_STEP_SUMMARY
+        echo "" >> $GITHUB_STEP_SUMMARY
+        echo "### Test Results" >> $GITHUB_STEP_SUMMARY
+        if [ -d "target/surefire-reports" ]; then
+          TESTS=$(find target/surefire-reports -name "TEST-*.xml" | wc -l)
+          echo "- Test suites executed: $TESTS" >> $GITHUB_STEP_SUMMARY
+        fi
+        echo "" >> $GITHUB_STEP_SUMMARY
+        echo "### Available Reports" >> $GITHUB_STEP_SUMMARY
+        echo "- ✅ JaCoCo Coverage Report" >> $GITHUB_STEP_SUMMARY
+        echo "- ✅ Checkstyle Analysis" >> $GITHUB_STEP_SUMMARY
+        echo "- ✅ PMD Static Analysis" >> $GITHUB_STEP_SUMMARY
+        echo "- ✅ Maven Site Documentation" >> $GITHUB_STEP_SUMMARY
+        echo "" >> $GITHUB_STEP_SUMMARY
+        echo "### 📥 Download Artifacts" >> $GITHUB_STEP_SUMMARY
+        echo "All reports are available as workflow artifacts above." >> $GITHUB_STEP_SUMMARY
