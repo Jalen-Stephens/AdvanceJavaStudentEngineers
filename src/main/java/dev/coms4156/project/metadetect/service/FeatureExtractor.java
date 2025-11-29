@@ -12,6 +12,7 @@ import org.opencv.core.MatOfInt;
 import org.opencv.core.Size;
 import org.opencv.imgcodecs.Imgcodecs;
 import org.opencv.imgproc.Imgproc;
+import nu.pattern.OpenCV;
 
 
 /**
@@ -31,8 +32,18 @@ import org.opencv.imgproc.Imgproc;
 public class FeatureExtractor {
 
   static {
-    // Load native OpenCV library
-    System.loadLibrary(Core.NATIVE_LIBRARY_NAME);
+    // Load native OpenCV library packaged with openpnp/opencv.
+    try {
+      OpenCV.loadLocally();
+    } catch (Throwable t) {
+      // Fallback to shared loader if local extraction is not available.
+      try {
+        OpenCV.loadShared();
+      } catch (Throwable ignored) {
+        // Last resort: try the default system library name.
+        System.loadLibrary(Core.NATIVE_LIBRARY_NAME);
+      }
+    }
   }
 
   /**
@@ -57,7 +68,7 @@ public class FeatureExtractor {
 
     int width          = img.cols();
     int height         = img.rows();
-    double aspectRatio = (height == 0) ? 0.0 : (double) width / height;
+    double aspectRatio = aspectRatio(width, height);
 
     return new double[] {
         lapVar,
@@ -89,6 +100,11 @@ public class FeatureExtractor {
         c2pa.getc2paClaimGeneratorIsAi(),
         c2pa.getc2paErrorFlag()
     };
+  }
+
+  /** Computes aspect ratio while guarding against zero height. */
+  private static double aspectRatio(int width, int height) {
+    return height == 0 ? 0.0 : (double) width / height;
   }
 
   /**
