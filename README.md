@@ -49,6 +49,13 @@ From the terminal, run the following CLI commands:
     mvn checkstyle:check
 ```
 
+## Continuous Integration & Reports
+---------------------------------------------------------------------
+- **Workflow:** `.github/workflows/ci-reports.yml` runs `./mvnw -B -ntp clean test`, `jacoco:report`, `pmd:pmd` (HTML) + `pmd:check` gate, and `checkstyle:checkstyle`. It then snapshots JaCoCo/PMD HTML to PNG via `scripts/html_to_png.sh` and uploads everything as the `ci-reports` artifact.
+- **Artifacts:** CI bundles `reports/` (HTML copies, PNG screenshots, raw XML) plus `target/surefire-reports/`. Grab the `ci-reports` artifact from a workflow run to view coverage and static analysis outputs.
+- **Optional live E2E:** Disabled by default. Enable by setting `RUN_LIVE_E2E=true` in the workflow (step runs `LIVE_E2E=true ./mvnw -Dtest=dev.coms4156.project.metadetect.e2e.ClientServiceLiveE2eTest test` and requires real Supabase/DB env vars).
+- **Manual API/E2E tools:** If external dependencies are unavailable, run the live test locally with the command above (see End-to-End Testing) and ensure Supabase/DB secrets are exported. We use Postman for manual API checks when exercising the live stack. Document any skipped external runs in PRs if needed.
+
 # End-to-End Testing
 ---------------------------------------------------------------------
 - **Live E2E against real Supabase + DB (opt-in):**  
