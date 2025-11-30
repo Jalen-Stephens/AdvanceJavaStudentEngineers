@@ -1,5 +1,6 @@
 package dev.coms4156.project.metadetect.service;
 
+import java.net.URI;
 import java.nio.charset.StandardCharsets;
 import java.time.Duration;
 import org.slf4j.Logger;
@@ -33,13 +34,26 @@ public class SupabaseStorageService {
   private static final Logger log = LoggerFactory.getLogger(SupabaseStorageService.class);
 
   private final WebClient supabase;
-  private final String projectBase;       // e.g., https://xyz.supabase.co
+  private final String projectBase;       // e.g., https://xyz.supabase.co (no trailing slash)
   private final String bucket;            // e.g., metadetect-images
   private final int signedUrlTtlSeconds;  // e.g., 600
   private final String supabaseAnonKey;   // required by Storage API
 
   // Variant of WebClient that removes Content-Type on DELETE requests.
   private final WebClient supabaseNoCtOnDelete;
+
+  // Encodes a bucket object path by URL-encoding each segment (spaces -> %20, etc.).
+  private static String encodePath(String objectPath) {
+    if (objectPath == null || objectPath.isBlank()) {
+      throw new IllegalArgumentException("objectPath must not be blank");
+    }
+    return UriComponentsBuilder.newInstance()
+        .pathSegment(objectPath.split("/"))
+        .build()
+        .encode()
+        .toUriString()
+        .substring(1); // drop leading '/'
+  }
 
   /**
    * Constructs a Supabase Storage adapter used for upload/sign/delete operations.
@@ -58,7 +72,10 @@ public class SupabaseStorageService {
       @Value("${metadetect.supabase.anonKey}") String supabaseAnonKey
   ) {
     this.supabase = supabaseWebClient;
-    this.projectBase = projectBase;
+    // Normalize to avoid double slashes when concatenating paths.
+    this.projectBase = projectBase != null && projectBase.endsWith("/")
+        ? projectBase.substring(0, projectBase.length() - 1)
+        : projectBase;
     this.bucket = bucket;
     this.signedUrlTtlSeconds = signedUrlTtlSeconds;
     this.supabaseAnonKey = supabaseAnonKey;
@@ -97,14 +114,8 @@ public class SupabaseStorageService {
                              String bearerJwt) {
 
     // URL-encode segments to avoid 400s on special characters.
-    String encoded = UriComponentsBuilder.newInstance()
-        .pathSegment(objectPath.split("/"))
-        .build()
-        .encode()
-        .toUriString()
-        .substring(1); // drop leading '/'
-
-    String url = projectBase + "/storage/v1/object/" + bucket + "/" + encoded;
+    String encoded = encodePath(objectPath);
+    URI url = URI.create(projectBase + "/storage/v1/object/" + bucket + "/" + encoded);
 
     try {
       supabase
@@ -143,7 +154,8 @@ public class SupabaseStorageService {
    * @return absolute https URL suitable for direct client download
    */
   public String createSignedUrl(String storagePath, String userBearerJwt) {
-    String url = projectBase + "/storage/v1/object/sign/" + bucket + "/" + storagePath;
+    String encoded = encodePath(storagePath);
+    URI url = URI.create(projectBase + "/storage/v1/object/sign/" + bucket + "/" + encoded);
     String bodyJson = "{\"expiresIn\":" + signedUrlTtlSeconds + "}";
 
     String signedFromApi = supabase.post()
@@ -196,8 +208,8 @@ public class SupabaseStorageService {
     if (objectPath == null || objectPath.isBlank()) {
       return;
     }
-
-    String url = projectBase + "/storage/v1/object/" + bucket + "/" + objectPath;
+    String encoded = encodePath(objectPath);
+    URI url = URI.create(projectBase + "/storage/v1/object/" + bucket + "/" + encoded);
 
     try {
       supabaseNoCtOnDelete

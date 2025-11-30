@@ -1,41 +1,45 @@
 ### **Commit / Ticket Reference**
-- **Commit:** 
-- **Ticket:** 
-- **Date:** 
-- **Team Member:** 
+- **Commit:** fix(storage): encode Supabase paths and normalize project base URL
+- **Ticket:** N/A (prod bugfix)
+- **Date:** 2025-11-29
+- **Team Member:** Jalen Stephens
 
 ---
 
 ### **AI Tool Information**
 - **Tool Used:** OpenAI ChatGPT (GPT-5)
-- **Access Method:** ChatGPT Web (.edu academic access)
+- **Access Method:** Codex CLI (local, sandboxed; no paid API calls)
 - **Configuration:** Default model settings
-- **Cost:** $0 (no paid API calls)
+- **Cost:** $0 (course-provided access)
 
 ---
 
 ### **Purpose of AI Assistance**
-<Briefly describe what part of the task the AI assisted with — e.g., refactoring, writing docs, fixing errors, setting up build tools, etc.>
+Identified and fixed Supabase storage path handling so filenames with spaces are safely encoded; normalized project base URLs to avoid double slashes in upload/sign/delete endpoints; ensured tests cover space-encoding paths.
 
 ---
 
 ### **Prompts / Interaction Summary**
-<List or paraphrase the key prompts you used.>
+- “Uploads fail when filenames contain spaces; make storage paths URL-safe for Supabase.”
+- “Fix double-encoding/double-slash issues in SupabaseStorageService.”
+- “Provide commit message and fill citations template.”
 
 ---
 
 ### **Resulting Artifacts**
-<List files, configurations, or code generated/edited with AI help.>
+- `src/main/java/dev/coms4156/project/metadetect/service/SupabaseStorageService.java`
+- `src/test/java/dev/coms4156/project/metadetect/service/SupabaseStorageServiceTest.java`
 
 ---
 
 ### **Verification**
-<List how you tested/validated the AI-assisted changes (build, test suite, manual review, etc.).>
+- `mvn -q -Dtest=SupabaseStorageServiceTest test`
 
 ---
 
 ### **Attribution Statement**
 > Portions of this commit or configuration were generated with assistance from OpenAI ChatGPT (GPT-5) on <date>. All AI-generated content was reviewed, verified, and finalized by the development team.
+> Portions of this commit or configuration were generated with assistance from OpenAI ChatGPT (GPT-5) on 2025-11-29. All AI-generated content was reviewed, verified, and finalized by the development team.
 
 ---
 
