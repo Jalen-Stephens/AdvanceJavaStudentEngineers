@@ -3,6 +3,7 @@ package dev.coms4156.project.metadetect.service;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.junit.jupiter.api.Assumptions.assumeTrue;
 
 import java.net.SocketException;
@@ -101,6 +102,23 @@ class SupabaseStorageServiceTest {
     assertEquals(MediaType.IMAGE_PNG_VALUE, req.getHeader("Content-Type"));
   }
 
+  @Test
+  void uploadObject_encodesSpacesInPath() throws Exception {
+    server.enqueue(new MockResponse().setResponseCode(200).setBody("{}"));
+
+    storageService.uploadObject(
+        "hello".getBytes(),
+        MediaType.IMAGE_PNG_VALUE,
+        "user 123/photo folder/my photo.png",
+        "bearer.jwt.here"
+    );
+
+    RecordedRequest req = server.takeRequest();
+    assertEquals(
+        "/storage/v1/object/metadetect-images/user%20123/photo%20folder/my%20photo.png",
+        req.getPath());
+  }
+
   /**
    * Verifies createSignedUrl issues POST to /sign endpoint and
    * reconstructs the final absolute URL using projectBase.
@@ -132,6 +150,31 @@ class SupabaseStorageServiceTest {
     assertEquals("Bearer bearer.jwt.here", req.getHeader("Authorization"));
     assertEquals(anonKey, req.getHeader("apikey"));
     assertEquals("application/json", req.getHeader("Content-Type"));
+  }
+
+  @Test
+  void createSignedUrl_encodesSpacesInPath() throws Exception {
+    String relative =
+        "/storage/v1/object/sign/metadetect-images/"
+        + "user%20123/my%20photo%201.png?token=abc&expires=321";
+
+    server.enqueue(new MockResponse()
+        .setResponseCode(200)
+        .setHeader("Content-Type", "application/json")
+        .setBody("{\"signedURL\":\"" + relative + "\"}"));
+
+    String abs = storageService.createSignedUrl(
+        "user 123/my photo 1.png",
+        "bearer.jwt.here"
+    );
+
+    assertNotNull(abs);
+    assertTrue(abs.endsWith(relative));
+
+    RecordedRequest req = server.takeRequest();
+    assertEquals(
+        "/storage/v1/object/sign/metadetect-images/user%20123/my%20photo%201.png",
+        req.getPath());
   }
 
   @Test
