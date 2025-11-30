@@ -44,10 +44,12 @@ else
 fi
 
 echo "Converting JaCoCo report: $JACOCO_HTML -> reports/jacoco.png"
-wkhtmltoimage --width 1600 --quality 90 "$JACOCO_HTML" "${PNG_OUTPUT}/jacoco.png"
+wkhtmltoimage --enable-local-file-access --width 1600 --quality 90 \
+  "$JACOCO_HTML" "${PNG_OUTPUT}/jacoco.png"
 
 echo "Converting PMD report: $PMD_HTML -> reports/pmd.png"
-wkhtmltoimage --width 1600 --quality 90 "$PMD_HTML" "${PNG_OUTPUT}/pmd.png"
+wkhtmltoimage --enable-local-file-access --width 1600 --quality 90 \
+  "$PMD_HTML" "${PNG_OUTPUT}/pmd.png"
 
 # Copy HTML assets for artifact collection
 echo "Copying HTML assets into ${HTML_OUTPUT}"
