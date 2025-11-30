@@ -3010,3 +3010,51 @@ Extended CI and test reliability:
 > Portions of this work were generated with assistance from OpenAI ChatGPT (GPT-5) on 2026-02-17. All AI-generated content was reviewed and finalized by the development team.
 
 ---
+
+### **Commit / Ticket Reference**
+- **Commit:** pending
+- **Ticket:** none
+- **Date:** 2026-02-17
+- **Team Member:** Jalen Stephens
+
+---
+
+### **AI Tool Information**
+- **Tool Used:** OpenAI ChatGPT (GPT-5) via Codex CLI
+- **Access Method:** Local Codex CLI (sandboxed)
+- **Configuration:** Default model settings
+- **Cost:** $0 (no paid API calls)
+
+---
+
+### **Purpose of AI Assistance**
+Expanded CI coverage and optional live E2E hook:
+- Added Checkstyle execution to the CI workflow and bundled the XML into artifacts.
+- Added an opt-in live E2E test step (`LIVE_E2E=true ./mvnw -Dtest=dev.coms4156.project.metadetect.e2e.ClientServiceLiveE2eTest test`) gated by `RUN_LIVE_E2E`.
+- Retained prior report generation and artifact packaging.
+
+---
+
+### **Prompts / Interaction Summary**
+- “Does this do all of this: Continuous Integration… add Checkstyle to the CI”
+- “We also have an E2E test … command: LIVE_E2E=true mvn -Dtest=dev.coms4156.project.metadetect.e2e.ClientServiceLiveE2eTest test”
+- “git commit and add citations”
+
+---
+
+### **Resulting Artifacts**
+- `.github/workflows/ci-reports.yml`
+- `citations.md`
+
+---
+
+### **Verification**
+- Local: `./mvnw -q -DskipTests compile`
+- CI: run `ci-reports` workflow; Checkstyle now executes, E2E step runs when `RUN_LIVE_E2E=true`.
+
+---
+
+### **Attribution Statement**
+> Portions of this work were generated with assistance from OpenAI ChatGPT (GPT-5) on 2026-02-17. All AI-generated content was reviewed and finalized by the development team.
+
+---
