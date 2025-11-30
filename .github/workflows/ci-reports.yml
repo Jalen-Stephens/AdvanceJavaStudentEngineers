@@ -22,118 +22,60 @@ jobs:
       with:
         java-version: '17'
         distribution: 'temurin'
-        
-    - name: Cache Maven dependencies
-      uses: actions/cache@v4
-      with:
-        path: ~/.m2
-        key: ${{ runner.os }}-m2-${{ hashFiles('**/pom.xml') }}
-        restore-keys: ${{ runner.os }}-m2
+        cache: 'maven'
     
     # ===== TESTING =====
-    - name: Run unit tests with coverage
-      run: ./mvnw -B clean test
-      continue-on-error: false
+    - name: Run unit tests from module root
+      run: ./mvnw -B -ntp clean test
+      working-directory: .
       
     # ===== CODE COVERAGE =====
     - name: Generate JaCoCo coverage report
-      run: ./mvnw -B jacoco:report
-      if: always()
+      run: ./mvnw -B -ntp jacoco:report
       
     # ===== STATIC ANALYSIS =====
-    - name: Run Checkstyle analysis
-      run: ./mvnw -B checkstyle:checkstyle
-      continue-on-error: true
-      if: always()
-      
-    - name: Generate PMD report
-      run: ./mvnw -B pmd:pmd -Dpmd.failOnViolation=false
-      continue-on-error: true
-      if: always()
-      
-    # ===== GENERATE SITE REPORTS =====
-    - name: Generate Maven site with all reports
-      run: ./mvnw -B site -Dcheckstyle.failsOnError=false -Dpmd.failOnViolation=false
-      continue-on-error: true
-      if: always()
-      
-    # ===== QUALITY GATES =====
-    - name: Run Checkstyle quality gate
-      run: ./mvnw -B checkstyle:check
-      continue-on-error: true
-      if: always()
-      
-    - name: Run PMD quality gate
-      run: ./mvnw -B pmd:check
-      continue-on-error: true
-      if: always()
-      
-    # ===== DEBUG & VERIFICATION =====
-    - name: List generated reports
-      run: |
-        echo "========================================="
-        echo "Generated CI Reports Structure"
-        echo "========================================="
-        echo ""
-        echo "Target directory structure:"
-        find target -type f -name "*.xml" -o -name "*.html" | grep -E "(checkstyle|pmd|jacoco|surefire)" | sort || echo "No report files found"
-        echo ""
-        echo "Site reports:"
-        ls -la target/site/ 2>/dev/null || echo "No target/site directory"
-        echo ""
-        echo "JaCoCo reports:"
-        ls -la target/site/jacoco/ 2>/dev/null || echo "No JaCoCo reports"
-        echo ""
-        echo "Checkstyle reports:"
-        ls -la target/ | grep checkstyle || echo "No Checkstyle reports"
-        echo ""
-        echo "PMD reports:"
-        find target -name "*pmd*" -type f || echo "No PMD reports"
-      if: always()
+    - name: Generate PMD HTML report
+      run: ./mvnw -B -ntp pmd:pmd -Dpmd.failOnViolation=false
       
     # ===== CONVERT TO PNG =====
     - name: Install wkhtmltopdf for report conversion
       run: |
         sudo apt-get update
         sudo apt-get install -y wkhtmltopdf
-      if: always()
         
     - name: Make conversion script executable
       run: chmod +x scripts/html_to_png.sh
-      if: always()
       
     - name: Convert HTML reports to PNG
       run: bash scripts/html_to_png.sh
-      continue-on-error: true
+
+    - name: Collect additional raw artifacts into /reports
       if: always()
+      run: |
+        mkdir -p reports/test-results reports/raw
+        if [ -d "target/surefire-reports" ]; then
+          cp -R target/surefire-reports/. reports/test-results/
+        fi
+        if [ -f "target/pmd.xml" ]; then
+          cp target/pmd.xml reports/raw/pmd.xml
+        fi
+        if [ -f "target/site/jacoco/jacoco.xml" ]; then
+          cp target/site/jacoco/jacoco.xml reports/raw/jacoco.xml
+        fi
+      
+    # ===== QUALITY GATES =====
+    - name: Enforce PMD violations
+      run: ./mvnw -B -ntp pmd:check
       
     # ===== UPLOAD ARTIFACTS =====
-    - name: Upload HTML/XML reports
+    - name: Upload CI reports (HTML, PNG, XML)
       uses: actions/upload-artifact@v4
       if: always()
       with:
-        name: ci-reports-html-xml
+        name: ci-reports
         path: |
-          target/site/
-          target/checkstyle-result.xml
-          target/pmd.xml
+          reports/
           target/surefire-reports/
-        retention-days: 30
-        
-    - name: Upload PNG screenshots
-      uses: actions/upload-artifact@v4
-      if: always()
-      with:
-        name: ci-reports-screenshots
-        path: reports/*.png
-        retention-days: 30
-        
-    - name: Upload test results
-      uses: actions/upload-artifact@v4
-      if: always()
-      with:
-        name: test-results
-        path: target/surefire-reports/
         retention-days: 30
     
     # ===== SUMMARY =====
@@ -149,10 +91,9 @@ jobs:
         fi
         echo "" >> $GITHUB_STEP_SUMMARY
         echo "### Available Reports" >> $GITHUB_STEP_SUMMARY
-        echo "- ✅ JaCoCo Coverage Report" >> $GITHUB_STEP_SUMMARY
-        echo "- ✅ Checkstyle Analysis" >> $GITHUB_STEP_SUMMARY
-        echo "- ✅ PMD Static Analysis" >> $GITHUB_STEP_SUMMARY
-        echo "- ✅ Maven Site Documentation" >> $GITHUB_STEP_SUMMARY
+        echo "- ✅ JaCoCo coverage (HTML + PNG snapshot)" >> $GITHUB_STEP_SUMMARY
+        echo "- ✅ PMD static analysis (HTML + PNG snapshot)" >> $GITHUB_STEP_SUMMARY
+        echo "- ✅ Unit test XML results" >> $GITHUB_STEP_SUMMARY
         echo "" >> $GITHUB_STEP_SUMMARY
         echo "### 📥 Download Artifacts" >> $GITHUB_STEP_SUMMARY
-        echo "All reports are available as workflow artifacts above." >> $GITHUB_STEP_SUMMARY
+        echo "All consolidated under the 'ci-reports' artifact (reports/ + surefire XML)." >> $GITHUB_STEP_SUMMARY

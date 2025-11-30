@@ -4,8 +4,12 @@ set -euo pipefail
 
 echo "Converting HTML reports to PNG..."
 
-# Ensure reports directory exists
-mkdir -p reports
+REPORTS_DIR="reports"
+HTML_OUTPUT="${REPORTS_DIR}/html"
+PNG_OUTPUT="${REPORTS_DIR}/png"
+
+# Ensure report output directories exist
+mkdir -p "${HTML_OUTPUT}/jacoco" "${HTML_OUTPUT}/pmd" "${PNG_OUTPUT}"
 
 # Check for JaCoCo HTML report
 JACOCO_HTML="target/site/jacoco/index.html"
@@ -40,11 +44,19 @@ else
 fi
 
 echo "Converting JaCoCo report: $JACOCO_HTML -> reports/jacoco.png"
-wkhtmltoimage --width 1600 --quality 90 "$JACOCO_HTML" reports/jacoco.png
+wkhtmltoimage --width 1600 --quality 90 "$JACOCO_HTML" "${PNG_OUTPUT}/jacoco.png"
 
 echo "Converting PMD report: $PMD_HTML -> reports/pmd.png"
-wkhtmltoimage --width 1600 --quality 90 "$PMD_HTML" reports/pmd.png
+wkhtmltoimage --width 1600 --quality 90 "$PMD_HTML" "${PNG_OUTPUT}/pmd.png"
+
+# Copy HTML assets for artifact collection
+echo "Copying HTML assets into ${HTML_OUTPUT}"
+JACOCO_DIR="$(dirname "$JACOCO_HTML")"
+PMD_DIR="$(dirname "$PMD_HTML")"
+cp -R "${JACOCO_DIR}/." "${HTML_OUTPUT}/jacoco/"
+cp -R "${PMD_DIR}/." "${HTML_OUTPUT}/pmd/"
 
 echo "HTML to PNG conversion completed successfully"
 echo "Generated files:"
-ls -la reports/
+ls -la "${PNG_OUTPUT}"
+ls -la "${HTML_OUTPUT}/jacoco" "${HTML_OUTPUT}/pmd"

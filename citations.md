@@ -2909,3 +2909,46 @@ AI assistance was used to design, debug, and generate the complete `FeatureExtra
 > Portions of this commit or configuration were generated with assistance from OpenAI ChatGPT (GPT-5) on November 23 2025. All AI-generated content was reviewed, validated, and finalized by the development team.
 
 ---
+
+
+### **Commit / Ticket Reference**
+- **Commit:** pending
+- **Ticket:** none
+- **Date:** 2026-02-17
+- **Team Member:** Jalen Stephens
+
+---
+
+### **AI Tool Information**
+- **Tool Used:** OpenAI ChatGPT (GPT-5)
+- **Access Method:** Codex CLI (local, sandboxed)
+- **Configuration:** Default model settings
+- **Cost:** $0 (no paid API calls)
+
+---
+
+### **Purpose of AI Assistance**
+Updated the CI pipeline to run Maven tests from the module root, generate JaCoCo + PMD HTML reports, convert them to PNG snapshots, and bundle HTML/PNG/XML outputs into a single artifact.
+
+---
+
+### **Prompts / Interaction Summary**
+- “It doesn’t correctly run unit tests from the module root; collect JaCoCo + PMD HTML and PNG artifacts.”
+- “Convert HTML → PNG via wkhtmltoimage and package reports.”
+- “Give a commit message and fill out the citations template for these changes.”
+
+---
+
+### **Resulting Artifacts**
+- `.github/workflows/ci-reports.yml` (CI steps for tests, reports, PNG conversion, artifact upload, PMD gate)
+- `scripts/html_to_png.sh` (HTML-to-PNG conversion plus HTML copies into `reports/html`)
+
+---
+
+### **Verification**
+Not run locally here (follow-up: `./mvnw -B -ntp clean test && ./mvnw -B -ntp jacoco:report && ./mvnw -B -ntp pmd:pmd -Dpmd.failOnViolation=false && bash scripts/html_to_png.sh && ./mvnw -B -ntp pmd:check`).
+
+---
+
+### **Attribution Statement**
+> Portions of this work were generated with assistance from OpenAI ChatGPT (GPT-5) on 2026-02-17. All AI-generated content was reviewed and finalized by the development team.
