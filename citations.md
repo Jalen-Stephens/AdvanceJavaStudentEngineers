@@ -2952,3 +2952,61 @@ Not run locally here (follow-up: `./mvnw -B -ntp clean test && ./mvnw -B -ntp ja
 
 ### **Attribution Statement**
 > Portions of this work were generated with assistance from OpenAI ChatGPT (GPT-5) on 2026-02-17. All AI-generated content was reviewed and finalized by the development team.
+### **Commit / Ticket Reference**
+- **Commit:** pending
+- **Ticket:** none
+- **Date:** 2026-02-17
+- **Team Member:** Jalen Stephens
+
+---
+
+### **AI Tool Information**
+- **Tool Used:** OpenAI ChatGPT (GPT-5) via Codex CLI
+- **Access Method:** Local Codex CLI (sandboxed)
+- **Configuration:** Default model settings
+- **Cost:** $0 (no paid API calls)
+
+---
+
+### **Purpose of AI Assistance**
+Extended CI and test reliability:
+- Refined `ci-reports.yml` to run Maven tests from module root, generate JaCoCo/PMD HTML, convert to PNG, and bundle reports into a single artifact.
+- Updated `scripts/html_to_png.sh` to collect HTML assets and PNG snapshots under `reports/`.
+- Made C2PA integration tests portable with JSON fixtures when the macOS `c2patool` binary is unavailable; exposed a parsing helper.
+- Fixed Checkstyle issues (import order, indentation, wrapping) across FeatureExtractor, C2PA unit/integration tests, ImageControllerTest, SupabaseStorageServiceTest, AnalyzeServiceTest, AuthProxyServiceTest.
+
+---
+
+### **Prompts / Interaction Summary**
+- “It doesn’t correctly run unit tests from the module root; collect JaCoCo + PMD HTML and PNG artifacts.”
+- “Convert HTML → PNG via wkhtmltoimage and package reports.”
+- “Make the C2PA integration tests work on all systems.”
+- “Fix the Checkstyle warnings (import order, operator wrap, indentation).”
+- “Commit message and fill out the citations template.”
+
+---
+
+### **Resulting Artifacts**
+- `.github/workflows/ci-reports.yml`
+- `scripts/html_to_png.sh`
+- `src/main/java/dev/coms4156/project/metadetect/service/FeatureExtractor.java`
+- `src/test/java/dev/coms4156/project/metadetect/c2pa/C2paToolInvokerIntegrationTest.java`
+- `src/test/java/dev/coms4156/project/metadetect/c2pa/C2paToolInvokerUnitTest.java`
+- `src/test/java/dev/coms4156/project/metadetect/controller/ImageControllerTest.java`
+- `src/test/java/dev/coms4156/project/metadetect/service/SupabaseStorageServiceTest.java`
+- `src/test/java/dev/coms4156/project/metadetect/service/AnalyzeServiceTest.java`
+- `src/test/java/dev/coms4156/project/metadetect/service/AuthProxyServiceTest.java`
+- `src/test/resources/c2pa-fixtures/*.json`
+
+---
+
+### **Verification**
+- Local: `./mvnw -q -DskipTests compile` (passes in sandbox).
+- Follow-up recommended: `./mvnw -B -ntp clean test jacoco:report pmd:pmd -Dpmd.failOnViolation=false` and `./mvnw -B -ntp pmd:check` to enforce gates.
+
+---
+
+### **Attribution Statement**
+> Portions of this work were generated with assistance from OpenAI ChatGPT (GPT-5) on 2026-02-17. All AI-generated content was reviewed and finalized by the development team.
+
+---

@@ -6,13 +6,13 @@ import static org.junit.jupiter.api.Assertions.assertFalse;
 
 import dev.coms4156.project.metadetect.c2pa.C2paToolInvoker.C2paMetadata;
 import java.io.File;
-import java.nio.charset.StandardCharsets;
+import java.io.FileWriter;
 import java.lang.reflect.Method;
-import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.io.TempDir;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.io.FileWriter;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.io.TempDir;
 
 /**
  * Unit-level coverage for {@link C2paToolInvoker} without calling the real CLI.
@@ -318,9 +318,11 @@ class C2paToolInvokerUnitTest {
   @Test
   void extractMetadata_noClaimFound_returnsSoftNoManifest(@TempDir Path tmp) throws Exception {
     Path script = tmp.resolve("c2pa-noclaim.sh");
-    Files.writeString(script, "#!/bin/sh\n" +
-        "echo \"no claim found\" 1>&2\n" +
-        "exit 1\n", StandardCharsets.UTF_8);
+    Files.writeString(script, """
+        #!/bin/sh
+        echo "no claim found" 1>&2
+        exit 1
+        """, StandardCharsets.UTF_8);
     script.toFile().setExecutable(true);
 
     C2paToolInvoker invoker = new C2paToolInvoker(script.toAbsolutePath().toString());
@@ -335,9 +337,11 @@ class C2paToolInvokerUnitTest {
   @Test
   void extractMetadata_exitNonZero_withDifferentStderr_isError(@TempDir Path tmp) throws Exception {
     Path script = tmp.resolve("c2pa-fail.sh");
-    Files.writeString(script, "#!/bin/sh\n" +
-        "echo \"bad\" 1>&2\n" +
-        "exit 2\n", StandardCharsets.UTF_8);
+    Files.writeString(script, """
+        #!/bin/sh
+        echo "bad" 1>&2
+        exit 2
+        """, StandardCharsets.UTF_8);
     script.toFile().setExecutable(true);
 
     C2paToolInvoker invoker = new C2paToolInvoker(script.toAbsolutePath().toString());
@@ -351,9 +355,11 @@ class C2paToolInvokerUnitTest {
   @Test
   void extractMetadata_stdoutEmpty_returnsError(@TempDir Path tmp) throws Exception {
     Path script = tmp.resolve("c2pa-empty-stdout.sh");
-    Files.writeString(script, "#!/bin/sh\n" +
-        "echo \"\" > /dev/null\n" +
-        "exit 0\n", StandardCharsets.UTF_8);
+    Files.writeString(script, """
+        #!/bin/sh
+        echo "" > /dev/null
+        exit 0
+        """, StandardCharsets.UTF_8);
     script.toFile().setExecutable(true);
 
     C2paToolInvoker invoker = new C2paToolInvoker(script.toAbsolutePath().toString());
