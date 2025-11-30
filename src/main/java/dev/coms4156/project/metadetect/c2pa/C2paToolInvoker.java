@@ -249,6 +249,14 @@ public class C2paToolInvoker {
     }
   }
 
+  /**
+   * Exposed for tests to validate JSON parsing on platforms where the bundled
+   * c2patool binary cannot execute (e.g., non-macOS CI runners).
+   */
+  public C2paMetadata parseMetadataFromJsonForTests(String json) {
+    return parseMetadataFromJson(json);
+  }
+
   private static boolean isAiClaimGenerator(String generator) {
     if (generator == null) {
       return false;

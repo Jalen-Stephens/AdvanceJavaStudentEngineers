@@ -477,7 +477,8 @@ class AnalyzeServiceTest {
     );
 
     assertTrue(out.getName().endsWith(".png"));
-    assertThat(Files.readAllBytes(out.toPath())).containsExactly("pngbytes".getBytes(StandardCharsets.UTF_8));
+    assertThat(Files.readAllBytes(out.toPath()))
+        .containsExactly("pngbytes".getBytes(StandardCharsets.UTF_8));
 
     // cleanup
     out.delete();

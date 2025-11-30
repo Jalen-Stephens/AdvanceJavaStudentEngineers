@@ -6,6 +6,7 @@ WORKDIR /app
 # Copy project files
 COPY pom.xml .
 COPY src ./src
+COPY tools ./tools
 
 # Build the application (skip tests for faster builds)
 RUN mvn clean package -DskipTests -B
@@ -17,6 +18,12 @@ WORKDIR /app
 
 # Copy the JAR
 COPY --from=build /app/target/*.jar app.jar
+
+# Copy the C2PA tool
+COPY --from=build /app/tools ./tools
+
+# Make c2patool executable
+RUN chmod +x tools/c2patool/c2patool 2>/dev/null || true
 
 # Expose port
 EXPOSE 8080

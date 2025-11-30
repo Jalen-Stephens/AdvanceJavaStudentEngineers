@@ -1,5 +1,6 @@
 package dev.coms4156.project.metadetect.controller;
 
+import static org.hamcrest.Matchers.containsString;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.ArgumentMatchers.isNull;
@@ -10,7 +11,6 @@ import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
-import static org.hamcrest.Matchers.containsString;
 
 import dev.coms4156.project.metadetect.dto.Dtos;
 import dev.coms4156.project.metadetect.model.Image;
@@ -76,11 +76,11 @@ class ImageControllerTest {
     when(imageService.listByOwner(userId, 0, 5)).thenReturn(List.of(makeImage()));
 
     mvc.perform(MockMvcRequestBuilders.get("/api/images"))
-      .andExpect(status().isOk())
-      .andExpect(jsonPath("$[0].id").value(imgId.toString()))
-      .andExpect(jsonPath("$[0].filename").value("test.jpg"))
-      .andExpect(jsonPath("$[0].userId").value(userId.toString()))
-      .andExpect(jsonPath("$[0].labels[0]").value("tag1"))
+        .andExpect(status().isOk())
+        .andExpect(jsonPath("$[0].id").value(imgId.toString()))
+        .andExpect(jsonPath("$[0].filename").value("test.jpg"))
+        .andExpect(jsonPath("$[0].userId").value(userId.toString()))
+        .andExpect(jsonPath("$[0].labels[0]").value("tag1"))
         .andExpect(jsonPath("$[0].note").value("hello"));
   }
 
@@ -93,7 +93,7 @@ class ImageControllerTest {
     when(imageService.listByOwner(userId, 0, 5)).thenReturn(List.of(makeImage()));
 
     mvc.perform(MockMvcRequestBuilders.get("/api/images?page=5&size=10"))
-      .andExpect(status().isOk())
+        .andExpect(status().isOk())
         .andExpect(content().json("[]"));
   }
 
@@ -111,9 +111,9 @@ class ImageControllerTest {
     when(imageService.getById(userId, imgId)).thenReturn(makeImage());
 
     mvc.perform(MockMvcRequestBuilders.get("/api/images/" + imgId))
-      .andExpect(status().isOk())
-      .andExpect(jsonPath("$.id").value(imgId.toString()))
-      .andExpect(jsonPath("$.note").value("hello"))
+        .andExpect(status().isOk())
+        .andExpect(jsonPath("$.id").value(imgId.toString()))
+        .andExpect(jsonPath("$.note").value("hello"))
         .andExpect(jsonPath("$.labels[1]").value("tag2"));
   }
 
@@ -183,7 +183,7 @@ class ImageControllerTest {
       .andExpect(status().isOk())
       .andExpect(jsonPath("$.note").value("note-only"))
       .andExpect(jsonPath("$.labels").isArray())
-      .andExpect(jsonPath("$.labels").isEmpty());
+        .andExpect(jsonPath("$.labels").isEmpty());
   }
 
   // ---- DELETE /api/images/{id} ----
