@@ -94,7 +94,13 @@ public class SecurityConfig {
                   "/js/**",
                   "/images/**",
                   "/fonts/**",
-                  "/webjars/**"
+                  "/webjars/**",
+
+                  // Swagger / OpenAPI docs
+                  "/swagger-ui.html",
+                  "/swagger-ui/**",
+                  "/v3/api-docs/**",
+                  "/api-docs/**"
               ).permitAll()
 
               // Public non-API endpoints (health/auth pages used by tests + clients)
