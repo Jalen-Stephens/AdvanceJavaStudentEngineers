@@ -20,6 +20,7 @@ import dev.coms4156.project.metadetect.dto.Dtos;
 import dev.coms4156.project.metadetect.model.AnalysisReport;
 import dev.coms4156.project.metadetect.model.Image;
 import dev.coms4156.project.metadetect.repository.AnalysisReportRepository;
+import dev.coms4156.project.metadetect.service.LogisticRegressionService.InferenceResult;
 import dev.coms4156.project.metadetect.service.SupabaseStorageService;
 import dev.coms4156.project.metadetect.service.errors.ForbiddenException;
 import dev.coms4156.project.metadetect.service.errors.MissingStoragePathException;
@@ -52,6 +53,7 @@ class AnalyzeServiceTest {
   private AnalysisReportRepository repo;
   private SupabaseStorageService storage;
   private UserService userService;
+  private LogisticRegressionService logisticRegressionService;
   private Clock clock;
 
   private AnalyzeService service;
@@ -67,13 +69,23 @@ class AnalyzeServiceTest {
     repo = mock(AnalysisReportRepository.class);
     storage = mock(SupabaseStorageService.class);
     userService = mock(UserService.class);
+    logisticRegressionService = mock(LogisticRegressionService.class);
     clock = Clock.fixed(fixedNow, ZoneOffset.UTC);
 
-    service = new AnalyzeService(c2pa, imageService, repo, storage, userService, clock);
+    service = new AnalyzeService(
+        c2pa,
+        imageService,
+        repo,
+        storage,
+        userService,
+        logisticRegressionService,
+        clock
+    );
 
     when(userService.getCurrentUserIdOrThrow()).thenReturn(userId);
     // Bearer required by storage for signed URL generation.
     when(userService.getCurrentBearerOrThrow()).thenReturn("bearer-token");
+    when(logisticRegressionService.getModelVersion()).thenReturn("v1");
   }
 
   /** Creates an owned Image with the provided storage path. */
@@ -102,8 +114,11 @@ class AnalyzeServiceTest {
     when(storage.createSignedUrl(eq("u/i/file.png"), anyString()))
         .thenReturn(downloadable.toURI().toURL().toString());
 
-    String manifest = "{\"c2pa\":\"ok\"}";
-    when(c2pa.extractManifest(any(File.class))).thenReturn(manifest);
+    C2paToolInvoker.C2paMetadata metadata =
+        new C2paToolInvoker.C2paMetadata(1, 1, "gen", 0, 0, null);
+    when(c2pa.extractMetadata(any(File.class))).thenReturn(metadata);
+    when(logisticRegressionService.predict(anyString(), any()))
+        .thenReturn(new InferenceResult(0.73, true, "v1"));
 
     UUID analysisId = UUID.randomUUID();
     AnalysisReport pending = new AnalysisReport(imageId);
@@ -125,7 +140,8 @@ class AnalyzeServiceTest {
     verify(repo, atLeast(1)).save(saved.capture());
     AnalysisReport last = saved.getAllValues().get(saved.getAllValues().size() - 1);
     assertThat(last.getStatus().name()).isEqualTo("DONE");
-    assertThat(last.getDetails()).isEqualTo(manifest);
+    assertThat(last.getDetails()).contains("\"c2paHasManifest\":1");
+    assertThat(last.getConfidence()).isEqualTo(0.73);
 
     downloadable.delete();
   }
@@ -185,7 +201,7 @@ class AnalyzeServiceTest {
     when(storage.createSignedUrl(eq("a/b/c.png"), anyString()))
         .thenReturn(downloadable.toURI().toURL().toString());
 
-    when(c2pa.extractManifest(any(File.class))).thenThrow(new RuntimeException("boom"));
+    when(c2pa.extractMetadata(any(File.class))).thenThrow(new RuntimeException("boom"));
 
     UUID analysisId = UUID.randomUUID();
     AnalysisReport pending = new AnalysisReport(imageId);
@@ -264,6 +280,7 @@ class AnalyzeServiceTest {
     report.setId(analysisId);
     report.setStatus(AnalysisReport.ReportStatus.PENDING);
     report.setConfidence(null);
+    report.setDetails("{\"c2paHasManifest\":1,\"c2paErrorFlag\":0}");
 
     when(repo.findById(analysisId)).thenReturn(Optional.of(report));
     when(imageService.getById(userId, imageId)).thenReturn(ownedImage("x"));
@@ -271,7 +288,9 @@ class AnalyzeServiceTest {
     Dtos.AnalyzeConfidenceResponse out = service.getConfidence(analysisId);
     assertThat(out.analysisId()).isEqualTo(analysisId.toString());
     assertThat(out.status()).isEqualTo("PENDING");
-    assertThat(out.score()).isNull();
+    assertThat(out.confidenceScore()).isNull();
+    assertThat(out.c2paUsed()).isTrue();
+    assertThat(out.modelVersion()).isEqualTo("v1");
   }
 
   /**

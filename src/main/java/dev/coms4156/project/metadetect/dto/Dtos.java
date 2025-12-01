@@ -67,7 +67,9 @@ public final class Dtos {
   public record AnalyzeConfidenceResponse(
       String analysisId,
       String status,
-      Double score              // nullable until we implement a real scorer
+      Double confidenceScore,
+      boolean c2paUsed,
+      String modelVersion
   ) { }
 
   /**

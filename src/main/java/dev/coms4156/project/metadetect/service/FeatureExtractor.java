@@ -3,6 +3,7 @@ package dev.coms4156.project.metadetect.service;
 import dev.coms4156.project.metadetect.c2pa.C2paToolInvoker.C2paMetadata;
 import java.util.ArrayList;
 import java.util.List;
+import nu.pattern.OpenCV;
 import org.opencv.core.Core;
 import org.opencv.core.CvType;
 import org.opencv.core.Mat;
@@ -12,6 +13,7 @@ import org.opencv.core.MatOfInt;
 import org.opencv.core.Size;
 import org.opencv.imgcodecs.Imgcodecs;
 import org.opencv.imgproc.Imgproc;
+import org.springframework.stereotype.Component;
 
 
 /**
@@ -28,11 +30,18 @@ import org.opencv.imgproc.Imgproc;
  * NOTE: C2PA metadata is obtained separately via C2paToolInvoker. This class does
  * not call C2PA directly, but is designed to combine its results into the final feature vector.
  */
+@Component
 public class FeatureExtractor {
 
   static {
-    // Load native OpenCV library
-    System.loadLibrary(Core.NATIVE_LIBRARY_NAME);
+    // Load native OpenCV library packaged with the OpenPnp artifact.
+    // loadShared() extracts platform binaries to a temp dir; fallback to System.loadLibrary
+    // helps in environments where shared loading is restricted.
+    try {
+      OpenCV.loadShared();
+    } catch (UnsatisfiedLinkError e) {
+      System.loadLibrary(Core.NATIVE_LIBRARY_NAME);
+    }
   }
 
   /**
@@ -246,5 +255,44 @@ public class FeatureExtractor {
     }
 
     return entropy;
+  }
+
+  /**
+   * Produces a CSV header matching the extractAllFeatures() order plus the label column.
+   */
+  public static String csvHeader() {
+    return String.join(",",
+        "laplacianVariance",
+        "noiseStd",
+        "edgeDensity",
+        "frequencyRatio",
+        "saturationEntropy",
+        "width",
+        "height",
+        "aspectRatio",
+        "c2paHasManifest",
+        "c2paManifestCount",
+        "c2paClaimGeneratorIsAi",
+        "c2paErrorFlag",
+        "label");
+  }
+
+  /**
+   * Simple CSV row builder to help offline dataset generation for the Python trainer.
+   *
+   * @param features ordered feature vector from {@link #extractAllFeatures(String, C2paMetadata)}
+   * @param label integer label (e.g., 1=AI generated, 0=human)
+   * @return CSV string containing all features followed by the label
+   */
+  public static String toCsvRow(double[] features, int label) {
+    StringBuilder sb = new StringBuilder();
+    for (int i = 0; i < features.length; i++) {
+      if (i > 0) {
+        sb.append(',');
+      }
+      sb.append(features[i]);
+    }
+    sb.append(',').append(label);
+    return sb.toString();
   }
 }

@@ -173,6 +173,70 @@ Prompts and questions provided to ChatGPT included:
 
 ---
 
+### **Commit / Ticket Reference**
+
+* **Commit:** `feat(ml): add logistic regression loader/inference and feature CSV helpers for AI scoring`
+* **Ticket:** `#49 — Implement Demoable Client + Pooler Stability`
+* **Date:** December 1, 2025
+* **Team Member:** Jalen Stephens
+
+---
+
+### **AI Tool Information**
+
+* **Tool Used:** OpenAI ChatGPT (GPT-5) via Codex CLI
+* **Access Method:** Local Codex CLI session (sandboxed, no paid API usage)
+* **Configuration:** Default model settings
+* **Cost:** $0 (educational access)
+
+---
+
+### **Purpose of AI Assistance**
+
+* Implemented logistic regression model loader and inference service for the confidence score pipeline.
+* Added CSV header/row helpers in `FeatureExtractor` to support offline dataset generation.
+* Wired `AnalyzeService` to compute and persist ML confidence plus C2PA usage flags and model version.
+* Added placeholder `model.json` and model path configuration for runtime loading.
+
+---
+
+### **Prompts / Interaction Summary**
+
+* “Implement logistic regression inference with pretrained weights + bias in Java”
+* “Add model loader for JSON weights and hook into AnalyzeService”
+* “Add CSV scaffolding helpers to FeatureExtractor for offline training”
+* “Fix OpenCV native load errors on macOS/Java 17+”
+* “Fill out the commit citation entry using the standard template”
+
+---
+
+### **Resulting Artifacts**
+
+* `src/main/java/dev/coms4156/project/metadetect/service/ModelLoader.java`
+* `src/main/java/dev/coms4156/project/metadetect/service/LogisticRegressionService.java`
+* `src/main/java/dev/coms4156/project/metadetect/service/FeatureExtractor.java`
+* `src/main/java/dev/coms4156/project/metadetect/service/AnalyzeService.java`
+* `src/main/resources/model/model.json`
+* `src/main/resources/application.properties` (model path)
+* Updated controller/service tests for the new confidence response shape.
+
+---
+
+### **Verification**
+
+* `./mvnw -q -DskipTests compile`
+* `mvn spring-boot:run` locally with `env.pooler.sh` sourced (startup success)
+
+---
+
+### **Attribution Statement**
+
+> Portions of this commit were generated with assistance from OpenAI ChatGPT (GPT-5) on December 1, 2025. All AI-generated content was reviewed, verified, and finalized by the development team.
+
+---
+
+---
+
 ### **Purpose of AI Assistance**
 
 The AI assistant helped diagnose Supabase pooler exhaustion by reviewing how Spring transactions were scoped around long-running storage calls. Guidance focused on:
@@ -2850,4 +2914,3 @@ AI assistance was used to design, debug, and generate the complete `FeatureExtra
 > Portions of this commit or configuration were generated with assistance from OpenAI ChatGPT (GPT-5) on November 23 2025. All AI-generated content was reviewed, validated, and finalized by the development team.
 
 ---
-

@@ -50,7 +50,7 @@ class AnalyzeControllerTest {
   void getStatus_returnsDtoFromService() throws Exception {
     UUID analysisId = UUID.randomUUID();
     var response =
-        new Dtos.AnalyzeConfidenceResponse(analysisId.toString(), "COMPLETED", 0.97d);
+        new Dtos.AnalyzeConfidenceResponse(analysisId.toString(), "COMPLETED", 0.97d, true, "v1");
     when(analyzeService.getConfidence(analysisId)).thenReturn(response);
 
     mvc.perform(MockMvcRequestBuilders.get("/api/analyze/" + analysisId))
@@ -58,7 +58,9 @@ class AnalyzeControllerTest {
         .andExpect(content().contentTypeCompatibleWith(MediaType.APPLICATION_JSON))
         .andExpect(jsonPath("$.analysisId").value(analysisId.toString()))
         .andExpect(jsonPath("$.status").value("COMPLETED"))
-        .andExpect(jsonPath("$.score").value(0.97d));
+        .andExpect(jsonPath("$.confidenceScore").value(0.97d))
+        .andExpect(jsonPath("$.c2paUsed").value(true))
+        .andExpect(jsonPath("$.modelVersion").value("v1"));
 
     verify(analyzeService, times(1)).getConfidence(analysisId);
   }
