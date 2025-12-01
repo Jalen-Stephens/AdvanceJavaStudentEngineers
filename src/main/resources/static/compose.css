@@ -250,6 +250,43 @@ button.primary:not(:disabled):hover {
   gap: 8px;
 }
 
+.ai-flags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 10px;
+  border-radius: 999px;
+  font-size: 0.78rem;
+  letter-spacing: 0.02em;
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+}
+
+.pill.ai-strong {
+  background: linear-gradient(135deg, rgba(236, 72, 153, 0.25), rgba(124, 58, 237, 0.25));
+  border-color: rgba(236, 72, 153, 0.55);
+  color: #ffe4f5;
+}
+
+.pill.ai-soft {
+  background: rgba(56, 189, 248, 0.14);
+  border-color: rgba(56, 189, 248, 0.5);
+  color: #dbeafe;
+}
+
+.pill.score {
+  background: rgba(255, 255, 255, 0.06);
+  border-color: rgba(255, 255, 255, 0.2);
+  color: #e5e7eb;
+  font-weight: 600;
+}
+
 .post-body .timestamp {
   font-size: 0.8rem;
   color: var(--muted);

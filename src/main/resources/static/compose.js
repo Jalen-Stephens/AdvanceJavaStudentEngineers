@@ -85,6 +85,26 @@
     return data;
   };
 
+  const buildAiBadges = (image) => {
+    const wrap = document.createElement('div');
+    wrap.className = 'ai-flags';
+
+    if (typeof image.confidenceScore === 'number') {
+      const scorePill = document.createElement('span');
+      scorePill.className = 'pill score';
+      scorePill.textContent = `Score: ${image.confidenceScore.toFixed(2)}`;
+      wrap.appendChild(scorePill);
+    }
+
+    if (image.aiTag) {
+      const tagPill = document.createElement('span');
+      tagPill.className = `pill ${image.aiTagClass || 'ai'}`;
+      tagPill.textContent = image.aiTag;
+      wrap.appendChild(tagPill);
+    }
+    return wrap;
+  };
+
   const buildCard = (image) => {
     const card = document.createElement('article');
     card.className = 'post-card';
@@ -97,10 +117,11 @@
     img.src = image.signedUrl || 'data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" width="400" height="300"/%3E';
     media.appendChild(img);
 
-    if (image.isAiGenerated) {
+    // Overlay banner only for strong AI cases
+    if (image.aiTagClass === 'ai-strong') {
       const banner = document.createElement('span');
       banner.className = 'ai-banner';
-      banner.textContent = 'AI generated';
+      banner.textContent = image.aiTag || 'AI generated';
       media.appendChild(banner);
     }
 
@@ -114,6 +135,8 @@
     const caption = document.createElement('p');
     caption.className = 'caption';
     caption.textContent = image.note || 'No caption yet.';
+
+    const aiFlags = buildAiBadges(image);
 
     const labelsWrap = document.createElement('div');
     labelsWrap.className = 'labels';
@@ -134,7 +157,7 @@
     del.addEventListener('click', () => deleteImage(image.id));
     actions.appendChild(del);
 
-    body.append(ts, caption, labelsWrap, actions);
+    body.append(ts, caption, aiFlags, labelsWrap, actions);
     card.append(media, body);
     return card;
   };
@@ -173,9 +196,30 @@
         const result = await requestJson(`/api/analyze/${analysisId}`);
         if (result?.status && result.status !== 'PENDING') {
           const statusString = result.status.toUpperCase();
-          const aiDetected = statusString === 'DONE'
-            || (typeof result.score === 'number' && result.score > 0.5);
-          return { isAiGenerated: aiDetected };
+          const score = typeof result.confidenceScore === 'number'
+            ? result.confidenceScore
+            : (typeof result.score === 'number' ? result.score : null);
+
+          let aiTag = null;
+          let aiTagClass = null;
+          const isDone = statusString === 'DONE';
+          if (typeof score === 'number') {
+            if (score >= 0.75) {
+              aiTag = 'AI generated';
+              aiTagClass = 'ai-strong';
+            } else if (score >= 0.5) {
+              aiTag = 'Likely AI generated';
+              aiTagClass = 'ai-soft';
+            }
+          }
+
+          const aiDetected = isDone && ((typeof score === 'number' && score >= 0.5) || statusString === 'DONE');
+          return {
+            isAiGenerated: aiDetected,
+            confidenceScore: typeof score === 'number' ? Math.min(Math.max(score, 0), 1) : null,
+            aiTag,
+            aiTagClass
+          };
         }
         if (attempt >= 3) {
           return { isAiGenerated: false };
