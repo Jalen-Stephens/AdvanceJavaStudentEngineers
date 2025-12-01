@@ -107,6 +107,8 @@ class AnalyzeServiceTest {
 
     var metadata = new C2paToolInvoker.C2paMetadata(1, 1, "gen", 0, 0, null);
     when(c2pa.extractMetadata(any(File.class))).thenReturn(metadata);
+    when(logisticRegressionService.predict(anyString(), any()))
+        .thenReturn(new InferenceResult(0.42, true, "v1"));
 
     callPrivate(
         service,

@@ -1,4 +1,48 @@
 ### **Commit / Ticket Reference**
+- **Commit:** test: add coverage for model loader and logistic regression service
+- **Ticket:** none
+- **Date:** 2026-02-17
+- **Team Member:** Jalen Stephens
+
+---
+
+### **AI Tool Information**
+- **Tool Used:** OpenAI ChatGPT (GPT-5) via Codex CLI
+- **Access Method:** Local Codex CLI (sandboxed; no paid API calls)
+- **Configuration:** Default model settings
+- **Cost:** $0 (course-provided access)
+
+---
+
+### **Purpose of AI Assistance**
+Added unit tests to raise branch/instruction coverage for model loading and logistic regression inference, including cache validation, path resolution, invalid weight handling, C2PA flag behavior, and sigmoid branches.
+
+---
+
+### **Prompts / Interaction Summary**
+- “give me a commit message and fill out a template in citations.md for the work we did”
+- “can you write test for these to increase branch and instruction coverage please”
+
+---
+
+### **Resulting Artifacts**
+- `src/test/java/dev/coms4156/project/metadetect/service/ModelLoaderTest.java`
+- `src/test/java/dev/coms4156/project/metadetect/service/LogisticRegressionServiceTest.java`
+- `src/test/resources/model/test-model.json`
+
+---
+
+### **Verification**
+- `./mvnw -q -Dtest=ModelLoaderTest,LogisticRegressionServiceTest test`
+
+---
+
+### **Attribution Statement**
+> Portions of this work were generated with assistance from OpenAI ChatGPT (GPT-5) on 2026-02-17. All AI-generated content was reviewed and finalized by the development team.
+
+---
+
+### **Commit / Ticket Reference**
 - **Commit:** fix(storage): encode Supabase paths and normalize project base URL
 - **Ticket:** N/A (prod bugfix)
 - **Date:** 2025-11-29
