@@ -4,6 +4,14 @@ This is the public repo for posting our project for the COMS4156 class.
 ## Viewing the Repository
 Please use the following link to view the repository: https://github.com/Jalen-Stephens/AdvanceJavaStudentEngineers
 
+## 🐳 Docker (Quick Testing)
+
+Build and run with Docker:
+```bash
+docker build -t metadetect .
+docker run -p 8080:8080 -e SPRING_DATASOURCE_URL=<your-db-url> -e SPRING_DATASOURCE_USERNAME=<user> -e SPRING_DATASOURCE_PASSWORD=<pass> -e SUPABASE_URL=<url> -e SUPABASE_ANON_KEY=<key> -e SUPABASE_JWT_SECRET=<secret> metadetect
+```
+
 ## Building and Running a Local Instance
 In order to build and use this project you must install the following:
 
@@ -40,6 +48,32 @@ From the terminal, run the following CLI commands:
     ## OR
     mvn checkstyle:check
 ```
+
+## Continuous Integration & Reports
+---------------------------------------------------------------------
+- **Workflow:** `.github/workflows/ci-reports.yml` runs `./mvnw -B -ntp clean test`, `jacoco:report`, `pmd:pmd` (HTML) + `pmd:check` gate, and `checkstyle:checkstyle`. It then snapshots JaCoCo/PMD HTML to PNG via `scripts/html_to_png.sh` and uploads everything as the `ci-reports` artifact.
+- **Artifacts:** CI bundles `reports/` (HTML copies, PNG screenshots, raw XML) plus `target/surefire-reports/`. Grab the `ci-reports` artifact from a workflow run to view coverage and static analysis outputs.
+- **Optional live E2E:** Disabled by default. Enable by setting `RUN_LIVE_E2E=true` in the workflow (step runs `LIVE_E2E=true ./mvnw -Dtest=dev.coms4156.project.metadetect.e2e.ClientServiceLiveE2eTest test` and requires real Supabase/DB env vars).
+- **Manual API/E2E tools:** If external dependencies are unavailable, run the live test locally with the command above (see End-to-End Testing) and ensure Supabase/DB secrets are exported. We use Postman for manual API checks when exercising the live stack. Document any skipped external runs in PRs if needed.
+
+# End-to-End Testing
+---------------------------------------------------------------------
+- **Live E2E against real Supabase + DB (opt-in):**  
+  Requires environment variables for your real stack (`SPRING_DATASOURCE_URL`, `SPRING_DATASOURCE_USERNAME`, `SPRING_DATASOURCE_PASSWORD`, `SUPABASE_URL`, `SUPABASE_ANON_KEY`, `SUPABASE_JWT_SECRET`, `SUPABASE_STORAGE_BUCKET`). Runs only when `LIVE_E2E=true` is set to avoid accidental external calls.
+  ```bash
+  LIVE_E2E=true mvn -Dtest=dev.coms4156.project.metadetect.e2e.ClientServiceLiveE2eTest test
+  ```
+  This flow signs up a unique email, logs in via Supabase Auth, uploads `Spaghetti.png` from `src/test/resources/mock-images/Spaghetti.png`, lists images, and deletes the upload—exercising real DB/storage paths. If signup/login fail (e.g., Supabase creds misconfigured), the test will skip with the upstream error text to avoid red builds while still surfacing the root cause.
+
+- **Manual Pulse checklist (against a running backend):**
+  1. Start MetaDetect (`mvn spring-boot:run`) with valid Supabase env vars loaded.
+  2. Open http://localhost:8080/ (Pulse landing page served from `src/main/resources/static`).
+  3. Submit the **Join Pulse** form with a fresh email/password; confirm the Supabase JSON response shows your email.
+  4. Log in with the same credentials; verify the response shows tokens and the UI saves the token banner.
+  5. Navigate to Pulse Studio (auto-redirect or http://localhost:8080/compose.html) and upload a sample image (e.g., `src/test/resources/mock-images/Spaghetti.png`) with a caption/labels.
+  6. Confirm the feed shows your new post and that the signed URL preview loads.
+  7. Delete the post from the feed; ensure the API returns 204 and the card disappears.
+  8. (Optional) Watch the AI banner on the card; it polls `/api/analyze/{imageId}` and should flip to **AI generated** once the backend marks the analysis `DONE`.
 ## How to Run
 ---------------------------------------------------------------------
 
@@ -526,13 +560,198 @@ Where AI was used it was heavily documented in the [citations.md](https://github
 ## Project Management Tool
 We used [Github Projects Kanban Board](https://github.com/users/Jalen-Stephens/projects/5) to Track development.
 
-## Continuous Integration Report
+## Continuous Integration (CI) Pipeline
 ---------------------------------------------------------------------
-This repository using GitHub Actions to perform continous integration, to view the latest results go to the following link: [AdvanceJavaStudentEngineers/actions](https://github.com/Jalen-Stephens/AdvanceJavaStudentEngineers/actions)
 
-Click on the latest job on the top under "X workflow runs" then Click 'build' under jobs finally click the drop down next to all the action items to read the logs made during their execution.
+### 🔄 What is Automated
 
-STILL UNDER DEVELOPMENT - PUSH TO ITERATION 2 - Sulay has been working very hard on this and it's good for next iteration
+This repository uses **GitHub Actions** to automate continuous integration. Every push and pull request triggers our CI pipeline which automatically performs:
+
+#### ✅ **Automated Tasks**
+1. **Unit Testing** - All JUnit tests run automatically
+   - Located in `src/test/java`
+   - Executed via `mvn test`
+   - Test results uploaded as artifacts
+
+2. **Code Coverage Analysis** - JaCoCo coverage reports
+   - Branch and line coverage metrics
+   - HTML reports generated in `target/site/jacoco/`
+   - Coverage data available as workflow artifacts
+
+3. **Style Checking** - Checkstyle validation
+   - Uses Google Java Style Guide (`google_checks.xml`)
+   - Checks all source and test files
+   - Reports generated in XML and HTML formats
+
+4. **Static Code Analysis** - PMD bug detection
+   - Analyzes code for potential bugs and code smells
+   - Custom ruleset in `config/pmd/ruleset.xml`
+   - Reports available in `target/site/pmd/`
+
+5. **Maven Site Generation** - Comprehensive documentation
+   - Combines all reports into a unified site
+   - Includes project information and dependencies
+   - Full site available in `target/site/`
+
+6. **Quality Gates** - Build validation
+   - Checkstyle violations reported
+   - PMD issues flagged (non-blocking for reports)
+   - Test failures block the build
+
+7. **Report Artifacts** - Downloadable results
+   - HTML/XML reports preserved for 30 days
+   - PNG screenshots of key reports
+   - Test results in JUnit XML format
+
+### 📋 Viewing CI Results
+
+**To view the latest CI run:**
+1. Navigate to [GitHub Actions](https://github.com/Jalen-Stephens/AdvanceJavaStudentEngineers/actions)
+2. Click the latest workflow run (top of the list)
+3. View the **CI Summary** at the bottom of the page
+4. Click **ci-reports** job to see detailed logs
+5. Download artifacts:
+   - `ci-reports-html-xml` - Full HTML/XML reports
+   - `ci-reports-screenshots` - PNG images of reports
+   - `test-results` - JUnit test result files
+
+**Accessing Report Artifacts:**
+- Scroll to the bottom of any workflow run page
+- Under "Artifacts", download the desired report package
+- Extract and open `index.html` files in your browser
+
+### 🚫 What is NOT Automated (Manual Testing Required)
+
+#### ❌ **End-to-End (E2E) Testing**
+**Why:** E2E tests require live external services (Supabase Auth, PostgreSQL database, S3 storage) with sensitive credentials that cannot be safely stored in CI without extensive secret management infrastructure.
+
+**How to run manually:**
+```bash
+# Set required environment variables (see env.pooler.sh example in email)
+set -a
+source env.pooler.sh
+set +a
+
+# Run E2E tests
+LIVE_E2E=true mvn -Dtest=dev.coms4156.project.metadetect.e2e.ClientServiceLiveE2eTest test
+```
+
+**What E2E tests cover:**
+- Real authentication flow through Supabase Auth
+- Image upload to actual S3 storage bucket
+- Database queries against live PostgreSQL instance
+- Image listing and deletion with real storage cleanup
+- Complete user journey from signup to content management
+
+#### ❌ **API Integration Testing via Postman/REST Clients**
+**Why:** Interactive API testing tools like Postman require manual interaction to:
+- Configure authentication tokens from live login responses
+- Upload actual image files from the local filesystem
+- Validate response data and side effects visually
+- Test error scenarios with intentional bad inputs
+- Verify storage side effects in Supabase dashboard
+
+**How to run manually:**
+1. Start the application locally:
+   ```bash
+   mvn spring-boot:run
+   ```
+
+2. Use Postman Collection or cURL commands (see "Endpoint Access Instructions" section below)
+
+3. Example workflow:
+   ```bash
+   # 1. Sign up
+   curl -X POST http://localhost:8080/auth/signup \
+     -H "Content-Type: application/json" \
+     -d '{"email": "test@example.com", "password": "testpass123"}'
+   
+   # 2. Login and save token
+   TOKEN=$(curl -s -X POST http://localhost:8080/auth/login \
+     -H "Content-Type: application/json" \
+     -d '{"email": "test@example.com", "password": "testpass123"}' \
+     | jq -r '.access_token')
+   
+   # 3. Upload image
+   curl -X POST http://localhost:8080/api/images/upload \
+     -H "Authorization: Bearer $TOKEN" \
+     -F "file=@src/test/resources/mock-images/Spaghetti.png"
+   ```
+
+**Proof of API Testing:**
+See `reports/api-testing.png` for screenshots demonstrating successful Postman testing of all endpoints.
+
+#### ❌ **Client Application (Pulse) Manual Testing**
+**Why:** The Pulse web client is a browser-based UI that requires:
+- Visual validation of the user interface
+- Interactive form submission and routing
+- Token persistence in browser storage
+- Real-time status polling and UI updates
+- Cross-browser compatibility testing
+
+**How to run manually:**
+1. Start backend: `mvn spring-boot:run`
+2. Start static server: `python3 -m http.server 4173 --directory client`
+3. Open browser: http://localhost:4173
+4. Test signup/login forms, image upload, feed display, and deletion
+
+See "Client Demo (Pulse)" section for detailed instructions.
+
+### 📊 CI Reports in Repository
+
+The `reports/` directory contains recent CI report snapshots:
+- `checkstyle-report.png` - Style checking results
+- `branch-report.png` - JaCoCo coverage visualization  
+- `pmd-report.png` - Static analysis findings
+- `api-testing.png` - Postman/cURL API test evidence
+
+These are periodically updated from CI runs and committed for easy reference.
+
+### 🔧 CI Configuration Files
+
+- `.github/workflows/ci-reports.yml` - Main CI pipeline
+- `.github/workflows/maven-main.yml` - Fast build pipeline
+- `pom.xml` - Maven plugins for Checkstyle, PMD, JaCoCo
+- `config/pmd/ruleset.xml` - PMD rules configuration
+- `scripts/html_to_png.sh` - Report screenshot generation
+- `scripts/run-ci-locally.sh` - Local CI validation (Linux/macOS)
+- `scripts/run-ci-locally.ps1` - Local CI validation (Windows)
+
+### 🖥️ Running CI Locally
+
+Before pushing code, you can run the full CI pipeline locally:
+
+**Linux/macOS:**
+```bash
+chmod +x scripts/run-ci-locally.sh
+./scripts/run-ci-locally.sh
+```
+
+**Windows (PowerShell):**
+```powershell
+.\scripts\run-ci-locally.ps1
+```
+
+This will run all checks (compile, test, coverage, style, static analysis) and show a summary of results.
+
+### 📚 Detailed Documentation
+
+For comprehensive CI documentation, see **[CI-PIPELINE.md](CI-PIPELINE.md)** which includes:
+- Complete pipeline architecture
+- Detailed step-by-step process
+- Manual testing procedures
+- Troubleshooting guide
+- Report access instructions
+
+### 📈 Continuous Improvement
+
+Our CI pipeline is continuously improved based on:
+- Build performance metrics
+- Code quality trends
+- Test coverage growth
+- Developer feedback
+
+For CI issues or suggestions, open an issue with the `ci-pipeline` label.
 
 ## Tools used 
 ---------------------------------------------------------------------

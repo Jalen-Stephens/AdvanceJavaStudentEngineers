@@ -10,6 +10,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import dev.coms4156.project.metadetect.dto.Dtos;
 import dev.coms4156.project.metadetect.service.AnalyzeService;
 import java.util.UUID;
+import org.hamcrest.Matchers;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
@@ -98,5 +99,18 @@ class AnalyzeControllerTest {
         .andExpect(jsonPath("$.note").value("stub"));
 
     verify(analyzeService, times(1)).compare(left, right);
+  }
+
+  @Test
+  void compare_missingParam_returnsBadRequest() throws Exception {
+    mvc.perform(MockMvcRequestBuilders.get("/api/analyze/compare")
+            .param("left", UUID.randomUUID().toString()))
+        .andExpect(status().isBadRequest());
+  }
+
+  @Test
+  void getStatus_invalidUuid_returns400() throws Exception {
+    mvc.perform(MockMvcRequestBuilders.get("/api/analyze/not-a-uuid"))
+        .andExpect(status().isBadRequest());
   }
 }

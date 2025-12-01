@@ -1,44 +1,107 @@
 ### **Commit / Ticket Reference**
-- **Commit:** 
-- **Ticket:** 
-- **Date:** 
-- **Team Member:** 
+- **Commit:** fix(storage): encode Supabase paths and normalize project base URL
+- **Ticket:** N/A (prod bugfix)
+- **Date:** 2025-11-29
+- **Team Member:** Jalen Stephens
 
 ---
 
 ### **AI Tool Information**
 - **Tool Used:** OpenAI ChatGPT (GPT-5)
-- **Access Method:** ChatGPT Web (.edu academic access)
+- **Access Method:** Codex CLI (local, sandboxed; no paid API calls)
 - **Configuration:** Default model settings
-- **Cost:** $0 (no paid API calls)
+- **Cost:** $0 (course-provided access)
 
 ---
 
 ### **Purpose of AI Assistance**
-<Briefly describe what part of the task the AI assisted with — e.g., refactoring, writing docs, fixing errors, setting up build tools, etc.>
+Identified and fixed Supabase storage path handling so filenames with spaces are safely encoded; normalized project base URLs to avoid double slashes in upload/sign/delete endpoints; ensured tests cover space-encoding paths.
 
 ---
 
 ### **Prompts / Interaction Summary**
-<List or paraphrase the key prompts you used.>
+- “Uploads fail when filenames contain spaces; make storage paths URL-safe for Supabase.”
+- “Fix double-encoding/double-slash issues in SupabaseStorageService.”
+- “Provide commit message and fill citations template.”
 
 ---
 
 ### **Resulting Artifacts**
-<List files, configurations, or code generated/edited with AI help.>
+- `src/main/java/dev/coms4156/project/metadetect/service/SupabaseStorageService.java`
+- `src/test/java/dev/coms4156/project/metadetect/service/SupabaseStorageServiceTest.java`
 
 ---
 
 ### **Verification**
-<List how you tested/validated the AI-assisted changes (build, test suite, manual review, etc.).>
+- `mvn -q -Dtest=SupabaseStorageServiceTest test`
 
 ---
 
 ### **Attribution Statement**
 > Portions of this commit or configuration were generated with assistance from OpenAI ChatGPT (GPT-5) on <date>. All AI-generated content was reviewed, verified, and finalized by the development team.
+> Portions of this commit or configuration were generated with assistance from OpenAI ChatGPT (GPT-5) on 2025-11-29. All AI-generated content was reviewed, verified, and finalized by the development team.
 
 ---
 
+
+### **Commit / Ticket Reference**
+
+* **Commit:** _pending_ (live E2E hardening and Pulse UX tweaks)
+* **Ticket:** _none_ (stability/QA task)
+* **Date:** November 29, 2025
+* **Team Member:** Jalen Stephens
+
+---
+
+### **AI Tool Information**
+
+* **Tool Used:** OpenAI ChatGPT (GPT-5) via Codex CLI
+* **Access Method:** Local Codex CLI session (sandboxed; no paid API calls)
+* **Configuration:** Default model settings
+* **Cost:** $0 (course-provided access)
+
+---
+
+### **Purpose of AI Assistance**
+
+Hardened the live end-to-end test flow and client UX:
+* Adjusted the live E2E upload to use the real `spaghetti.png`, added multipart size overrides, and instrumented logging for 413s.
+* Refined Pulse auth flow to auto-redirect after signup when a token is returned.
+* Documented live E2E setup/behavior in README.
+
+---
+
+### **Prompts / Interaction Summary**
+
+* “413 on live E2E upload—switch back to mock image and add logs.”
+* “Increase multipart limits for live profile.”
+* “Remove fallback to tiny payload once image upload succeeds.”
+* “Update Pulse so signup redirects like login when token is present.”
+* “Document how to run the live E2E in README.”
+
+---
+
+### **Resulting Artifacts**
+
+* `src/test/java/dev/coms4156/project/metadetect/e2e/ClientServiceLiveE2eTest.java` (image upload, logging, no fallback)
+* `src/test/resources/application-e2e-live.properties` (multipart size limits)
+* `src/main/resources/static/app.js` (Pulse signup redirect when token saved)
+* `README.md` (live E2E instructions and payload description)
+
+---
+
+### **Verification**
+
+* Live run: `LIVE_E2E=true mvn -Dtest=dev.coms4156.project.metadetect.e2e.ClientServiceLiveE2eTest test` (passes with `spaghetti.png` upload in current environment).
+* Manual browser check: signup now redirects to compose when Supabase returns a token.
+
+---
+
+### **Attribution Statement**
+
+> Portions of this work were generated with assistance from OpenAI ChatGPT (GPT-5) on November 29, 2025. All AI-generated content was reviewed and validated by the development team.
+
+---
 
 ### **Commit / Ticket Reference**
 
@@ -170,70 +233,6 @@ Prompts and questions provided to ChatGPT included:
 * **Access Method:** ChatGPT Web (.edu academic access)
 * **Configuration:** Default model settings
 * **Cost:** $0 (no paid API calls)
-
----
-
-### **Commit / Ticket Reference**
-
-* **Commit:** `feat(ml): add logistic regression loader/inference and feature CSV helpers for AI scoring`
-* **Ticket:** `#49 — Implement Demoable Client + Pooler Stability`
-* **Date:** December 1, 2025
-* **Team Member:** Jalen Stephens
-
----
-
-### **AI Tool Information**
-
-* **Tool Used:** OpenAI ChatGPT (GPT-5) via Codex CLI
-* **Access Method:** Local Codex CLI session (sandboxed, no paid API usage)
-* **Configuration:** Default model settings
-* **Cost:** $0 (educational access)
-
----
-
-### **Purpose of AI Assistance**
-
-* Implemented logistic regression model loader and inference service for the confidence score pipeline.
-* Added CSV header/row helpers in `FeatureExtractor` to support offline dataset generation.
-* Wired `AnalyzeService` to compute and persist ML confidence plus C2PA usage flags and model version.
-* Added placeholder `model.json` and model path configuration for runtime loading.
-
----
-
-### **Prompts / Interaction Summary**
-
-* “Implement logistic regression inference with pretrained weights + bias in Java”
-* “Add model loader for JSON weights and hook into AnalyzeService”
-* “Add CSV scaffolding helpers to FeatureExtractor for offline training”
-* “Fix OpenCV native load errors on macOS/Java 17+”
-* “Fill out the commit citation entry using the standard template”
-
----
-
-### **Resulting Artifacts**
-
-* `src/main/java/dev/coms4156/project/metadetect/service/ModelLoader.java`
-* `src/main/java/dev/coms4156/project/metadetect/service/LogisticRegressionService.java`
-* `src/main/java/dev/coms4156/project/metadetect/service/FeatureExtractor.java`
-* `src/main/java/dev/coms4156/project/metadetect/service/AnalyzeService.java`
-* `src/main/resources/model/model.json`
-* `src/main/resources/application.properties` (model path)
-* Updated controller/service tests for the new confidence response shape.
-
----
-
-### **Verification**
-
-* `./mvnw -q -DskipTests compile`
-* `mvn spring-boot:run` locally with `env.pooler.sh` sourced (startup success)
-
----
-
-### **Attribution Statement**
-
-> Portions of this commit were generated with assistance from OpenAI ChatGPT (GPT-5) on December 1, 2025. All AI-generated content was reviewed, verified, and finalized by the development team.
-
----
 
 ---
 
@@ -2912,5 +2911,154 @@ AI assistance was used to design, debug, and generate the complete `FeatureExtra
 
 ### **Attribution Statement**
 > Portions of this commit or configuration were generated with assistance from OpenAI ChatGPT (GPT-5) on November 23 2025. All AI-generated content was reviewed, validated, and finalized by the development team.
+
+---
+
+
+### **Commit / Ticket Reference**
+- **Commit:** pending
+- **Ticket:** none
+- **Date:** 2026-02-17
+- **Team Member:** Jalen Stephens
+
+---
+
+### **AI Tool Information**
+- **Tool Used:** OpenAI ChatGPT (GPT-5)
+- **Access Method:** Codex CLI (local, sandboxed)
+- **Configuration:** Default model settings
+- **Cost:** $0 (no paid API calls)
+
+---
+
+### **Purpose of AI Assistance**
+Updated the CI pipeline to run Maven tests from the module root, generate JaCoCo + PMD HTML reports, convert them to PNG snapshots, and bundle HTML/PNG/XML outputs into a single artifact.
+
+---
+
+### **Prompts / Interaction Summary**
+- “It doesn’t correctly run unit tests from the module root; collect JaCoCo + PMD HTML and PNG artifacts.”
+- “Convert HTML → PNG via wkhtmltoimage and package reports.”
+- “Give a commit message and fill out the citations template for these changes.”
+
+---
+
+### **Resulting Artifacts**
+- `.github/workflows/ci-reports.yml` (CI steps for tests, reports, PNG conversion, artifact upload, PMD gate)
+- `scripts/html_to_png.sh` (HTML-to-PNG conversion plus HTML copies into `reports/html`)
+
+---
+
+### **Verification**
+Not run locally here (follow-up: `./mvnw -B -ntp clean test && ./mvnw -B -ntp jacoco:report && ./mvnw -B -ntp pmd:pmd -Dpmd.failOnViolation=false && bash scripts/html_to_png.sh && ./mvnw -B -ntp pmd:check`).
+
+---
+
+### **Attribution Statement**
+> Portions of this work were generated with assistance from OpenAI ChatGPT (GPT-5) on 2026-02-17. All AI-generated content was reviewed and finalized by the development team.
+### **Commit / Ticket Reference**
+- **Commit:** pending
+- **Ticket:** none
+- **Date:** 2026-02-17
+- **Team Member:** Jalen Stephens
+
+---
+
+### **AI Tool Information**
+- **Tool Used:** OpenAI ChatGPT (GPT-5) via Codex CLI
+- **Access Method:** Local Codex CLI (sandboxed)
+- **Configuration:** Default model settings
+- **Cost:** $0 (no paid API calls)
+
+---
+
+### **Purpose of AI Assistance**
+Extended CI and test reliability:
+- Refined `ci-reports.yml` to run Maven tests from module root, generate JaCoCo/PMD HTML, convert to PNG, and bundle reports into a single artifact.
+- Updated `scripts/html_to_png.sh` to collect HTML assets and PNG snapshots under `reports/`.
+- Made C2PA integration tests portable with JSON fixtures when the macOS `c2patool` binary is unavailable; exposed a parsing helper.
+- Fixed Checkstyle issues (import order, indentation, wrapping) across FeatureExtractor, C2PA unit/integration tests, ImageControllerTest, SupabaseStorageServiceTest, AnalyzeServiceTest, AuthProxyServiceTest.
+
+---
+
+### **Prompts / Interaction Summary**
+- “It doesn’t correctly run unit tests from the module root; collect JaCoCo + PMD HTML and PNG artifacts.”
+- “Convert HTML → PNG via wkhtmltoimage and package reports.”
+- “Make the C2PA integration tests work on all systems.”
+- “Fix the Checkstyle warnings (import order, operator wrap, indentation).”
+- “Commit message and fill out the citations template.”
+
+---
+
+### **Resulting Artifacts**
+- `.github/workflows/ci-reports.yml`
+- `scripts/html_to_png.sh`
+- `src/main/java/dev/coms4156/project/metadetect/service/FeatureExtractor.java`
+- `src/test/java/dev/coms4156/project/metadetect/c2pa/C2paToolInvokerIntegrationTest.java`
+- `src/test/java/dev/coms4156/project/metadetect/c2pa/C2paToolInvokerUnitTest.java`
+- `src/test/java/dev/coms4156/project/metadetect/controller/ImageControllerTest.java`
+- `src/test/java/dev/coms4156/project/metadetect/service/SupabaseStorageServiceTest.java`
+- `src/test/java/dev/coms4156/project/metadetect/service/AnalyzeServiceTest.java`
+- `src/test/java/dev/coms4156/project/metadetect/service/AuthProxyServiceTest.java`
+- `src/test/resources/c2pa-fixtures/*.json`
+
+---
+
+### **Verification**
+- Local: `./mvnw -q -DskipTests compile` (passes in sandbox).
+- Follow-up recommended: `./mvnw -B -ntp clean test jacoco:report pmd:pmd -Dpmd.failOnViolation=false` and `./mvnw -B -ntp pmd:check` to enforce gates.
+
+---
+
+### **Attribution Statement**
+> Portions of this work were generated with assistance from OpenAI ChatGPT (GPT-5) on 2026-02-17. All AI-generated content was reviewed and finalized by the development team.
+
+---
+
+### **Commit / Ticket Reference**
+- **Commit:** pending
+- **Ticket:** none
+- **Date:** 2026-02-17
+- **Team Member:** Jalen Stephens
+
+---
+
+### **AI Tool Information**
+- **Tool Used:** OpenAI ChatGPT (GPT-5) via Codex CLI
+- **Access Method:** Local Codex CLI (sandboxed)
+- **Configuration:** Default model settings
+- **Cost:** $0 (no paid API calls)
+
+---
+
+### **Purpose of AI Assistance**
+Expanded CI coverage and optional live E2E hook:
+- Added Checkstyle execution to the CI workflow and bundled the XML into artifacts.
+- Added an opt-in live E2E test step (`LIVE_E2E=true ./mvnw -Dtest=dev.coms4156.project.metadetect.e2e.ClientServiceLiveE2eTest test`) gated by `RUN_LIVE_E2E`.
+- Retained prior report generation and artifact packaging.
+
+---
+
+### **Prompts / Interaction Summary**
+- “Does this do all of this: Continuous Integration… add Checkstyle to the CI”
+- “We also have an E2E test … command: LIVE_E2E=true mvn -Dtest=dev.coms4156.project.metadetect.e2e.ClientServiceLiveE2eTest test”
+- “git commit and add citations”
+
+---
+
+### **Resulting Artifacts**
+- `.github/workflows/ci-reports.yml`
+- `citations.md`
+
+---
+
+### **Verification**
+- Local: `./mvnw -q -DskipTests compile`
+- CI: run `ci-reports` workflow; Checkstyle now executes, E2E step runs when `RUN_LIVE_E2E=true`.
+
+---
+
+### **Attribution Statement**
+> Portions of this work were generated with assistance from OpenAI ChatGPT (GPT-5) on 2026-02-17. All AI-generated content was reviewed and finalized by the development team.
 
 ---

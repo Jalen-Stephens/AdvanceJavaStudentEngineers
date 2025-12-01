@@ -1,0 +1,12 @@
+{
+  "active_manifest": "urn:uuid:ai-tampered",
+  "manifests": {
+    "urn:uuid:ai-tampered": {
+      "claim": {
+        "claim_generator_info": {
+          "name": "midjourney"
+        }
+      }
+    }
+  }
+}
