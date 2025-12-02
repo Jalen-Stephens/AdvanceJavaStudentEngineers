@@ -22,14 +22,15 @@ class FeatureExtractorTest {
   void extractAllFeatures_missingFile_returnsC2paOnly() {
     FeatureExtractor fx = extractor();
     C2paToolInvoker.C2paMetadata meta = new C2paToolInvoker.C2paMetadata(
-        1, 3, "tool", 0, 0, null);
+        1, 3, "tool", 0, 0, null, 0, null);
 
     double[] out = fx.extractAllFeatures("does/not/exist.png", meta);
 
-    assertThat(out).hasSize(12);
+    assertThat(out).hasSize(13);
     assertThat(out[0]).isZero();
     assertThat(out[8]).isEqualTo(1.0);
     assertThat(out[9]).isEqualTo(3.0);
+    assertThat(out[11]).isEqualTo(0.0);
   }
 
   @Test

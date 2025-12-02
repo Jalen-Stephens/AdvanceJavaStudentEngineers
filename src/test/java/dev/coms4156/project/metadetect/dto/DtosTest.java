@@ -31,6 +31,18 @@ class DtosTest {
     assertThat(analyzeStatus.status()).isEqualTo("PENDING");
     assertThat(analyzeStatus.completedAt()).isNull();
 
+    var analyzeConfidence = new Dtos.AnalyzeConfidenceResponse(
+        "analysis-123",
+        "DONE",
+        0.9,
+        true,
+        "v1",
+        true,
+        "matched keyword"
+    );
+    assertThat(analyzeConfidence.isScreenshot()).isTrue();
+    assertThat(analyzeConfidence.screenshotReason()).isEqualTo("matched keyword");
+
     var compare = new Dtos.AnalyzeCompareResponse("DONE", null, "note");
     assertThat(compare.status()).isEqualTo("DONE");
     assertThat(compare.similarity()).isNull();

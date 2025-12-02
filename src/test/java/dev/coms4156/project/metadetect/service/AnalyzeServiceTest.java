@@ -106,7 +106,15 @@ class AnalyzeServiceTest {
     when(storage.createSignedUrl(eq("user/path.jpg"), anyString()))
         .thenReturn(tempKeep.toURI().toURL().toString());
 
-    var metadata = new C2paToolInvoker.C2paMetadata(1, 1, "gen", 0, 0, null);
+    var metadata = new C2paToolInvoker.C2paMetadata(
+        1,
+        1,
+        "gen",
+        0,
+        1,
+        "claim_generator contains \"gen\"",
+        0,
+        null);
     when(c2pa.extractMetadata(any(File.class))).thenReturn(metadata);
     when(logisticRegressionService.predict(anyString(), any()))
         .thenReturn(new InferenceResult(0.42, true, "v1"));
@@ -124,6 +132,8 @@ class AnalyzeServiceTest {
     AnalysisReport last = saved.getValue();
     assertThat(last.getStatus()).isEqualTo(AnalysisReport.ReportStatus.DONE);
     assertThat(last.getDetails()).contains("\"c2paHasManifest\":1");
+    assertThat(last.getDetails()).contains("\"c2paIsScreenshot\":1");
+    assertThat(last.getConfidence()).isEqualTo(0.47);
   }
 
   @AfterEach
@@ -161,7 +171,7 @@ class AnalyzeServiceTest {
         .thenReturn(downloadable.toURI().toURL().toString());
 
     var metadata = new C2paToolInvoker.C2paMetadata(
-        1, 2, "midjourney", 1, 0, null);
+        1, 2, "midjourney", 1, 0, null, 0, null);
     when(c2pa.extractMetadata(any(File.class))).thenReturn(metadata);
     when(logisticRegressionService.predict(anyString(), any()))
         .thenReturn(new InferenceResult(0.73, true, "v1"));
@@ -187,6 +197,7 @@ class AnalyzeServiceTest {
     AnalysisReport last = saved.getAllValues().get(saved.getAllValues().size() - 1);
     assertThat(last.getStatus().name()).isEqualTo("DONE");
     assertThat(last.getDetails()).contains("\"c2paHasManifest\":1");
+    assertThat(last.getDetails()).contains("\"c2paIsScreenshot\":0");
     assertThat(last.getConfidence()).isEqualTo(0.73);
 
     downloadable.delete();
@@ -360,6 +371,25 @@ class AnalyzeServiceTest {
     assertThat(out.confidenceScore()).isNull();
     assertThat(out.c2paUsed()).isTrue();
     assertThat(out.modelVersion()).isEqualTo("v1");
+    assertThat(out.isScreenshot()).isFalse();
+    assertThat(out.screenshotReason()).isNull();
+  }
+
+  @Test
+  void getConfidence_withScreenshotMetadata_surfacesFlagAndReason() {
+    UUID analysisId = UUID.randomUUID();
+    AnalysisReport report = new AnalysisReport(imageId);
+    report.setId(analysisId);
+    report.setStatus(AnalysisReport.ReportStatus.DONE);
+    report.setConfidence(0.5);
+    report.setDetails("{\"c2paIsScreenshot\":1,\"c2paScreenshotReason\":\"matched keyword\"}");
+
+    when(repo.findById(analysisId)).thenReturn(Optional.of(report));
+    when(imageService.getById(userId, imageId)).thenReturn(ownedImage("x"));
+
+    Dtos.AnalyzeConfidenceResponse out = service.getConfidence(analysisId);
+    assertThat(out.isScreenshot()).isTrue();
+    assertThat(out.screenshotReason()).isEqualTo("matched keyword");
   }
 
   /**

@@ -33,7 +33,7 @@ class LogisticRegressionServiceTest {
     when(featureExtractor.extractAllFeatures(eq("img.jpg"), any()))
         .thenReturn(new double[] {1.0, 2.0});
 
-    var c2pa = new C2paToolInvoker.C2paMetadata(1, 1, "gen", 0, 0, null);
+    var c2pa = new C2paToolInvoker.C2paMetadata(1, 1, "gen", 0, 0, null, 0, null);
 
     LogisticRegressionService.InferenceResult result = service.predict("img.jpg", c2pa);
 
@@ -50,7 +50,7 @@ class LogisticRegressionServiceTest {
     when(featureExtractor.extractAllFeatures(eq("img2.jpg"), any()))
         .thenReturn(new double[] {1.0, 1.0});
 
-    var c2pa = new C2paToolInvoker.C2paMetadata(1, 1, "gen", 0, 1, "err");
+    var c2pa = new C2paToolInvoker.C2paMetadata(1, 1, "gen", 0, 0, null, 1, "err");
 
     LogisticRegressionService.InferenceResult result = service.predict("img2.jpg", c2pa);
 
@@ -70,7 +70,7 @@ class LogisticRegressionServiceTest {
 
     LogisticRegressionService.InferenceResult result = service.predict(
         "img3.jpg",
-        new C2paToolInvoker.C2paMetadata(0, 0, null, 0, 0, null)
+        new C2paToolInvoker.C2paMetadata(0, 0, null, 0, 0, null, 0, null)
     );
 
     assertThat(result.c2paUsed()).isFalse();
