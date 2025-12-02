@@ -56,6 +56,13 @@ All incoming HTTP requests are logged by `RequestLoggingFilter` (a Spring `OnceP
 ```
 On Heroku, view the live stream with `heroku logs --tail`.
 
+## Heroku JVM sizing (512 MB dyno)
+Set the Heroku config var `JAVA_TOOL_OPTIONS` to:
+```
+-Dfile.encoding=UTF-8 -XX:MaxRAM=536870912 -Xmx256m -Xss512k -XX:CICompilerCount=2
+```
+These flags cap total RAM, constrain the heap/thread stacks below the 512 MB dyno limit, and keep the JIT thread pool small—reducing the chance of R14/R15 OOM events when uploads spike.
+
 ## Continuous Integration & Reports
 ---------------------------------------------------------------------
 - **Workflow:** `.github/workflows/ci-reports.yml` runs `./mvnw -B -ntp clean test`, `jacoco:report`, `pmd:pmd` (HTML) + `pmd:check` gate, and `checkstyle:checkstyle`. It then snapshots JaCoCo/PMD HTML to PNG via `scripts/html_to_png.sh` and uploads everything as the `ci-reports` artifact.

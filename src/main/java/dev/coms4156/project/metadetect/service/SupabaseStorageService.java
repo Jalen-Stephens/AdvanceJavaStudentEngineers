@@ -1,20 +1,27 @@
 package dev.coms4156.project.metadetect.service;
 
+import java.io.IOException;
+import java.io.InputStream;
 import java.net.URI;
 import java.nio.charset.StandardCharsets;
 import java.time.Duration;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.core.io.buffer.DataBuffer;
+import org.springframework.core.io.buffer.DataBufferUtils;
+import org.springframework.core.io.buffer.DefaultDataBufferFactory;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.MediaType;
 import org.springframework.stereotype.Service;
+import org.springframework.web.reactive.function.BodyInserters;
 import org.springframework.web.reactive.function.client.ClientRequest;
 import org.springframework.web.reactive.function.client.ExchangeFilterFunction;
 import org.springframework.web.reactive.function.client.WebClient;
 import org.springframework.web.reactive.function.client.WebClientResponseException;
 import org.springframework.web.util.UriComponentsBuilder;
+import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
 /**
@@ -102,13 +109,15 @@ public class SupabaseStorageService {
    * - Each segment is URL-encoded (defensive against spaces or special chars).
    * - Caller provides the logical `objectPath`, e.g. "userId/imageId--filename".
    *
-   * @param bytes file contents
+   * @param data InputStream of file contents (streamed to Supabase)
+   * @param contentLength size hint if available; pass a negative value if unknown
    * @param contentType MIME type (defaults to application/octet-stream)
    * @param objectPath storage key within the bucket
    * @param bearerJwt caller's user JWT for RLS/policy checks
    * @return the objectPath that was written
    */
-  public String uploadObject(byte[] bytes,
+  public String uploadObject(InputStream data,
+                             long contentLength,
                              String contentType,
                              String objectPath,
                              String bearerJwt) {
@@ -116,26 +125,47 @@ public class SupabaseStorageService {
     // URL-encode segments to avoid 400s on special characters.
     String encoded = encodePath(objectPath);
     URI url = URI.create(projectBase + "/storage/v1/object/" + bucket + "/" + encoded);
+    Flux<DataBuffer> body = Flux.using(
+        () -> data,
+        stream -> DataBufferUtils.readInputStream(
+            () -> stream,
+            new DefaultDataBufferFactory(),
+            16 * 1024 // stream in small chunks to avoid buffering large files in memory
+        ),
+        stream -> {
+          try {
+            stream.close();
+          } catch (IOException ioe) {
+            log.warn("Failed to close upload stream for {}", objectPath, ioe);
+          }
+        }
+    );
 
     try {
-      supabase
-        .put()
-        .uri(url)
-        .header(HttpHeaders.AUTHORIZATION, "Bearer " + bearerJwt)
-        .header("apikey", supabaseAnonKey)
-        .header("x-upsert", "true") // allow overwrite if the same key is reused
-        .contentType(MediaType.parseMediaType(
-          contentType == null || contentType.isBlank()
-            ? MediaType.APPLICATION_OCTET_STREAM_VALUE
-            : contentType))
-        .bodyValue(bytes)
-        .retrieve()
-        .bodyToMono(String.class)
-        .onErrorResume(WebClientResponseException.class, ex -> {
-          log.error("Supabase upload failed: status={}, body={}",
-              ex.getStatusCode(), ex.getResponseBodyAsString());
-          return Mono.error(ex);
-        })
+      var request = supabase
+          .put()
+          .uri(url)
+          .header(HttpHeaders.AUTHORIZATION, "Bearer " + bearerJwt)
+          .header("apikey", supabaseAnonKey)
+          .header("x-upsert", "true") // allow overwrite if the same key is reused
+          .contentType(MediaType.parseMediaType(
+              contentType == null || contentType.isBlank()
+                  ? MediaType.APPLICATION_OCTET_STREAM_VALUE
+                  : contentType));
+
+      if (contentLength > 0) {
+        request = request.header(HttpHeaders.CONTENT_LENGTH, String.valueOf(contentLength));
+      }
+
+      request
+          .body(BodyInserters.fromDataBuffers(body))
+          .retrieve()
+          .bodyToMono(String.class)
+          .onErrorResume(WebClientResponseException.class, ex -> {
+            log.error("Supabase upload failed: status={}, body={}",
+                ex.getStatusCode(), ex.getResponseBodyAsString());
+            return Mono.error(ex);
+          })
           .block();
 
       return objectPath;

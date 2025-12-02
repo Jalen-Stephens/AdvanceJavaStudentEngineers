@@ -100,12 +100,26 @@ public class C2paToolInvoker {
       return C2paMetadata.error(msg);
     }
 
+    File toolBinary = new File(c2paToolPath).getAbsoluteFile();
+    if (!toolBinary.exists()) {
+      String msg = "C2PA tool not found at path: " + toolBinary;
+      log.warn(msg);
+      return C2paMetadata.error(msg);
+    }
+    if (!toolBinary.canExecute()) {
+      log.warn("C2PA tool at {} is not executable; invocation may fail", toolBinary);
+    }
+
     try {
+      // Invoke the binary directly (no shell) to avoid accidental script parsing on Heroku.
       ProcessBuilder pb = new ProcessBuilder(
-          c2paToolPath,
+          toolBinary.getAbsolutePath(),
           imageFile.getAbsolutePath(),
           "-d" // detailed JSON output
       );
+      if (toolBinary.getParentFile() != null) {
+        pb.directory(toolBinary.getParentFile());
+      }
       pb.redirectErrorStream(false);
 
       Process proc = pb.start();
@@ -152,7 +166,7 @@ public class C2paToolInvoker {
         return C2paMetadata.error(msg);
       }
     } catch (Exception e) {
-      String msg = "Unexpected error while invoking C2PA tool: " + e;
+      String msg = "Unexpected error while invoking C2PA tool (" + toolBinary + "): " + e;
       log.warn(msg, e);
       return C2paMetadata.error(msg);
     }

@@ -97,6 +97,15 @@ public class AnalyzeService {
     // 1) Ownership gate (RLS-friendly through ImageService)
     Image img = imageService.getById(currentUser, imageId);
 
+    // Fast-path: reuse latest analysis if one exists and isn't FAILED.
+    var latest = analysisRepo.findTopByImageIdOrderByCreatedAtDesc(imageId);
+    if (latest.isPresent()) {
+      ReportStatus status = latest.get().getStatus();
+      if (status == ReportStatus.DONE || status == ReportStatus.PENDING) {
+        return new Dtos.AnalyzeStartResponse(latest.get().getId().toString());
+      }
+    }
+
     // 2) Require a non-null storage path
     String storagePath = img.getStoragePath();
     if (!StringUtils.hasText(storagePath)) {

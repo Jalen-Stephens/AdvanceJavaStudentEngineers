@@ -37,8 +37,10 @@ class SupabaseStorageServiceErrorTest {
         client, "https://example.test", "bucket", 900, "anon"
     );
 
+    byte[] bytes = "bytes".getBytes();
     assertThrows(RuntimeException.class, () -> svc.uploadObject(
-        "bytes".getBytes(),
+        new java.io.ByteArrayInputStream(bytes),
+        bytes.length,
         MediaType.IMAGE_PNG_VALUE,
         "user/a.png",
         "jwt"

@@ -6,6 +6,7 @@ import dev.coms4156.project.metadetect.repository.ImageRepository;
 import dev.coms4156.project.metadetect.service.errors.ForbiddenException;
 import dev.coms4156.project.metadetect.service.errors.NotFoundException;
 import java.io.IOException;
+import java.io.InputStream;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
@@ -61,7 +62,7 @@ public class ImageService {
         .replaceAll("[/\\\\]", "_");
 
     Image created = null;
-    try {
+    try (InputStream stream = file.getInputStream()) {
       // 1) Create DB row under the user identity
       created = rls.asUser(userId, () -> {
         Image img = new Image();
@@ -75,7 +76,8 @@ public class ImageService {
 
       // 3) Upload binary to Supabase
       storage.uploadObject(
-          file.getBytes(),
+          stream, // stream upload to avoid buffering whole file in memory
+          file.getSize(),
           Optional.ofNullable(file.getContentType())
           .orElse(MediaType.APPLICATION_OCTET_STREAM_VALUE),
           storageKey,

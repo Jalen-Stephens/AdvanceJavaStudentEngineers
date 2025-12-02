@@ -6,6 +6,8 @@ import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.junit.jupiter.api.Assumptions.assumeTrue;
 
+import java.io.IOException;
+import java.io.InputStream;
 import java.net.SocketException;
 import okhttp3.mockwebserver.MockResponse;
 import okhttp3.mockwebserver.MockWebServer;
@@ -82,7 +84,8 @@ class SupabaseStorageServiceTest {
     byte[] bytes = "hello".getBytes();
 
     String returnedPath = storageService.uploadObject(
-        bytes,
+        new java.io.ByteArrayInputStream(bytes),
+        bytes.length,
         MediaType.IMAGE_PNG_VALUE,
         "user-123/img-uuid--photo.png",
         "bearer.jwt.here"
@@ -100,14 +103,17 @@ class SupabaseStorageServiceTest {
     assertEquals(anonKey, req.getHeader("apikey"));
     assertEquals("true", req.getHeader("x-upsert"));
     assertEquals(MediaType.IMAGE_PNG_VALUE, req.getHeader("Content-Type"));
+    assertEquals(String.valueOf(bytes.length), req.getHeader("Content-Length"));
   }
 
   @Test
   void uploadObject_encodesSpacesInPath() throws Exception {
     server.enqueue(new MockResponse().setResponseCode(200).setBody("{}"));
 
+    byte[] bytes = "hello".getBytes();
     storageService.uploadObject(
-        "hello".getBytes(),
+        new java.io.ByteArrayInputStream(bytes),
+        bytes.length,
         MediaType.IMAGE_PNG_VALUE,
         "user 123/photo folder/my photo.png",
         "bearer.jwt.here"
@@ -117,6 +123,41 @@ class SupabaseStorageServiceTest {
     assertEquals(
         "/storage/v1/object/metadetect-images/user%20123/photo%20folder/my%20photo.png",
         req.getPath());
+  }
+
+  @Test
+  void uploadObject_skipsContentLengthHeaderWhenUnknown_andClosesStreamQuietly() throws Exception {
+    server.enqueue(new MockResponse().setResponseCode(200).setBody("{}"));
+
+    InputStream noisy = new InputStream() {
+      private boolean read = false;
+      @Override
+      public int read() {
+        if (read) {
+          return -1;
+        }
+        read = true;
+        return 'x';
+      }
+
+      @Override
+      public void close() throws IOException {
+        throw new IOException("close failure");
+      }
+    };
+
+    storageService.uploadObject(
+        noisy,
+        -1, // unknown length -> no Content-Length header
+        MediaType.APPLICATION_OCTET_STREAM_VALUE,
+        "user-123/no-length.bin",
+        "bearer.jwt.here"
+    );
+
+    RecordedRequest req = server.takeRequest();
+    assertEquals("PUT", req.getMethod());
+    assertEquals("/storage/v1/object/metadetect-images/user-123/no-length.bin", req.getPath());
+    assertNull(req.getHeader("Content-Length"));
   }
 
   /**

@@ -3,6 +3,7 @@ package dev.coms4156.project.metadetect.service;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.doAnswer;
@@ -19,6 +20,7 @@ import dev.coms4156.project.metadetect.service.SupabaseStorageService;
 import dev.coms4156.project.metadetect.service.errors.ForbiddenException;
 import dev.coms4156.project.metadetect.service.errors.NotFoundException;
 import java.io.IOException;
+import java.io.InputStream;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
@@ -315,7 +317,7 @@ class ImageServiceTest {
     found.setFilename("pic.png");
     when(repo.findById(newId)).thenReturn(Optional.of(found));
 
-    when(storage.uploadObject(any(byte[].class), eq("image/png"),
+    when(storage.uploadObject(any(InputStream.class), anyLong(), eq("image/png"),
       anyString(), eq("jwt"))).thenReturn("ok");
 
     MultipartFile file = new org.springframework.mock.web.MockMultipartFile(
@@ -329,7 +331,7 @@ class ImageServiceTest {
     assertThat(result.getFilename()).isEqualTo("pic.png");
     assertThat(result.getStoragePath()).isEqualTo(expectedKey);
 
-    verify(storage).uploadObject(any(byte[].class), eq("image/png"),
+    verify(storage).uploadObject(any(InputStream.class), anyLong(), eq("image/png"),
         eq(expectedKey), eq("jwt"));
 
     // Two saves: create (no storage path) then update (with storage path).
@@ -370,7 +372,7 @@ class ImageServiceTest {
     when(repo.findById(newId)).thenReturn(Optional.of(found));
 
     ArgumentCaptor<String> contentTypeCap = ArgumentCaptor.forClass(String.class);
-    when(storage.uploadObject(any(byte[].class),
+    when(storage.uploadObject(any(InputStream.class), anyLong(),
       contentTypeCap.capture(), anyString(), anyString()))
         .thenReturn("ok");
 
@@ -399,7 +401,7 @@ class ImageServiceTest {
     MultipartFile bad = org.mockito.Mockito.mock(MultipartFile.class);
     when(bad.getOriginalFilename()).thenReturn("x.png");
     when(bad.getContentType()).thenReturn("image/png");
-    when(bad.getBytes()).thenThrow(new IOException("read fail"));
+    when(bad.getInputStream()).thenThrow(new IOException("read fail"));
 
     assertThatThrownBy(() -> service.upload(ownerId, "jwt", bad))
         .isInstanceOf(IOException.class);
