@@ -1,0 +1,13 @@
+{
+  "active_manifest": "urn:uuid:ai-valid",
+  "manifests": {
+    "urn:uuid:ai-valid": {
+      "claim": {
+        "claim_generator_info": {
+          "name": "OpenAI DALL-E"
+        },
+        "title": "AI Generated Sample"
+      }
+    }
+  }
+}

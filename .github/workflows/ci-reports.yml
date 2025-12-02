@@ -1,0 +1,114 @@
+name: CI Reports
+
+on:
+  push:
+    branches:
+      - main
+      - 'features/**'
+  pull_request:
+    branches:
+      - main
+
+jobs:
+  ci-reports:
+    runs-on: ubuntu-latest
+    env:
+      RUN_LIVE_E2E: "false"
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      
+    - name: Set up JDK 17
+      uses: actions/setup-java@v4
+      with:
+        java-version: '17'
+        distribution: 'temurin'
+        cache: 'maven'
+    
+    # ===== TESTING =====
+    - name: Run unit tests from module root
+      run: ./mvnw -B -ntp clean test
+      working-directory: .
+      
+    # ===== CODE COVERAGE =====
+    - name: Generate JaCoCo coverage report
+      run: ./mvnw -B -ntp jacoco:report
+      
+    # ===== STATIC ANALYSIS =====
+    - name: Generate PMD HTML report
+      run: ./mvnw -B -ntp pmd:pmd -Dpmd.failOnViolation=false
+
+    - name: Run Checkstyle
+      run: ./mvnw -B -ntp checkstyle:checkstyle
+
+    # ===== OPTIONAL LIVE E2E (requires LIVE_E2E env + external deps) =====
+    - name: Run live E2E (opt-in)
+      if: env.RUN_LIVE_E2E == 'true'
+      env:
+        LIVE_E2E: "true"
+      run: ./mvnw -B -ntp -Dtest=dev.coms4156.project.metadetect.e2e.ClientServiceLiveE2eTest test
+      
+    # ===== CONVERT TO PNG =====
+    - name: Install wkhtmltopdf for report conversion
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y wkhtmltopdf
+        
+    - name: Make conversion script executable
+      run: chmod +x scripts/html_to_png.sh
+      
+    - name: Convert HTML reports to PNG
+      run: bash scripts/html_to_png.sh
+
+    - name: Collect additional raw artifacts into /reports
+      if: always()
+      run: |
+        mkdir -p reports/test-results reports/raw
+        if [ -d "target/surefire-reports" ]; then
+          cp -R target/surefire-reports/. reports/test-results/
+        fi
+        if [ -f "target/pmd.xml" ]; then
+          cp target/pmd.xml reports/raw/pmd.xml
+        fi
+        if [ -f "target/checkstyle-result.xml" ]; then
+          cp target/checkstyle-result.xml reports/raw/checkstyle-result.xml
+        fi
+        if [ -f "target/site/jacoco/jacoco.xml" ]; then
+          cp target/site/jacoco/jacoco.xml reports/raw/jacoco.xml
+        fi
+      
+    # ===== QUALITY GATES =====
+    - name: Enforce PMD violations
+      run: ./mvnw -B -ntp pmd:check
+      
+    # ===== UPLOAD ARTIFACTS =====
+    - name: Upload CI reports (HTML, PNG, XML)
+      uses: actions/upload-artifact@v4
+      if: always()
+      with:
+        name: ci-reports
+        path: |
+          reports/
+          target/surefire-reports/
+        retention-days: 30
+    
+    # ===== SUMMARY =====
+    - name: Generate CI Summary
+      if: always()
+      run: |
+        echo "## 📊 CI Report Summary" >> $GITHUB_STEP_SUMMARY
+        echo "" >> $GITHUB_STEP_SUMMARY
+        echo "### Test Results" >> $GITHUB_STEP_SUMMARY
+        if [ -d "target/surefire-reports" ]; then
+          TESTS=$(find target/surefire-reports -name "TEST-*.xml" | wc -l)
+          echo "- Test suites executed: $TESTS" >> $GITHUB_STEP_SUMMARY
+        fi
+        echo "" >> $GITHUB_STEP_SUMMARY
+        echo "### Available Reports" >> $GITHUB_STEP_SUMMARY
+        echo "- ✅ JaCoCo coverage (HTML + PNG snapshot)" >> $GITHUB_STEP_SUMMARY
+        echo "- ✅ PMD static analysis (HTML + PNG snapshot)" >> $GITHUB_STEP_SUMMARY
+        echo "- ✅ Unit test XML results" >> $GITHUB_STEP_SUMMARY
+        echo "" >> $GITHUB_STEP_SUMMARY
+        echo "### 📥 Download Artifacts" >> $GITHUB_STEP_SUMMARY
+        echo "All consolidated under the 'ci-reports' artifact (reports/ + surefire XML)." >> $GITHUB_STEP_SUMMARY

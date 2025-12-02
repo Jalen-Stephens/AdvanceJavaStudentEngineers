@@ -19,8 +19,8 @@ import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.security.oauth2.jwt.JwtDecoder;
 import org.springframework.security.oauth2.jwt.JwtValidators;
 import org.springframework.security.oauth2.jwt.NimbusJwtDecoder;
-import org.springframework.security.web.authentication.HttpStatusEntryPoint;
 import org.springframework.security.web.SecurityFilterChain;
+import org.springframework.security.web.authentication.HttpStatusEntryPoint;
 import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
@@ -94,7 +94,13 @@ public class SecurityConfig {
                   "/js/**",
                   "/images/**",
                   "/fonts/**",
-                  "/webjars/**"
+                  "/webjars/**",
+
+                  // Swagger / OpenAPI docs
+                  "/swagger-ui.html",
+                  "/swagger-ui/**",
+                  "/v3/api-docs/**",
+                  "/api-docs/**"
               ).permitAll()
 
               // Public non-API endpoints (health/auth pages used by tests + clients)

@@ -50,6 +50,15 @@ class HealthControllerTest {
   }
 
   @Test
+  void dbHealth_returnsDownWhenNull() throws Exception {
+    when(jdbcTemplate.queryForObject(eq("select 1"), eq(Integer.class))).thenReturn(null);
+
+    mvc.perform(MockMvcRequestBuilders.get("/db/health"))
+        .andExpect(status().isOk())
+        .andExpect(content().string("DOWN"));
+  }
+
+  @Test
   void version_returnsStaticMetadata() throws Exception {
     mvc.perform(MockMvcRequestBuilders.get("/db/version")
             .accept(MediaType.APPLICATION_JSON))

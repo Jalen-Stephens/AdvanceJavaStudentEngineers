@@ -13,7 +13,7 @@ import org.opencv.core.MatOfInt;
 import org.opencv.core.Size;
 import org.opencv.imgcodecs.Imgcodecs;
 import org.opencv.imgproc.Imgproc;
-import org.springframework.stereotype.Component;
+import org.springframework.stereotype.Service;
 
 
 /**
@@ -30,17 +30,21 @@ import org.springframework.stereotype.Component;
  * NOTE: C2PA metadata is obtained separately via C2paToolInvoker. This class does
  * not call C2PA directly, but is designed to combine its results into the final feature vector.
  */
-@Component
+@Service
 public class FeatureExtractor {
 
   static {
-    // Load native OpenCV library packaged with the OpenPnp artifact.
-    // loadShared() extracts platform binaries to a temp dir; fallback to System.loadLibrary
-    // helps in environments where shared loading is restricted.
+    // Load native OpenCV library packaged with openpnp/opencv.
     try {
-      OpenCV.loadShared();
-    } catch (UnsatisfiedLinkError e) {
-      System.loadLibrary(Core.NATIVE_LIBRARY_NAME);
+      OpenCV.loadLocally();
+    } catch (Throwable t) {
+      // Fallback to shared loader if local extraction is not available.
+      try {
+        OpenCV.loadShared();
+      } catch (Throwable ignored) {
+        // Last resort: try the default system library name.
+        System.loadLibrary(Core.NATIVE_LIBRARY_NAME);
+      }
     }
   }
 
@@ -66,7 +70,7 @@ public class FeatureExtractor {
 
     int width          = img.cols();
     int height         = img.rows();
-    double aspectRatio = (height == 0) ? 0.0 : (double) width / height;
+    double aspectRatio = aspectRatio(width, height);
 
     return new double[] {
         lapVar,
@@ -98,6 +102,11 @@ public class FeatureExtractor {
         c2pa.getc2paClaimGeneratorIsAi(),
         c2pa.getc2paErrorFlag()
     };
+  }
+
+  /** Computes aspect ratio while guarding against zero height. */
+  private static double aspectRatio(int width, int height) {
+    return height == 0 ? 0.0 : (double) width / height;
   }
 
   /**
@@ -255,44 +264,5 @@ public class FeatureExtractor {
     }
 
     return entropy;
-  }
-
-  /**
-   * Produces a CSV header matching the extractAllFeatures() order plus the label column.
-   */
-  public static String csvHeader() {
-    return String.join(",",
-        "laplacianVariance",
-        "noiseStd",
-        "edgeDensity",
-        "frequencyRatio",
-        "saturationEntropy",
-        "width",
-        "height",
-        "aspectRatio",
-        "c2paHasManifest",
-        "c2paManifestCount",
-        "c2paClaimGeneratorIsAi",
-        "c2paErrorFlag",
-        "label");
-  }
-
-  /**
-   * Simple CSV row builder to help offline dataset generation for the Python trainer.
-   *
-   * @param features ordered feature vector from {@link #extractAllFeatures(String, C2paMetadata)}
-   * @param label integer label (e.g., 1=AI generated, 0=human)
-   * @return CSV string containing all features followed by the label
-   */
-  public static String toCsvRow(double[] features, int label) {
-    StringBuilder sb = new StringBuilder();
-    for (int i = 0; i < features.length; i++) {
-      if (i > 0) {
-        sb.append(',');
-      }
-      sb.append(features[i]);
-    }
-    sb.append(',').append(label);
-    return sb.toString();
   }
 }

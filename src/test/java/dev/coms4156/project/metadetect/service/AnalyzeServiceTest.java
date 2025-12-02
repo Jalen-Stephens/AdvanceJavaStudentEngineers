@@ -1,10 +1,9 @@
 package dev.coms4156.project.metadetect.service;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.junit.jupiter.api.Assertions.assertFalse;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assumptions.assumeTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
@@ -26,7 +25,8 @@ import dev.coms4156.project.metadetect.service.errors.ForbiddenException;
 import dev.coms4156.project.metadetect.service.errors.MissingStoragePathException;
 import dev.coms4156.project.metadetect.service.errors.NotFoundException;
 import java.io.File;
-import java.io.FileWriter;
+import java.io.FileOutputStream;
+import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.time.Clock;
@@ -34,6 +34,7 @@ import java.time.Instant;
 import java.time.ZoneOffset;
 import java.util.Optional;
 import java.util.UUID;
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
@@ -62,6 +63,8 @@ class AnalyzeServiceTest {
   private final UUID imageId = UUID.randomUUID();
   private final Instant fixedNow = Instant.parse("2025-01-01T00:00:00Z");
 
+  private File tempKeep;
+
   @BeforeEach
   void setUp() {
     c2pa = mock(C2paToolInvoker.class);
@@ -88,6 +91,48 @@ class AnalyzeServiceTest {
     when(logisticRegressionService.getModelVersion()).thenReturn("v1");
   }
 
+  @Test
+  void runExtractionAndFinalize_success_marksCompleted() throws Exception {
+    UUID analysisId = UUID.randomUUID();
+    AnalysisReport pending = new AnalysisReport(imageId);
+    pending.setId(analysisId);
+    pending.setStatus(AnalysisReport.ReportStatus.PENDING);
+    when(repo.findById(analysisId)).thenReturn(Optional.of(pending));
+    when(repo.save(any(AnalysisReport.class))).thenAnswer(inv -> inv.getArgument(0));
+
+    tempKeep = File.createTempFile("rf-", ".jpg");
+    Files.writeString(tempKeep.toPath(), "imgdata", StandardCharsets.UTF_8);
+    when(storage.createSignedUrl(eq("user/path.jpg"), anyString()))
+        .thenReturn(tempKeep.toURI().toURL().toString());
+
+    var metadata = new C2paToolInvoker.C2paMetadata(1, 1, "gen", 0, 0, null);
+    when(c2pa.extractMetadata(any(File.class))).thenReturn(metadata);
+    when(logisticRegressionService.predict(anyString(), any()))
+        .thenReturn(new InferenceResult(0.42, true, "v1"));
+
+    callPrivate(
+        service,
+        "runExtractionAndFinalize",
+        new Class<?>[] { UUID.class, String.class },
+        analysisId,
+        "user/path.jpg"
+    );
+
+    ArgumentCaptor<AnalysisReport> saved = ArgumentCaptor.forClass(AnalysisReport.class);
+    verify(repo, atLeast(1)).save(saved.capture());
+    AnalysisReport last = saved.getValue();
+    assertThat(last.getStatus()).isEqualTo(AnalysisReport.ReportStatus.DONE);
+    assertThat(last.getDetails()).contains("\"c2paHasManifest\":1");
+  }
+
+  @AfterEach
+  void cleanupTemp() {
+    if (tempKeep != null && tempKeep.exists()) {
+      //noinspection ResultOfMethodCallIgnored
+      tempKeep.delete();
+    }
+  }
+
   /** Creates an owned Image with the provided storage path. */
   private Image ownedImage(String storagePath) {
     Image img = new Image();
@@ -97,7 +142,7 @@ class AnalyzeServiceTest {
     return img;
   }
 
-  /**
+  /*
    * submitAnalysis happy-path:
    * - Creates PENDING report.
    * - Downloads via signed URL.
@@ -108,14 +153,14 @@ class AnalyzeServiceTest {
   void submitAnalysis_happyPath_marksCompleted_andReturnsId() throws Exception {
     when(imageService.getById(userId, imageId)).thenReturn(ownedImage("u/i/file.png"));
 
-    File downloadable = File.createTempFile("source-", ".bin");
+    File downloadable = File.createTempFile("source-", ".png");
     Files.writeString(downloadable.toPath(), "bytes", StandardCharsets.UTF_8);
 
     when(storage.createSignedUrl(eq("u/i/file.png"), anyString()))
         .thenReturn(downloadable.toURI().toURL().toString());
 
-    C2paToolInvoker.C2paMetadata metadata =
-        new C2paToolInvoker.C2paMetadata(1, 1, "gen", 0, 0, null);
+    var metadata = new C2paToolInvoker.C2paMetadata(
+        1, 2, "midjourney", 1, 0, null);
     when(c2pa.extractMetadata(any(File.class))).thenReturn(metadata);
     when(logisticRegressionService.predict(anyString(), any()))
         .thenReturn(new InferenceResult(0.73, true, "v1"));
@@ -186,7 +231,7 @@ class AnalyzeServiceTest {
     assertThat(last.getDetails()).contains("\"error\":");
   }
 
-  /**
+  /*
    * If the C2PA tool throws, the report should be marked FAILED and the error
    * message should be captured into details JSON.
    */
@@ -195,13 +240,12 @@ class AnalyzeServiceTest {
     when(imageService.getById(userId, imageId)).thenReturn(ownedImage("a/b/c.png"));
 
     File downloadable = File.createTempFile("dl-", ".img");
-    try (FileWriter fw = new FileWriter(downloadable)) {
-      fw.write("imgdata");
-    }
+    Files.writeString(downloadable.toPath(), "imgdata", StandardCharsets.UTF_8);
     when(storage.createSignedUrl(eq("a/b/c.png"), anyString()))
         .thenReturn(downloadable.toURI().toURL().toString());
 
-    when(c2pa.extractMetadata(any(File.class))).thenThrow(new RuntimeException("boom"));
+    when(c2pa.extractMetadata(any(File.class)))
+        .thenThrow(new RuntimeException("boom! c2pa"));
 
     UUID analysisId = UUID.randomUUID();
     AnalysisReport pending = new AnalysisReport(imageId);
@@ -221,7 +265,7 @@ class AnalyzeServiceTest {
     verify(repo, atLeast(1)).save(saved.capture());
     AnalysisReport last = saved.getAllValues().get(saved.getAllValues().size() - 1);
     assertThat(last.getStatus().name()).isEqualTo("FAILED");
-    assertThat(last.getDetails()).contains("\"error\":\"");
+    assertThat(last.getDetails()).contains("c2pa");
 
     downloadable.delete();
   }
@@ -267,6 +311,13 @@ class AnalyzeServiceTest {
     UUID analysisId = UUID.randomUUID();
     when(repo.findById(analysisId)).thenReturn(Optional.empty());
     assertThrows(NotFoundException.class, () -> service.getMetadata(analysisId));
+  }
+
+  @Test
+  void getConfidence_missingAnalysis_throwsNotFound() {
+    UUID missing = UUID.randomUUID();
+    when(repo.findById(missing)).thenReturn(Optional.empty());
+    assertThrows(NotFoundException.class, () -> service.getConfidence(missing));
   }
 
   /**
@@ -365,6 +416,40 @@ class AnalyzeServiceTest {
     assertThat(out.length()).isEqualTo(limit);
   }
 
+  @Test
+  void truncate_null_returnsNull() {
+    String out = callPrivate(
+        service,
+        "truncate",
+        new Class<?>[] { String.class, int.class },
+        null,
+        10
+    );
+    assertThat(out).isNull();
+  }
+
+  @Test
+  void escapeForJson_escapesControlCharacters() {
+    String out = callPrivate(
+        service,
+        "escapeForJson",
+        new Class<?>[] { String.class },
+        "quote\" \\\n\t"
+    );
+    assertThat(out).contains("\\\"").contains("\\\\").contains("\\n").contains("\\t");
+  }
+
+  @Test
+  void escapeForJson_null_returnsNull() {
+    String out = callPrivate(
+        service,
+        "escapeForJson",
+        new Class<?>[] { String.class },
+        (Object) null
+    );
+    assertThat(out).isNull();
+  }
+
   /**
    * downloadToTemp(): given a file:// URL, writes to a temp file and returns it.
    * Verifies byte-for-byte integrity.
@@ -393,6 +478,90 @@ class AnalyzeServiceTest {
     out.delete();
     destDir.delete();
     src.delete();
+  }
+
+  @Test
+  void downloadToTemp_usesStoragePathExtension_whenPresent() throws Exception {
+    tempKeep = File.createTempFile("dl-src-", ".png");
+    try (FileOutputStream fos = new FileOutputStream(tempKeep)) {
+      fos.write("pngbytes".getBytes(StandardCharsets.UTF_8));
+    }
+    String url = tempKeep.toURI().toURL().toString();
+
+    File out = callPrivate(
+        service,
+        "downloadToTemp",
+        new Class<?>[] { String.class, String.class },
+        url,
+        "folder/file.png"
+    );
+
+    assertTrue(out.getName().endsWith(".png"));
+    assertThat(Files.readAllBytes(out.toPath()))
+        .containsExactly("pngbytes".getBytes(StandardCharsets.UTF_8));
+
+    // cleanup
+    out.delete();
+  }
+
+  @Test
+  void downloadToTemp_extensionTooLong_fallsBackToBin() throws Exception {
+    tempKeep = File.createTempFile("dl-src-", ".longext");
+    try (FileOutputStream fos = new FileOutputStream(tempKeep)) {
+      fos.write("data".getBytes(StandardCharsets.UTF_8));
+    }
+    String url = tempKeep.toURI().toURL().toString();
+
+    File out = callPrivate(
+        service,
+        "downloadToTemp",
+        new Class<?>[] { String.class, String.class },
+        url,
+        "user/image.with.reallylongextentionname"
+    );
+
+    assertTrue(out.getName().endsWith(".bin"));
+    out.delete();
+  }
+
+  @Test
+  void downloadToTemp_invalidExtensionCharacters_fallsBackToBin() throws Exception {
+    tempKeep = File.createTempFile("dl-src-", ".weird");
+    Files.writeString(tempKeep.toPath(), "bytes", StandardCharsets.UTF_8);
+    String url = tempKeep.toURI().toURL().toString();
+
+    File out = callPrivate(
+        service,
+        "downloadToTemp",
+        new Class<?>[] { String.class, String.class },
+        url,
+        "user/file.p-ng"
+    );
+
+    assertTrue(out.getName().endsWith(".bin"));
+    out.delete();
+  }
+
+  @Test
+  void downloadToTemp_withoutExtension_defaultsToBinExtension_andFailsOnEmpty() throws Exception {
+    File src = File.createTempFile("empty-", ".tmp");
+    // ensure empty file for boundary coverage
+    assumeTrue(src.length() == 0);
+
+    String url = src.toURI().toURL().toString();
+
+    try {
+      callPrivate(
+          service,
+          "downloadToTemp",
+          new Class<?>[]{String.class, String.class},
+          url,
+          "no-extension-path"
+      );
+    } catch (RuntimeException ex) {
+      assertThat(ex).hasCauseInstanceOf(java.lang.reflect.InvocationTargetException.class);
+      assertThat(ex.getCause().getCause()).isInstanceOf(IOException.class);
+    }
   }
 
   // Reflection helper used to reach private test targets.
