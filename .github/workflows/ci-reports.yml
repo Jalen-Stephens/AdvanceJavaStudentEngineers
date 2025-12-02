@@ -40,7 +40,7 @@ jobs:
       run: ./mvnw -B -ntp pmd:pmd -Dpmd.failOnViolation=false
 
     - name: Run Checkstyle
-      run: ./mvnw -B -ntp checkstyle:checkstyle
+      run: ./mvnw -B -ntp checkstyle:check
 
     # ===== OPTIONAL LIVE E2E (requires LIVE_E2E env + external deps) =====
     - name: Run live E2E (opt-in)
