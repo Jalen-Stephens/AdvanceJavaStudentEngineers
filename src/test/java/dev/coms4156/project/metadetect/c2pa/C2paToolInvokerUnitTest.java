@@ -316,6 +316,31 @@ class C2paToolInvokerUnitTest {
   }
 
   @Test
+  void extractMetadata_toolMissing_returnsError() throws Exception {
+    C2paToolInvoker invoker = new C2paToolInvoker("/does/not/exist/c2pa");
+    File img = File.createTempFile("img-", ".bin");
+
+    C2paMetadata meta = invoker.extractMetadata(img);
+
+    assertEquals(1, meta.getc2paErrorFlag());
+    assertThat(meta.getc2paErrorMessage()).contains("not found");
+  }
+
+  @Test
+  void extractMetadata_toolNotExecutable_warnsAndReturnsError(@TempDir Path tmp) throws Exception {
+    Path tool = tmp.resolve("c2pa-noexec");
+    Files.writeString(tool, "#!/bin/sh\nexit 0\n", StandardCharsets.UTF_8);
+    // intentionally leave non-executable to hit the branch
+    File img = File.createTempFile("img-", ".bin");
+
+    C2paToolInvoker invoker = new C2paToolInvoker(tool.toAbsolutePath().toString());
+    C2paMetadata meta = invoker.extractMetadata(img);
+
+    assertEquals(1, meta.getc2paErrorFlag());
+    assertThat(meta.getc2paErrorMessage()).contains(tool.toString());
+  }
+
+  @Test
   void extractMetadata_noClaimFound_returnsSoftNoManifest(@TempDir Path tmp) throws Exception {
     Path script = tmp.resolve("c2pa-noclaim.sh");
     Files.writeString(script, """

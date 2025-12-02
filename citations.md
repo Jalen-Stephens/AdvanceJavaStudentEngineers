@@ -3223,3 +3223,54 @@ AI-assisted work was validated by:
 > Portions of this commit or configuration were generated with assistance from OpenAI ChatGPT (GPT-5) on 12/1/2025. All AI-generated content was reviewed, verified, and finalized by the development team.
 
 ---
+
+### **Commit / Ticket Reference**
+- **Commit:** chore/memory-c2pa-streaming-and-tests
+- **Ticket:** none
+- **Date:** 2025-12-02
+- **Team Member:** Jalen Stephens
+
+---
+
+### **AI Tool Information**
+- **Tool Used:** OpenAI ChatGPT (GPT-5) via Codex CLI
+- **Access Method:** Local Codex CLI session (sandboxed; no paid API calls)
+- **Configuration:** Default model settings
+- **Cost:** $0 (course-provided access)
+
+---
+
+### **Purpose of AI Assistance**
+Implemented memory- and OS-safe changes: streamed uploads to Supabase, hardened c2patool invocation, capped multipart size, reused existing analysis results instead of re-running, gated integration tests to Linux, and added JSON parsing + storage edge-case tests to keep coverage high on macOS/Linux.
+
+---
+
+### **Prompts / Interaction Summary**
+- “Here’s a prompt you can paste into VS Code for Copilot/Codex… Goals: Fix c2patool binary usage, limit upload size, tune JVM memory”
+- “can you increase branch coverage test here: SupabaseStorageService.java”
+- “can you increase branch coverage in : C2paToolInvoker.java”
+- “okay can you fill out a template in citations.md and put it in the citations.md file and also give me a commit message for all the changes we made”
+
+---
+
+### **Resulting Artifacts**
+- `src/main/java/dev/coms4156/project/metadetect/c2pa/C2paToolInvoker.java`
+- `src/main/java/dev/coms4156/project/metadetect/service/ImageService.java`
+- `src/main/java/dev/coms4156/project/metadetect/service/SupabaseStorageService.java`
+- `src/main/java/dev/coms4156/project/metadetect/service/AnalyzeService.java`
+- `src/main/resources/application.properties`
+- `src/test/java/dev/coms4156/project/metadetect/c2pa/C2paToolInvokerIntegrationTest.java`
+- `src/test/java/dev/coms4156/project/metadetect/c2pa/C2paToolInvokerJsonParsingTest.java`
+- `src/test/java/dev/coms4156/project/metadetect/service/ImageServiceTest.java`
+- `src/test/java/dev/coms4156/project/metadetect/service/SupabaseStorageServiceTest.java`
+- `README.md`
+
+---
+
+### **Verification**
+- `mvn test` (macOS; JaCoCo warns about class file major version 68 but tests pass)
+
+---
+
+### **Attribution Statement**
+- The AI assisted in designing and implementing streaming uploads, safer c2patool invocation, analysis reuse, and cross-OS test coverage improvements.

@@ -12,6 +12,8 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
 import java.util.Objects;
+import org.junit.jupiter.api.Assumptions;
+import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 
@@ -25,6 +27,15 @@ import org.junit.jupiter.api.io.TempDir;
  *   - real_no_manifest.HEIC
  */
 public class C2paToolInvokerIntegrationTest {
+
+  @BeforeAll
+  static void onlyRunOnLinux() {
+    String os = System.getProperty("os.name", "").toLowerCase();
+    Assumptions.assumeTrue(
+        os.contains("linux"),
+        "C2PA integration tests only run on Linux (real c2patool binary)"
+    );
+  }
 
   /** True when host OS can execute the bundled macOS c2patool (local dev). */
   private boolean c2paToolSupported() {

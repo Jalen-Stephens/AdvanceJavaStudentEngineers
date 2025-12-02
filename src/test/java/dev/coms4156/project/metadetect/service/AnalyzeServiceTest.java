@@ -89,6 +89,7 @@ class AnalyzeServiceTest {
     // Bearer required by storage for signed URL generation.
     when(userService.getCurrentBearerOrThrow()).thenReturn("bearer-token");
     when(logisticRegressionService.getModelVersion()).thenReturn("v1");
+    when(repo.findTopByImageIdOrderByCreatedAtDesc(any())).thenReturn(Optional.empty());
   }
 
   @Test
@@ -198,6 +199,23 @@ class AnalyzeServiceTest {
 
     assertThrows(MissingStoragePathException.class, () -> service.submitAnalysis(imageId));
     verify(repo, never()).save(any());
+  }
+
+  /** If a completed analysis already exists, reuse it and do not re-run extraction. */
+  @Test
+  void submitAnalysis_reusesExistingCompletedAnalysis() {
+    UUID existingId = UUID.randomUUID();
+    AnalysisReport existing = new AnalysisReport(imageId);
+    existing.setId(existingId);
+    existing.setStatus(AnalysisReport.ReportStatus.DONE);
+    when(repo.findTopByImageIdOrderByCreatedAtDesc(imageId)).thenReturn(Optional.of(existing));
+    when(imageService.getById(userId, imageId)).thenReturn(ownedImage("x/y/z.png"));
+
+    Dtos.AnalyzeStartResponse resp = service.submitAnalysis(imageId);
+
+    assertThat(resp.analysisId()).isEqualTo(existingId.toString());
+    verify(repo, never()).save(any(AnalysisReport.class));
+    verify(c2pa, never()).extractMetadata(any());
   }
 
   /**
