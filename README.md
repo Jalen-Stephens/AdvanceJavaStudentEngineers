@@ -49,6 +49,13 @@ From the terminal, run the following CLI commands:
     mvn checkstyle:check
 ```
 
+## HTTP Request Logging
+All incoming HTTP requests are logged by `RequestLoggingFilter` (a Spring `OncePerRequestFilter`) using SLF4J + Logback to stdout only. Example:
+```
+2024-11-01 10:15:30.123 INFO  [http-nio-8080-exec-1] dev.coms4156.project.metadetect.logging.RequestLoggingFilter - HTTP_REQUEST method=GET uri=/health query=- status=200 durationMs=12
+```
+On Heroku, view the live stream with `heroku logs --tail`.
+
 ## Continuous Integration & Reports
 ---------------------------------------------------------------------
 - **Workflow:** `.github/workflows/ci-reports.yml` runs `./mvnw -B -ntp clean test`, `jacoco:report`, `pmd:pmd` (HTML) + `pmd:check` gate, and `checkstyle:checkstyle`. It then snapshots JaCoCo/PMD HTML to PNG via `scripts/html_to_png.sh` and uploads everything as the `ci-reports` artifact.
