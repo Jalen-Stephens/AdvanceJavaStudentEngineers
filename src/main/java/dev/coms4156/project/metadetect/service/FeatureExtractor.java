@@ -84,6 +84,7 @@ public class FeatureExtractor {
         c2pa.getc2paHasManifest(),
         c2pa.getc2paManifestCount(),
         c2pa.getc2paClaimGeneratorIsAi(),
+        c2pa.getc2paIsScreenshot(),
         c2pa.getc2paErrorFlag()
     };
   }
@@ -100,6 +101,7 @@ public class FeatureExtractor {
         c2pa.getc2paHasManifest(),
         c2pa.getc2paManifestCount(),
         c2pa.getc2paClaimGeneratorIsAi(),
+        c2pa.getc2paIsScreenshot(),
         c2pa.getc2paErrorFlag()
     };
   }

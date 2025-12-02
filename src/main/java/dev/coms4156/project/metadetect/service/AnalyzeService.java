@@ -48,6 +48,7 @@ public class AnalyzeService {
   private final UserService userService;
   private final LogisticRegressionService logisticRegressionService;
   private final Clock clock;
+  private static final double SCREENSHOT_SUSPICION_BONUS = 0.05;
 
   // Lightweight mapper for error JSON assembly.
   private final ObjectMapper objectMapper = new ObjectMapper();
@@ -174,12 +175,16 @@ public class AnalyzeService {
     var currentUser = userService.getCurrentUserIdOrThrow();
     imageService.getById(currentUser, report.getImageId());
 
+    ScreenshotInfo screenshotInfo = deriveScreenshotInfo(report.getDetails());
+
     return new Dtos.AnalyzeConfidenceResponse(
       report.getId().toString(),
       report.getStatus().name(),
       report.getConfidence(),
       deriveC2paUsed(report.getDetails()),
-      logisticRegressionService.getModelVersion()
+      logisticRegressionService.getModelVersion(),
+      screenshotInfo.isScreenshot(),
+      screenshotInfo.reason()
     );
   }
 
@@ -228,12 +233,16 @@ public class AnalyzeService {
           tempFile.getAbsolutePath(),
           meta
       );
+      double adjustedConfidence = applyScreenshotAdjustment(
+          inference.confidenceScore(),
+          meta
+      );
 
       // 4) Serialize metadata and mark COMPLETED with a confidence score
       String json = objectMapper.writeValueAsString(meta);
 
       // The details field now stores the C2PA metadata schema, not raw manifest JSON.
-      markCompleted(analysisId, json, inference.confidenceScore());
+      markCompleted(analysisId, json, adjustedConfidence);
 
     } catch (IOException ioe) {
       // IO-level failures (download, JSON serialization) are genuine failures.
@@ -335,6 +344,34 @@ public class AnalyzeService {
     }
   }
 
+  private ScreenshotInfo deriveScreenshotInfo(String detailsJson) {
+    if (!StringUtils.hasText(detailsJson)) {
+      return new ScreenshotInfo(false, null);
+    }
+    try {
+      JsonNode node = objectMapper.readTree(detailsJson);
+      boolean isScreenshot = node.path("c2paIsScreenshot").asInt(0) == 1;
+      String reason = node.path("c2paScreenshotReason").asText(null);
+      if (isScreenshot && (reason == null || reason.isBlank())) {
+        String generator = node.path("c2paClaimGenerator").asText(null);
+        if (StringUtils.hasText(generator)) {
+          reason = "Inferred from claim generator: " + generator;
+        }
+      }
+      return new ScreenshotInfo(isScreenshot, reason);
+    } catch (Exception e) {
+      return new ScreenshotInfo(false, null);
+    }
+  }
+
+  private double applyScreenshotAdjustment(double baseScore, C2paToolInvoker.C2paMetadata meta) {
+    if (meta != null && meta.getc2paIsScreenshot() == 1) {
+      double bumped = baseScore + SCREENSHOT_SUSPICION_BONUS;
+      return bumped > 1.0 ? 1.0 : bumped;
+    }
+    return baseScore;
+  }
+
   /** Truncates a string to a maximum length, null-safe. */
   private static String truncate(String s, int max) {
     if (s == null) {
@@ -369,6 +406,8 @@ public class AnalyzeService {
       return ar;
     }
   }
+
+  private record ScreenshotInfo(boolean isScreenshot, String reason) { }
 
   /**
    * Handles a generic failure during analysis by marking the analysis as FAILED

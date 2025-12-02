@@ -1,4 +1,54 @@
 ### **Commit / Ticket Reference**
+- **Commit:** feat(c2pa): flag screenshots and surface in analyze responses
+- **Ticket:** none (Feature #54)
+- **Date:** 2025-12-02
+- **Team Member:** Jalen Stephens
+
+---
+
+### **AI Tool Information**
+- **Tool Used:** OpenAI ChatGPT (GPT-5) via Codex CLI
+- **Access Method:** Local Codex CLI session (sandboxed; no paid API calls)
+- **Configuration:** Default model settings
+- **Cost:** $0 (course-provided access)
+
+---
+
+### **Purpose of AI Assistance**
+Added C2PA-driven screenshot detection and plumbing so screenshots are flagged as suspicious and exposed to clients. Work included heuristics based on claim generator and capture_type, new metadata fields, feature-vector update, score bump for screenshots, response DTO extensions, and regression tests.
+
+---
+
+### **Prompts / Interaction Summary**
+- “Implement Feature #54: Expand Analyze to correctly identify screen shots”
+- “Plumb screenshot flag into analyze pipeline and response DTO”
+- “Add JSON parsing and service tests for screenshot detection”
+- “Fix Checkstyle line length in AnalyzeServiceTest”
+
+---
+
+### **Resulting Artifacts**
+- `src/main/java/dev/coms4156/project/metadetect/c2pa/C2paToolInvoker.java`
+- `src/main/java/dev/coms4156/project/metadetect/service/FeatureExtractor.java`
+- `src/main/java/dev/coms4156/project/metadetect/service/AnalyzeService.java`
+- `src/main/java/dev/coms4156/project/metadetect/dto/Dtos.java`
+- `src/main/resources/model.json`
+- Tests: `src/test/java/dev/coms4156/project/metadetect/c2pa/C2paToolInvokerJsonParsingTest.java`, `src/test/java/dev/coms4156/project/metadetect/service/AnalyzeServiceTest.java`, `src/test/java/dev/coms4156/project/metadetect/service/FeatureExtractorTest.java`, `src/test/java/dev/coms4156/project/metadetect/controller/AnalyzeControllerTest.java`, `src/test/java/dev/coms4156/project/metadetect/dto/DtosTest.java`
+
+---
+
+### **Verification**
+- `./mvnw -q test` (passes; expected warnings from mocked c2patool branches)
+- `./mvnw -q -DskipTests compile` to regenerate main classes after changes
+
+---
+
+### **Attribution Statement**
+> Portions of this work were generated with assistance from OpenAI ChatGPT (GPT-5) on 2025-12-02. All AI-generated content was reviewed and finalized by the development team.
+
+---
+
+### **Commit / Ticket Reference**
 - **Commit:** feat(logging): add request logging filter and console logback config
 - **Ticket:** none
 - **Date:** 2025-12-02

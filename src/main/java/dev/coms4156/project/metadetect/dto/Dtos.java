@@ -69,7 +69,9 @@ public final class Dtos {
       String status,
       Double confidenceScore,
       boolean c2paUsed,
-      String modelVersion
+      String modelVersion,
+      boolean isScreenshot,
+      String screenshotReason
   ) { }
 
   /**

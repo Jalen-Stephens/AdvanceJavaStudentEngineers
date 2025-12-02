@@ -38,6 +38,25 @@ public class C2paToolInvoker {
       "runway"
   );
 
+  /**
+   * Keywords used to conservatively infer that an asset is a screenshot.
+   * This list intentionally focuses on obvious OS/browser capture tools.
+   */
+  private static final List<String> SCREENSHOT_KEYWORDS = Arrays.asList(
+      "screenshot",
+      "screen shot",
+      "screen capture",
+      "screen-capture",
+      "screen grab",
+      "screen-grab",
+      "snipping tool",
+      "snip & sketch",
+      "snip and sketch",
+      "windows snip",
+      "macos screenshot",
+      "screencapture"
+  );
+
   private final String c2paToolPath;
 
   /**
@@ -191,6 +210,9 @@ public class C2paToolInvoker {
       int hasManifest = 0;
       String claimGenerator = null;
       int claimGeneratorIsAi = 0;
+      int c2paIsScreenshot = 0;
+      String c2paScreenshotReason = null;
+      JsonNode claimNode = null;
 
       // Count manifests
       JsonNode manifestsNode = root.get("manifests");
@@ -220,7 +242,7 @@ public class C2paToolInvoker {
         }
 
         if (activeManifestNode != null && !activeManifestNode.isMissingNode()) {
-          JsonNode claimNode = activeManifestNode.get("claim");
+          claimNode = activeManifestNode.get("claim");
           if (claimNode == null || claimNode.isMissingNode()) {
             claimNode = activeManifestNode;
           }
@@ -248,11 +270,38 @@ public class C2paToolInvoker {
         claimGeneratorIsAi = 0;
       }
 
+      // Heuristic: detect screenshot tools via claim generator or capture_type.
+      if (claimGenerator != null && !claimGenerator.isBlank()) {
+        String gen = claimGenerator.toLowerCase();
+        for (String kw : SCREENSHOT_KEYWORDS) {
+          if (gen.contains(kw)) {
+            c2paIsScreenshot = 1;
+            c2paScreenshotReason = "claim_generator contains \"" + kw + "\"";
+            break;
+          }
+        }
+      }
+      if (c2paIsScreenshot == 0 && claimNode != null) {
+        JsonNode captureType = claimNode.get("capture_type");
+        if (captureType == null) {
+          captureType = claimNode.get("captureType");
+        }
+        String captureVal = captureType != null && !captureType.isNull()
+            ? captureType.asText(null)
+            : null;
+        if (captureVal != null && captureVal.equalsIgnoreCase("screenshot")) {
+          c2paIsScreenshot = 1;
+          c2paScreenshotReason = "capture_type indicates screenshot";
+        }
+      }
+
       return new C2paMetadata(
           hasManifest,
           manifestCount,
           claimGenerator,
           claimGeneratorIsAi,
+          c2paIsScreenshot,
+          c2paScreenshotReason,
           /*c2paErrorFlag*/ 0,
           /*c2paErrorMessage*/ null
       );
@@ -298,6 +347,8 @@ public class C2paToolInvoker {
       "c2paManifestCount",
       "c2paClaimGenerator",
       "c2paClaimGeneratorIsAi",
+      "c2paIsScreenshot",
+      "c2paScreenshotReason",
       "c2paErrorFlag",
       "c2paErrorMessage"
   })
@@ -307,6 +358,8 @@ public class C2paToolInvoker {
     private final int c2paManifestCount;
     private final String c2paClaimGenerator;
     private final int c2paClaimGeneratorIsAi;
+    private final int c2paIsScreenshot;
+    private final String c2paScreenshotReason;
     private final int c2paErrorFlag;
     private final String c2paErrorMessage;
 
@@ -317,6 +370,8 @@ public class C2paToolInvoker {
      * @param c2paManifestCount number of manifests detected in the file
      * @param c2paClaimGenerator claim generator string from the active manifest
      * @param c2paClaimGeneratorIsAi integer flag: 1 if AI generator detected, 0 if not
+     * @param c2paIsScreenshot integer flag: 1 if screenshot heuristics matched, 0 otherwise
+     * @param c2paScreenshotReason optional note describing which heuristic fired
      * @param c2paErrorFlag integer flag: 1 if error occurred, 0 if no error
      * @param c2paErrorMessage error message if errorFlag=1, null otherwise
      */
@@ -325,6 +380,8 @@ public class C2paToolInvoker {
         int c2paManifestCount,
         String c2paClaimGenerator,
         int c2paClaimGeneratorIsAi,
+        int c2paIsScreenshot,
+        String c2paScreenshotReason,
         int c2paErrorFlag,
         String c2paErrorMessage) {
 
@@ -332,6 +389,8 @@ public class C2paToolInvoker {
       this.c2paManifestCount = c2paManifestCount;
       this.c2paClaimGenerator = c2paClaimGenerator;
       this.c2paClaimGeneratorIsAi = c2paClaimGeneratorIsAi;
+      this.c2paIsScreenshot = c2paIsScreenshot;
+      this.c2paScreenshotReason = c2paScreenshotReason;
       this.c2paErrorFlag = c2paErrorFlag;
       this.c2paErrorMessage = c2paErrorMessage;
     }
@@ -343,6 +402,8 @@ public class C2paToolInvoker {
           /*c2paManifestCount*/ 0,
           /*c2paClaimGenerator*/ null,
           /*c2paClaimGeneratorIsAi*/ 0,
+          /*c2paIsScreenshot*/ 0,
+          /*c2paScreenshotReason*/ null,
           /*c2paErrorFlag*/ 0,
           /*c2paErrorMessage*/ null
       );
@@ -355,6 +416,8 @@ public class C2paToolInvoker {
           /*c2paManifestCount*/ 0,
           /*c2paClaimGenerator*/ null,
           /*c2paClaimGeneratorIsAi*/ 0,
+          /*c2paIsScreenshot*/ 0,
+          /*c2paScreenshotReason*/ null,
           /*c2paErrorFlag*/ 1,
           /*c2paErrorMessage*/ message
       );
@@ -374,6 +437,14 @@ public class C2paToolInvoker {
 
     public int getc2paClaimGeneratorIsAi() {
       return c2paClaimGeneratorIsAi;
+    }
+
+    public int getc2paIsScreenshot() {
+      return c2paIsScreenshot;
+    }
+
+    public String getc2paScreenshotReason() {
+      return c2paScreenshotReason;
     }
 
     public int getc2paErrorFlag() {
