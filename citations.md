@@ -1,4 +1,48 @@
 ### **Commit / Ticket Reference**
+- **Commit:** test: add coverage for model loader and logistic regression service
+- **Ticket:** none
+- **Date:** 2026-02-17
+- **Team Member:** Jalen Stephens
+
+---
+
+### **AI Tool Information**
+- **Tool Used:** OpenAI ChatGPT (GPT-5) via Codex CLI
+- **Access Method:** Local Codex CLI (sandboxed; no paid API calls)
+- **Configuration:** Default model settings
+- **Cost:** $0 (course-provided access)
+
+---
+
+### **Purpose of AI Assistance**
+Added unit tests to raise branch/instruction coverage for model loading and logistic regression inference, including cache validation, path resolution, invalid weight handling, C2PA flag behavior, and sigmoid branches.
+
+---
+
+### **Prompts / Interaction Summary**
+- “give me a commit message and fill out a template in citations.md for the work we did”
+- “can you write test for these to increase branch and instruction coverage please”
+
+---
+
+### **Resulting Artifacts**
+- `src/test/java/dev/coms4156/project/metadetect/service/ModelLoaderTest.java`
+- `src/test/java/dev/coms4156/project/metadetect/service/LogisticRegressionServiceTest.java`
+- `src/test/resources/model/test-model.json`
+
+---
+
+### **Verification**
+- `./mvnw -q -Dtest=ModelLoaderTest,LogisticRegressionServiceTest test`
+
+---
+
+### **Attribution Statement**
+> Portions of this work were generated with assistance from OpenAI ChatGPT (GPT-5) on 2026-02-17. All AI-generated content was reviewed and finalized by the development team.
+
+---
+
+### **Commit / Ticket Reference**
 - **Commit:** fix(storage): encode Supabase paths and normalize project base URL
 - **Ticket:** N/A (prod bugfix)
 - **Date:** 2025-11-29
@@ -3060,5 +3104,78 @@ Expanded CI coverage and optional live E2E hook:
 
 ### **Attribution Statement**
 > Portions of this work were generated with assistance from OpenAI ChatGPT (GPT-5) on 2026-02-17. All AI-generated content was reviewed and finalized by the development team.
+
+---
+
+### **Commit / Ticket Reference**
+- **Commit:** [feat] Implemented and Trained Logistic Regression Model  
+- **Ticket:** (#66) Implementation of Logistic Regression ML Model for Confidence Score  
+- **Date:** 12/1/2025  
+- **Team Member:** Isaac Schmidt
+
+---
+
+### **AI Tool Information**
+- **Tool Used:** OpenAI ChatGPT (GPT-5.1)  
+- **Access Method:** ChatGPT Web (.edu academic access)  
+- **Configuration:** Default model settings  
+- **Cost:** $0 (no paid API calls)
+
+---
+
+### **Purpose of AI Assistance**
+AI assistance was used to design, structure, and validate the machine-learning component of the MetaDetect system. This included help with:
+- Creating a feature extraction–based ML pipeline for AI-image detection  
+- Designing the workflow for offline model training (without including Python code in the repository)  
+- Advising on the correct model type, dataset preparation, cross-validation strategy, and model export  
+- Generating the Java inference architecture (ModelLoader, LogisticRegressionModel, AnalyzeService integration)  
+- Debugging dataset preparation issues and ensuring compatibility between training-time features and runtime inference
+
+---
+
+### **Prompts / Interaction Summary**
+Key interactions included:
+- Requesting recommendations for ML models appropriate for OpenCV feature vectors  
+- Asking how to train a logistic regression model offline and export weights for Java inference  
+- Debugging DatasetBuilder and CSV formatting issues to generate valid ML training data  
+- Setting up cross-validation for model evaluation  
+- Requesting a final AnalyzeService integration that correctly combines C2PA overrides with ML fallback  
+- Asking how and where `model.json` should be loaded in the service layer  
+- Requesting fixes and refactoring for ModelLoader, LogisticRegressionService, and FeatureExtractor interactions  
+- Clarifying model runtime behavior, including how C2PA features interact with ML predictions
+
+---
+
+### **Resulting Artifacts**
+The following deliverables were created or refined with AI assistance:
+- **DatasetBuilder.java** — Generates ML-ready feature CSVs from raw images and metadata  
+- **train_model.py (offline use only)** — Script used externally to train the logistic regression model  
+- **export_model.py (offline use only)** — Exports trained LR weights to a Java-readable `model.json`  
+- **model.json** — Serialized logistic regression weights and bias used in production  
+- **LogisticRegressionModel.java** — Runtime inference implementation compatible with exported weights  
+- **ModelLoader.java** — Loads `model.json` from classpath and constructs the inference model  
+- **LogisticRegressionService.java** — Bridges feature extraction and ML prediction  
+- **Updated AnalyzeService.java** — Integrates C2PA logic + ML fallback with clear override hierarchy  
+- Various debugging utilities, architectural recommendations, and corrections to CSV parsing logic
+
+---
+
+### **Verification**
+AI-assisted work was validated by:
+- Manual inspection and testing of DatasetBuilder output  
+- Successful cross-validation runs on ~80,000 training samples  
+- Confirming stable and consistent LR validation metrics across folds  
+- Verifying that exported weights from Python produced correct inference behavior in Java  
+- Manually testing AnalyzeService end-to-end with multiple categories of images:
+  - Images with valid AI manifests  
+  - Images with valid camera manifests  
+  - Images with no C2PA manifest  
+  - Images with corrupted or tampered manifests  
+- Ensuring the Java inference pipeline correctly loads model.json from classpath and returns deterministic probability scores
+
+---
+
+### **Attribution Statement**
+> Portions of this commit or configuration were generated with assistance from OpenAI ChatGPT (GPT-5) on 12/1/2025. All AI-generated content was reviewed, verified, and finalized by the development team.
 
 ---

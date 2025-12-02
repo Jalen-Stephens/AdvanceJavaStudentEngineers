@@ -19,6 +19,7 @@ import dev.coms4156.project.metadetect.dto.Dtos;
 import dev.coms4156.project.metadetect.model.AnalysisReport;
 import dev.coms4156.project.metadetect.model.Image;
 import dev.coms4156.project.metadetect.repository.AnalysisReportRepository;
+import dev.coms4156.project.metadetect.service.LogisticRegressionService.InferenceResult;
 import dev.coms4156.project.metadetect.service.SupabaseStorageService;
 import dev.coms4156.project.metadetect.service.errors.ForbiddenException;
 import dev.coms4156.project.metadetect.service.errors.MissingStoragePathException;
@@ -53,6 +54,7 @@ class AnalyzeServiceTest {
   private AnalysisReportRepository repo;
   private SupabaseStorageService storage;
   private UserService userService;
+  private LogisticRegressionService logisticRegressionService;
   private Clock clock;
 
   private AnalyzeService service;
@@ -70,13 +72,23 @@ class AnalyzeServiceTest {
     repo = mock(AnalysisReportRepository.class);
     storage = mock(SupabaseStorageService.class);
     userService = mock(UserService.class);
+    logisticRegressionService = mock(LogisticRegressionService.class);
     clock = Clock.fixed(fixedNow, ZoneOffset.UTC);
 
-    service = new AnalyzeService(c2pa, imageService, repo, storage, userService, clock);
+    service = new AnalyzeService(
+        c2pa,
+        imageService,
+        repo,
+        storage,
+        userService,
+        logisticRegressionService,
+        clock
+    );
 
     when(userService.getCurrentUserIdOrThrow()).thenReturn(userId);
     // Bearer required by storage for signed URL generation.
     when(userService.getCurrentBearerOrThrow()).thenReturn("bearer-token");
+    when(logisticRegressionService.getModelVersion()).thenReturn("v1");
   }
 
   @Test
@@ -95,6 +107,8 @@ class AnalyzeServiceTest {
 
     var metadata = new C2paToolInvoker.C2paMetadata(1, 1, "gen", 0, 0, null);
     when(c2pa.extractMetadata(any(File.class))).thenReturn(metadata);
+    when(logisticRegressionService.predict(anyString(), any()))
+        .thenReturn(new InferenceResult(0.42, true, "v1"));
 
     callPrivate(
         service,
@@ -148,6 +162,8 @@ class AnalyzeServiceTest {
     var metadata = new C2paToolInvoker.C2paMetadata(
         1, 2, "midjourney", 1, 0, null);
     when(c2pa.extractMetadata(any(File.class))).thenReturn(metadata);
+    when(logisticRegressionService.predict(anyString(), any()))
+        .thenReturn(new InferenceResult(0.73, true, "v1"));
 
     UUID analysisId = UUID.randomUUID();
     AnalysisReport pending = new AnalysisReport(imageId);
@@ -170,6 +186,7 @@ class AnalyzeServiceTest {
     AnalysisReport last = saved.getAllValues().get(saved.getAllValues().size() - 1);
     assertThat(last.getStatus().name()).isEqualTo("DONE");
     assertThat(last.getDetails()).contains("\"c2paHasManifest\":1");
+    assertThat(last.getConfidence()).isEqualTo(0.73);
 
     downloadable.delete();
   }
@@ -314,6 +331,7 @@ class AnalyzeServiceTest {
     report.setId(analysisId);
     report.setStatus(AnalysisReport.ReportStatus.PENDING);
     report.setConfidence(null);
+    report.setDetails("{\"c2paHasManifest\":1,\"c2paErrorFlag\":0}");
 
     when(repo.findById(analysisId)).thenReturn(Optional.of(report));
     when(imageService.getById(userId, imageId)).thenReturn(ownedImage("x"));
@@ -321,7 +339,9 @@ class AnalyzeServiceTest {
     Dtos.AnalyzeConfidenceResponse out = service.getConfidence(analysisId);
     assertThat(out.analysisId()).isEqualTo(analysisId.toString());
     assertThat(out.status()).isEqualTo("PENDING");
-    assertThat(out.score()).isNull();
+    assertThat(out.confidenceScore()).isNull();
+    assertThat(out.c2paUsed()).isTrue();
+    assertThat(out.modelVersion()).isEqualTo("v1");
   }
 
   /**

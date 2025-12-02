@@ -13,6 +13,7 @@ import org.opencv.core.MatOfInt;
 import org.opencv.core.Size;
 import org.opencv.imgcodecs.Imgcodecs;
 import org.opencv.imgproc.Imgproc;
+import org.springframework.stereotype.Service;
 
 
 /**
@@ -29,6 +30,7 @@ import org.opencv.imgproc.Imgproc;
  * NOTE: C2PA metadata is obtained separately via C2paToolInvoker. This class does
  * not call C2PA directly, but is designed to combine its results into the final feature vector.
  */
+@Service
 public class FeatureExtractor {
 
   static {

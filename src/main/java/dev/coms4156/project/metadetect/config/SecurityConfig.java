@@ -8,6 +8,7 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.core.annotation.Order;
 import org.springframework.http.HttpMethod;
+import org.springframework.http.HttpStatus;
 import org.springframework.security.config.Customizer;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
@@ -19,6 +20,7 @@ import org.springframework.security.oauth2.jwt.JwtDecoder;
 import org.springframework.security.oauth2.jwt.JwtValidators;
 import org.springframework.security.oauth2.jwt.NimbusJwtDecoder;
 import org.springframework.security.web.SecurityFilterChain;
+import org.springframework.security.web.authentication.HttpStatusEntryPoint;
 import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
@@ -54,6 +56,8 @@ public class SecurityConfig {
             // Everything else under /api/** requires auth
             .anyRequest().authenticated()
         )
+        .exceptionHandling(e -> e.authenticationEntryPoint(
+            new HttpStatusEntryPoint(HttpStatus.UNAUTHORIZED)))
         .oauth2ResourceServer(oauth -> oauth.jwt(Customizer.withDefaults()));
 
     return http.build();
@@ -90,12 +94,27 @@ public class SecurityConfig {
                   "/js/**",
                   "/images/**",
                   "/fonts/**",
-                  "/webjars/**"
+                  "/webjars/**",
+
+                  // Swagger / OpenAPI docs
+                  "/swagger-ui.html",
+                  "/swagger-ui/**",
+                  "/v3/api-docs/**",
+                  "/api-docs/**"
               ).permitAll()
 
-              // Everything else (non-API) is allowed
-              .anyRequest().permitAll()
+              // Public non-API endpoints (health/auth pages used by tests + clients)
+              .requestMatchers(
+                  "/health",
+                  "/actuator/**",
+                  "/auth/**"
+              ).permitAll()
+
+              // Everything else (non-API) requires authentication
+              .anyRequest().authenticated()
         );
+    http.exceptionHandling(e -> e.authenticationEntryPoint(
+        new HttpStatusEntryPoint(HttpStatus.UNAUTHORIZED)));
 
     return http.build();
   }

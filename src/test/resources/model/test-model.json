@@ -1,0 +1,5 @@
+{
+  "weights": [0.1, 0.2, 0.3],
+  "bias": 0.5,
+  "version": "v-test"
+}

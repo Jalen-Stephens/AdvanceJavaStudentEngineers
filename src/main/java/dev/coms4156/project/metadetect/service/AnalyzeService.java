@@ -2,6 +2,7 @@ package dev.coms4156.project.metadetect.service;
 
 import static dev.coms4156.project.metadetect.model.AnalysisReport.ReportStatus;
 
+import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import dev.coms4156.project.metadetect.c2pa.C2paToolInvoker;
 import dev.coms4156.project.metadetect.dto.Dtos;
@@ -9,6 +10,7 @@ import dev.coms4156.project.metadetect.model.AnalysisReport;
 import dev.coms4156.project.metadetect.model.AnalysisReport.ReportStatus;
 import dev.coms4156.project.metadetect.model.Image;
 import dev.coms4156.project.metadetect.repository.AnalysisReportRepository;
+import dev.coms4156.project.metadetect.service.LogisticRegressionService.InferenceResult;
 import dev.coms4156.project.metadetect.service.errors.MissingStoragePathException;
 import dev.coms4156.project.metadetect.service.errors.NotFoundException;
 import java.io.File;
@@ -44,6 +46,7 @@ public class AnalyzeService {
   private final AnalysisReportRepository analysisRepo;
   private final SupabaseStorageService storage;
   private final UserService userService;
+  private final LogisticRegressionService logisticRegressionService;
   private final Clock clock;
 
   // Lightweight mapper for error JSON assembly.
@@ -64,12 +67,14 @@ public class AnalyzeService {
                         AnalysisReportRepository analysisRepo,
                         SupabaseStorageService storage,
                         UserService userService,
+                        LogisticRegressionService logisticRegressionService,
                         Clock clock) {
     this.c2paToolInvoker = c2paToolInvoker;
     this.imageService = imageService;
     this.analysisRepo = analysisRepo;
     this.storage = storage;
     this.userService = userService;
+    this.logisticRegressionService = logisticRegressionService;
     this.clock = clock;
   }
 
@@ -163,7 +168,9 @@ public class AnalyzeService {
     return new Dtos.AnalyzeConfidenceResponse(
       report.getId().toString(),
       report.getStatus().name(),
-      report.getConfidence()   // null until a real scorer exists
+      report.getConfidence(),
+      deriveC2paUsed(report.getDetails()),
+      logisticRegressionService.getModelVersion()
     );
   }
 
@@ -207,11 +214,17 @@ public class AnalyzeService {
       // 2) Run C2PA extraction into ML-ready metadata
       C2paToolInvoker.C2paMetadata meta = c2paToolInvoker.extractMetadata(tempFile);
 
-      // 3) Serialize metadata and mark COMPLETED
+      // 3) Compute logistic-regression score using OpenCV + C2PA features
+      InferenceResult inference = logisticRegressionService.predict(
+          tempFile.getAbsolutePath(),
+          meta
+      );
+
+      // 4) Serialize metadata and mark COMPLETED with a confidence score
       String json = objectMapper.writeValueAsString(meta);
 
       // The details field now stores the C2PA metadata schema, not raw manifest JSON.
-      markCompleted(analysisId, json, /*confidence*/ null);
+      markCompleted(analysisId, json, inference.confidenceScore());
 
     } catch (IOException ioe) {
       // IO-level failures (download, JSON serialization) are genuine failures.
@@ -296,6 +309,21 @@ public class AnalyzeService {
   /** Returns a clock-based Instant for deterministic tests. */
   private Instant now() {
     return Instant.now(clock);
+  }
+
+  private boolean deriveC2paUsed(String detailsJson) {
+    if (!StringUtils.hasText(detailsJson)) {
+      return false;
+    }
+    try {
+      JsonNode node = objectMapper.readTree(detailsJson);
+      int hasManifest = node.path("c2paHasManifest").asInt(0);
+      int errorFlag = node.path("c2paErrorFlag").asInt(0);
+      return hasManifest == 1 && errorFlag == 0;
+    } catch (Exception e) {
+      // If parsing fails, default to false so the field is conservative.
+      return false;
+    }
   }
 
   /** Truncates a string to a maximum length, null-safe. */
