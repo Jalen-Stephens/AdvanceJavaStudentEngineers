@@ -36,7 +36,7 @@ public class ModelLoader {
    */
   public ModelLoader(ResourceLoader resourceLoader,
                      ObjectMapper objectMapper,
-                     @Value("${metadetect.model.path:classpath:model/model.json}")
+                     @Value("${main.resources.path:classpath:/model.json}")
                      String modelLocation) {
     this.resourceLoader = resourceLoader;
     this.objectMapper = objectMapper;
