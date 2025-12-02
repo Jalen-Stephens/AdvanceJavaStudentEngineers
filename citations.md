@@ -1,4 +1,48 @@
 ### **Commit / Ticket Reference**
+- **Commit:** feat(logging): add request logging filter and console logback config
+- **Ticket:** none
+- **Date:** 2025-12-02
+- **Team Member:** Jalen Stephens
+
+---
+
+### **AI Tool Information**
+- **Tool Used:** OpenAI ChatGPT (GPT-5) via Codex CLI
+- **Access Method:** Local Codex CLI session (sandboxed; no paid API calls)
+- **Configuration:** Default model settings
+- **Cost:** $0 (course-provided access)
+
+---
+
+### **Purpose of AI Assistance**
+Implemented centralized HTTP request logging with SLF4J/Logback for Heroku: added a `OncePerRequestFilter` to log method/URI/status/duration, configured console-only Logback pattern, and documented usage in the README.
+
+---
+
+### **Prompts / Interaction Summary**
+- “Here’s a ready-to-paste Codex prompt you can use for your new ‘logging’ branch 👇”
+- “can you make a commit message and fill out a citations template for it”
+
+---
+
+### **Resulting Artifacts**
+- `src/main/java/dev/coms4156/project/metadetect/logging/RequestLoggingFilter.java`
+- `src/main/resources/logback-spring.xml`
+- `README.md`
+
+---
+
+### **Verification**
+- Not run (sandboxed session without build execution). Recommended: `./mvnw -q test`
+
+---
+
+### **Attribution Statement**
+> Portions of this work were generated with assistance from OpenAI ChatGPT (GPT-5) on 2025-12-02. All AI-generated content was reviewed and finalized by the development team.
+
+---
+
+### **Commit / Ticket Reference**
 - **Commit:** test: add coverage for model loader and logistic regression service
 - **Ticket:** none
 - **Date:** 2026-02-17
