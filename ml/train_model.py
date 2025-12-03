@@ -15,8 +15,9 @@ from __future__ import annotations
 import argparse
 import csv
 import json
-import math
 import os
+from collections import Counter
+from dataclasses import dataclass
 from typing import List, Tuple
 
 import numpy as np
@@ -39,10 +40,24 @@ FEATURE_HEADER = [
 ]
 
 
-def parse_csv(path: str) -> Tuple[np.ndarray, np.ndarray]:
+@dataclass
+class DatasetStats:
+    path: str
+    total_rows: int
+    kept_rows: int
+    skipped_zero_rows: int
+    skipped_parse_rows: int
+    label_counts: Counter
+
+
+def parse_csv(path: str) -> Tuple[np.ndarray, np.ndarray, DatasetStats]:
     """Load features/labels, skipping empty lines and zeroed feature vectors."""
     X: List[List[float]] = []
     y: List[float] = []
+    total = 0
+    skipped_zero = 0
+    skipped_parse = 0
+    labels = Counter()
 
     with open(path, newline="") as f:
         reader = csv.reader(f)
@@ -61,23 +76,34 @@ def parse_csv(path: str) -> Tuple[np.ndarray, np.ndarray]:
         for row in reader:
             if not row or len(row) < 13:
                 continue
+            total += 1
             try:
                 feats = [float(v) for v in row[:-1]]
                 label = float(row[-1])
             except ValueError:
+                skipped_parse += 1
                 continue
 
-            # Skip fully zero feature rows (likely empty/corrupt).
             if all(v == 0.0 for v in feats):
+                skipped_zero += 1
                 continue
 
             X.append(feats)
             y.append(label)
+            labels[label] += 1
 
     if not X:
         raise ValueError(f"No usable rows found in {path}")
 
-    return np.array(X, dtype=np.float64), np.array(y, dtype=np.float64)
+    stats = DatasetStats(
+        path=path,
+        total_rows=total,
+        kept_rows=len(X),
+        skipped_zero_rows=skipped_zero,
+        skipped_parse_rows=skipped_parse,
+        label_counts=labels,
+    )
+    return np.array(X, dtype=np.float64), np.array(y, dtype=np.float64), stats
 
 
 def sigmoid(z: np.ndarray) -> np.ndarray:
@@ -154,8 +180,15 @@ def parse_args() -> argparse.Namespace:
 def main() -> None:
     args = parse_args()
 
-    X_train, y_train = parse_csv(args.train)
-    X_test, y_test = parse_csv(args.test)
+    X_train, y_train, train_stats = parse_csv(args.train)
+    X_test, y_test, test_stats = parse_csv(args.test)
+
+    print(f"Loaded {train_stats.path}: kept {train_stats.kept_rows}/{train_stats.total_rows} "
+          f"(skipped zero={train_stats.skipped_zero_rows}, parse_errors={train_stats.skipped_parse_rows}), "
+          f"labels={dict(train_stats.label_counts)}")
+    print(f"Loaded {test_stats.path}: kept {test_stats.kept_rows}/{test_stats.total_rows} "
+          f"(skipped zero={test_stats.skipped_zero_rows}, parse_errors={test_stats.skipped_parse_rows}), "
+          f"labels={dict(test_stats.label_counts)}")
 
     if X_train.shape[1] != X_test.shape[1]:
         raise ValueError(f"Feature size mismatch: train has {X_train.shape[1]}, test has {X_test.shape[1]}")
