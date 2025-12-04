@@ -197,6 +197,11 @@ public class C2paToolInvoker {
    * <p>On any JSON/shape error, this returns a metadata object with errorFlag=1.
    */
   private C2paMetadata parseMetadataFromJson(String json) {
+    if (json == null || json.isBlank()) {
+      String msg = "Unable to parse c2patool JSON output (input is null/blank)";
+      log.warn(msg);
+      return C2paMetadata.error(msg);
+    }
     try {
       ObjectMapper mapper = new ObjectMapper();
       JsonNode root = mapper.readTree(json);

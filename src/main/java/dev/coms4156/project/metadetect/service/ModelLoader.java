@@ -1,5 +1,6 @@
 package dev.coms4156.project.metadetect.service;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import java.io.IOException;
 import java.io.InputStream;
@@ -14,7 +15,7 @@ import org.springframework.stereotype.Component;
 /**
  * Loads logistic regression model parameters (weights + bias) from a JSON file.
  * The location is configurable via {@code metadetect.model.path} and defaults
- * to {@code classpath:model/model.json}. The loader caches the parsed model to
+ * to {@code classpath:/model.json}. The loader caches the parsed model to
  * avoid repeated disk I/O.
  */
 @Component
@@ -32,11 +33,11 @@ public class ModelLoader {
    *
    * @param resourceLoader resource resolver used to locate the model.json file
    * @param objectMapper JSON mapper for parsing the weights/bias file
-   * @param modelLocation configurable location (e.g., classpath:model/model.json)
+   * @param modelLocation configurable location (e.g., classpath:/model.json)
    */
   public ModelLoader(ResourceLoader resourceLoader,
                      ObjectMapper objectMapper,
-                     @Value("${main.resources.path:classpath:/model.json}")
+                     @Value("${metadetect.model.path:classpath:/model.json}")
                      String modelLocation) {
     this.resourceLoader = resourceLoader;
     this.objectMapper = objectMapper;
@@ -96,7 +97,9 @@ public class ModelLoader {
   public record ModelParameters(double[] weights, double bias, String version) { }
 
   /** Internal mapping of the JSON schema. */
+  @JsonIgnoreProperties(ignoreUnknown = true)
   private static final class ModelJson {
+    public String type;
     public double[] weights;
     public double bias;
     public String version;

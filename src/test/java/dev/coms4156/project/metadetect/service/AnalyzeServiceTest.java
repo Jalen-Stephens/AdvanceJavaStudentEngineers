@@ -229,6 +229,23 @@ class AnalyzeServiceTest {
     verify(c2pa, never()).extractMetadata(any());
   }
 
+  /** If a PENDING analysis exists, reuse it and avoid re-running extraction. */
+  @Test
+  void submitAnalysis_reusesExistingPendingAnalysis() {
+    UUID existingId = UUID.randomUUID();
+    AnalysisReport existing = new AnalysisReport(imageId);
+    existing.setId(existingId);
+    existing.setStatus(AnalysisReport.ReportStatus.PENDING);
+    when(repo.findTopByImageIdOrderByCreatedAtDesc(imageId)).thenReturn(Optional.of(existing));
+    when(imageService.getById(userId, imageId)).thenReturn(ownedImage("w/z.png"));
+
+    Dtos.AnalyzeStartResponse resp = service.submitAnalysis(imageId);
+
+    assertThat(resp.analysisId()).isEqualTo(existingId.toString());
+    verify(repo, never()).save(any(AnalysisReport.class));
+    verify(c2pa, never()).extractMetadata(any());
+  }
+
   /**
    * If the signed URL download fails, the report should be marked FAILED and
    * error JSON should be stored in details.
@@ -390,6 +407,41 @@ class AnalyzeServiceTest {
     Dtos.AnalyzeConfidenceResponse out = service.getConfidence(analysisId);
     assertThat(out.isScreenshot()).isTrue();
     assertThat(out.screenshotReason()).isEqualTo("matched keyword");
+  }
+
+  @Test
+  void getConfidence_withMalformedDetails_defaultsConservativeFlags() {
+    UUID analysisId = UUID.randomUUID();
+    AnalysisReport report = new AnalysisReport(imageId);
+    report.setId(analysisId);
+    report.setStatus(AnalysisReport.ReportStatus.DONE);
+    report.setDetails("{not-json"); // malformed payload triggers defensive defaults
+
+    when(repo.findById(analysisId)).thenReturn(Optional.of(report));
+    when(imageService.getById(userId, imageId)).thenReturn(ownedImage("x"));
+
+    Dtos.AnalyzeConfidenceResponse out = service.getConfidence(analysisId);
+    assertThat(out.c2paUsed()).isFalse();
+    assertThat(out.isScreenshot()).isFalse();
+    assertThat(out.screenshotReason()).isNull();
+  }
+
+  @Test
+  void getConfidence_infersScreenshotReasonFromClaimGeneratorWhenMissing() {
+    UUID analysisId = UUID.randomUUID();
+    AnalysisReport report = new AnalysisReport(imageId);
+    report.setId(analysisId);
+    report.setStatus(AnalysisReport.ReportStatus.DONE);
+    report.setConfidence(0.2);
+    // screenshot flag set, no reason present, but claim_generator is present
+    report.setDetails("{\"c2paIsScreenshot\":1,\"c2paClaimGenerator\":\"Snipping Tool\"}");
+
+    when(repo.findById(analysisId)).thenReturn(Optional.of(report));
+    when(imageService.getById(userId, imageId)).thenReturn(ownedImage("x"));
+
+    Dtos.AnalyzeConfidenceResponse out = service.getConfidence(analysisId);
+    assertThat(out.isScreenshot()).isTrue();
+    assertThat(out.screenshotReason()).isEqualTo("Inferred from claim generator: Snipping Tool");
   }
 
   /**
