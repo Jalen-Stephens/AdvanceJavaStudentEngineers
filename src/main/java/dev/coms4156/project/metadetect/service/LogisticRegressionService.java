@@ -39,6 +39,9 @@ public class LogisticRegressionService {
         && c2pa.getc2paHasManifest() == 1
         && c2pa.getc2paErrorFlag() == 0;
 
+    log.info("Model inference v{}: wLen={}, fLen={}, z={}, p={}",
+        model.version(), model.weights().length, features.length, z, probability);
+
     return new InferenceResult(probability, c2paUsed, model.version());
   }
 
