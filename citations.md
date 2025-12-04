@@ -3369,3 +3369,25 @@ Implemented memory- and OS-safe changes: streamed uploads to Supabase, hardened 
 
 ### **Attribution Statement**
 - The AI assisted in designing and implementing streaming uploads, safer c2patool invocation, analysis reuse, and cross-OS test coverage improvements.
+
+---
+
+### AI-Assisted Change Log
+- **Date:** 2025-12-04
+- **Author:** Jalen Stephens
+- **AI Tool:** OpenAI ChatGPT (GPT-5) via Codex CLI
+- **Purpose:** 
+  - Swap logistic regression weights/bias to the new provided model and ensure the loader uses `metadetect.model.path=classpath:/model.json`.
+  - Add inference logging for `/api/analyze` to surface C2PA/no-manifest cases and model probabilities in Heroku logs.
+  - Increase branch coverage: C2paToolInvoker JSON parsing (null/blank input, fallback manifest) and AnalyzeService (reuse pending analyses, defensive parsing of malformed details, screenshot reason inference).
+- **Files Touched:** 
+  - `src/main/resources/model.json`
+  - `src/main/java/dev/coms4156/project/metadetect/service/ModelLoader.java`
+  - `src/main/resources/application.properties`
+  - `src/main/java/dev/coms4156/project/metadetect/service/AnalyzeService.java`
+  - `src/test/java/dev/coms4156/project/metadetect/c2pa/C2paToolInvokerJsonParsingTest.java`
+  - `src/test/java/dev/coms4156/project/metadetect/service/AnalyzeServiceTest.java`
+- **Verification:** `mvn test` (passes; JaCoCo warns about class file major version 68 when running on Java 20/21)
+- **Attribution Statement:** Portions of this work (model loading/logging, test additions) were AI-assisted and reviewed/validated by the development team.
+
+---

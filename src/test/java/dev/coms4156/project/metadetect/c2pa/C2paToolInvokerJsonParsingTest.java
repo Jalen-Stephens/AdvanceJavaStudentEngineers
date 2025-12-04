@@ -73,6 +73,22 @@ class C2paToolInvokerJsonParsingTest {
       }
       """;
 
+  private static final String MULTI_MANIFEST_FALLBACK_JSON = """
+      {
+        "manifests": {
+          "first": { "claim_generator": "UnknownTool" },
+          "second": {
+            "claim": {
+              "claim_generator_info": { "name": "Magic AI Suite" }
+            }
+          }
+        },
+        "active_manifest": "missing-id"
+      }
+      """;
+
+  private static final String EMPTY_ROOT_JSON = "{}";
+
   private final C2paToolInvoker invoker = new C2paToolInvoker("tools/c2patool/c2patool");
 
   @Test
@@ -160,5 +176,45 @@ class C2paToolInvokerJsonParsingTest {
     assertEquals("boom", err.getc2paErrorMessage());
     assertEquals(0, err.getc2paHasManifest());
     assertEquals(0, err.getc2paIsScreenshot());
+  }
+
+  @Test
+  void parse_missingActiveManifest_fallsBackToFirstManifest() {
+    C2paMetadata meta = invoker.parseMetadataFromJsonForTests(MULTI_MANIFEST_FALLBACK_JSON);
+
+    assertEquals(1, meta.getc2paHasManifest());
+    assertEquals(2, meta.getc2paManifestCount());
+    // Should fall back to the first manifest when the active ID is missing.
+    assertEquals("UnknownTool", meta.getc2paClaimGenerator());
+    assertEquals(0, meta.getc2paClaimGeneratorIsAi());
+    assertEquals(0, meta.getc2paIsScreenshot());
+    assertEquals(0, meta.getc2paErrorFlag());
+  }
+
+  @Test
+  void parse_missingRoot_setsErrorFlag() {
+    C2paMetadata meta = invoker.parseMetadataFromJsonForTests(null);
+
+    assertEquals(0, meta.getc2paHasManifest());
+    assertEquals(0, meta.getc2paManifestCount());
+    assertEquals(1, meta.getc2paErrorFlag());
+  }
+
+  @Test
+  void parse_emptyRoot_hasNoManifestsAndNoError() {
+    C2paMetadata meta = invoker.parseMetadataFromJsonForTests(EMPTY_ROOT_JSON);
+
+    assertEquals(0, meta.getc2paHasManifest());
+    assertEquals(0, meta.getc2paManifestCount());
+    assertEquals(0, meta.getc2paErrorFlag());
+  }
+
+  @Test
+  void parse_blankInput_setsErrorFlag() {
+    C2paMetadata meta = invoker.parseMetadataFromJsonForTests("   ");
+
+    assertEquals(1, meta.getc2paErrorFlag());
+    assertEquals(0, meta.getc2paHasManifest());
+    assertEquals(0, meta.getc2paManifestCount());
   }
 }

@@ -21,6 +21,8 @@ import java.nio.file.StandardCopyOption;
 import java.time.Clock;
 import java.time.Instant;
 import java.util.UUID;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.lang.Nullable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -40,6 +42,8 @@ import org.springframework.util.StringUtils;
  */
 @Service
 public class AnalyzeService {
+
+  private static final Logger log = LoggerFactory.getLogger(AnalyzeService.class);
 
   private final C2paToolInvoker c2paToolInvoker;
   private final ImageService imageService;
@@ -97,6 +101,7 @@ public class AnalyzeService {
 
     // 1) Ownership gate (RLS-friendly through ImageService)
     Image img = imageService.getById(currentUser, imageId);
+    log.info("Analyze submit requested imageId={} userId={}", imageId, currentUser);
 
     // Fast-path: reuse latest analysis if one exists and isn't FAILED.
     var latest = analysisRepo.findTopByImageIdOrderByCreatedAtDesc(imageId);
@@ -227,6 +232,13 @@ public class AnalyzeService {
 
       // 2) Run C2PA extraction into ML-ready metadata
       C2paToolInvoker.C2paMetadata meta = c2paToolInvoker.extractMetadata(tempFile);
+      log.info("Analysis {}: c2paHasManifest={}, c2paErrorFlag={}, c2paClaimGeneratorIsAi={}",
+          analysisId, meta.getc2paHasManifest(), meta.getc2paErrorFlag(),
+          meta.getc2paClaimGeneratorIsAi());
+      if (meta.getc2paHasManifest() == 0 || meta.getc2paErrorFlag() != 0) {
+        log.info("Analysis {}: no valid C2PA manifest detected; executing ML model {}",
+            analysisId, logisticRegressionService.getModelVersion());
+      }
 
       // 3) Compute logistic-regression score using OpenCV + C2PA features
       InferenceResult inference = logisticRegressionService.predict(
@@ -237,12 +249,17 @@ public class AnalyzeService {
           inference.confidenceScore(),
           meta
       );
+      log.info("Analysis {}: inference modelVersion={} probability={} adjusted={} c2paUsed={}",
+          analysisId, inference.modelVersion(), inference.confidenceScore(),
+          adjustedConfidence, inference.c2paUsed());
 
       // 4) Serialize metadata and mark COMPLETED with a confidence score
       String json = objectMapper.writeValueAsString(meta);
 
       // The details field now stores the C2PA metadata schema, not raw manifest JSON.
       markCompleted(analysisId, json, adjustedConfidence);
+      log.info("Analysis {} completed: status=DONE confidence={} storagePath={}",
+          analysisId, adjustedConfidence, storagePath);
 
     } catch (IOException ioe) {
       // IO-level failures (download, JSON serialization) are genuine failures.
