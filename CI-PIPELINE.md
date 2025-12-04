@@ -534,7 +534,6 @@ Some stages run in parallel for speed:
 - [ ] Automated E2E tests with test database
 - [ ] Performance testing integration
 - [ ] Security scanning (OWASP Dependency Check)
-- [ ] Docker image building and scanning
 - [ ] Automated deployment to staging
 - [ ] Slack/Discord notifications
 - [ ] PR comment reports
@@ -547,7 +546,7 @@ Some stages run in parallel for speed:
 
 **Issue:** Tests pass locally but fail in CI
 - **Cause:** Environment differences, missing dependencies
-- **Solution:** Check CI logs, verify pom.xml, test with Docker
+- **Solution:** Check CI logs and verify pom.xml
 
 **Issue:** PMD report not generated
 - **Cause:** Analysis errors, missing source files

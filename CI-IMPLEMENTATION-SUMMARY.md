@@ -391,7 +391,6 @@ These are periodically updated from CI runs and committed for quick reference wi
 - [ ] Automated E2E with test database/mock services
 - [ ] Performance testing (JMeter/Gatling)
 - [ ] Security scanning (OWASP Dependency Check)
-- [ ] Docker image building and scanning
 - [ ] Automated deployment to staging
 - [ ] Pull request comment with reports
 - [ ] Slack/Discord notifications

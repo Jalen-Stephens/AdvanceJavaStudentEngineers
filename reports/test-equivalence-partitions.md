@@ -22,11 +22,30 @@ Unit-Level Partitions
   - Manifest present with active id + AI generator vs empty manifests: `parseMetadata_detectsActiveManifest_andAiGenerator`, `parseMetadata_noManifest_setsFlagsToZero`.
   - Invalid JSON / CLI failures: `parseMetadata_invalidJson_setsErrorFlag`, `extractMetadata_cliFailure_setsErrorFlag`, `extractMetadata_nullFile_returnsError`.
 
+- ModelLoader
+  - Classpath load caches + parses: `loadModel_fromClasspath_parsesAndCaches`.
+  - File path without prefix normalizes bias/version and applies `file:` default: `loadModel_withBareFilePath_defaultsToFilePrefix_andNormalizesBiasAndVersion`.
+  - Missing file -> IllegalState: `loadModel_missingFile_throwsIllegalState`.
+  - Invalid weight (NaN/Inf) -> IllegalState: `loadModel_invalidWeights_throwsIllegalState`.
+
+- UserService
+  - Authenticated with valid UUID sub: `getCurrentUserIdOrThrow_returnsUuid_whenAuthenticated`.
+  - No auth present: `getCurrentUserIdOrThrow_throwsUnauthorized_whenNoAuth`.
+  - Invalid sub (not UUID): `getCurrentUserIdOrThrow_throwsUnauthorized_whenInvalidSub`.
+  - Email claim present vs absent vs no auth: `getCurrentUserEmail_returnsEmail_whenClaimPresent`, `getCurrentUserEmail_empty_whenClaimMissing`, `getCurrentUserEmail_empty_whenNoAuth`.
+
 - FeatureExtractor
   - Missing image path -> C2PA-only defaults: `extractAllFeatures_missingFile_returnsC2paOnly`.
   - Small matrix feature computations (Laplace, noise, edges, frequency, entropy) -> non-negative bounds: `featureMethods_handleSmallMatrix`.
 
 - DTO shape/record coverage: `DtosTest.recordsRoundTrip` covers all request/response records including nullables and collections.
+
+- AnalysisReport entity
+  - Defaults vs setter round-trips and nullable fields: `defaultConstructor_initialState`, `gettersSetters_roundTrip`, `nullableFields`.
+  - Constructors vs lifecycle hook: `convenienceConstructor_setsImageIdAndPending`, `prePersist_setsDefaults_whenNulls`, `prePersist_respectsExistingValues`.
+  - Enum/status branches: `statusEnum_values`, `statusNull_thenPrePersist`.
+  - Equality/hash/toString edge cases: `equalsContract`, `equals_nullIds_equalByDesign`, `hashCodeFromId`, `toString_includesKeyFields`.
+  - JPA mapping annotations boundaries: `entityAndTable`, `statusEnumMapping`, `idAndImageIdColumns`, `detailsAndCreatedAtColumns`.
 
 API/Controller Partitions
 -------------------------
@@ -53,6 +72,13 @@ API/Controller Partitions
 - Security/CORS/JWT
   - Public vs secured resources and CORS preflight: `publicEndpoints_noAuthRequired`, `optionsPreflight_corsHeaders`.
   - JWT issuer boundaries (with/without slash, wrong issuer): `jwtDecoder_validIssuer_noSlash`, `jwtDecoder_validIssuer_withSlash`, `jwtDecoder_wrongIssuer_rejected`.
+
+- Health endpoints
+  - DB health up vs missing/zero/nullable result: `dbHealth_returnsUpWhenDatabaseResponds`, `dbHealth_returnsDownWhenResultMissing`, `dbHealth_returnsDownWhenNull`.
+  - Version metadata shape: `version_returnsStaticMetadata`.
+
+- Supabase WebClient config
+  - Default headers applied (apikey, bearer, content-type): `buildsWebClientWithHeaders`.
 
 Integration Tests
 -----------------

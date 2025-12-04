@@ -2168,7 +2168,7 @@ and consistency with Iteration 1 project standards.
 * **Team Member:** Jalen Stephens
 
 ### **Commit / Ticket Reference**
-- **Commit:** Update README.md to include Docker setup, full API documentation, and build/run/test details
+- **Commit:** Update README.md to include full API documentation and build/run/test details
 - **Ticket:** #42 — chore: update readme.md to fit guidelines
 - **Date:** October 23, 2025
 - **Team Member:** Isaac Schmidt
@@ -2195,9 +2195,8 @@ DTOs, database/RLS context helpers, and repository interfaces. The goal was to m
 documenting and ensure domain intent is clear to future maintainers.
 ChatGPT assisted with rewriting and expanding the project’s `README.md` to meet grading and documentation guidelines.  
 Specifically, it helped integrate:
-- A new **Docker setup section** (build, run, troubleshoot instructions).
 - Clear **API endpoint documentation** with input/output formats and status codes.
-- Formatted **build/run/test instructions** for both Maven and Docker environments.
+- Formatted **build/run/test instructions** for Maven.
 - Verification that the README satisfies all rubric items (API docs, order dependencies, build/test instructions, third-party explanation).
 
 ---
@@ -2210,7 +2209,6 @@ Specifically, it helped integrate:
 * Documented explicit query semantics in repository interfaces
 * Requested a one-line commit message referencing ticket #35
 - *“Create a copy and pastable README.md according to the format of the first file you received.”*
-- *“Create another section in `README.md` about running the file in Docker according to the information from `DOCKER_README.md`.”*
 - *“Does this file fulfill the rubric requirements for API documentation and setup instructions?”*
 - *“Write everything you assisted me with in .md format so that I can copy and paste it into my citations file.”*
 
@@ -2228,7 +2226,6 @@ Specifically, it helped integrate:
   * `ImageRepository.java`
 - `README.md` — new full-length Markdown file including:
   - Local setup & environment instructions (`env.pooler.sh`).
-  - Complete Docker build/run instructions.
   - Comprehensive API documentation (auth, image, analyze endpoints, with status codes).
   - Testing and CI/CD sections (Maven, PMD, JaCoCo, Checkstyle).
   - Third-party tool acknowledgment (`c2patool`).
@@ -2248,8 +2245,6 @@ Specifically, it helped integrate:
 * Verified repository method signatures and mappings remained intact
 - Manually reviewed the generated README for completeness and clarity.
 - Cross-checked against grading rubric for all 4 requirement categories.
-- Verified command accuracy by comparing against project’s existing Maven and Docker configurations.
-- Confirmed documentation order (setup → Docker → endpoints) for logical flow.
 
 ---
 
@@ -2327,6 +2322,56 @@ clarity without modifying runtime behavior.
 > by the development team.
 
 ---
+
+### **Commit / Ticket Reference**
+
+* **Commit:** `docs: surface CI evidence, coverage, partitions, and PMD before/after`
+* **Ticket:** N/A (documentation/QA polish)
+* **Date:** February 23, 2025
+* **Team Member:** Jalen Stephens
+
+---
+
+### **AI Tool Information**
+
+* **Tool Used:** OpenAI ChatGPT (GPT-5)
+* **Access Method:** ChatGPT via Codex CLI
+* **Configuration:** Default model settings
+* **Cost:** $0 (no paid API calls)
+
+---
+
+### **Purpose of AI Assistance**
+
+Documented CI evidence, coverage results, test equivalence partitions, static analysis before/after, integration/API/unit/E2E scope, and Kanban status in `README.md`. Updated `reports/test-equivalence-partitions.md` to reflect new tests (ModelLoader, UserService, AnalysisReport, health endpoints, Supabase WebClient). Added inline images for CI, coverage, PMD before/after.
+
+---
+
+### **Prompts / Interaction Summary**
+
+- “can we actually make the images we reference appear in the readme”
+- “we added more test can you make sure that test-equivalence-partitions is up to date”
+- Integration/API/unit/E2E/coverage/PMD rubric clarifications (branch coverage, static analysis, style, API testing, integration testing, project management).
+
+---
+
+### **Resulting Artifacts**
+
+- `README.md` — CI evidence images, coverage image (`reports/MetaDetect80.png`), PMD before/after images, clarified test scopes (unit/API/integration/E2E), CI triggers, coverage target, Kanban status, static analysis evidence.
+- `reports/test-equivalence-partitions.md` — updated partitions for ModelLoader, UserService, AnalysisReport entity, health endpoints, Supabase WebClient config.
+
+---
+
+### **Verification**
+
+- Manual review of README rendering (image links) and content accuracy.
+- Confirmed partitions file lists current tests.
+
+---
+
+### **Attribution Statement**
+
+> Portions of this documentation update were generated with assistance from OpenAI ChatGPT (GPT-5) on February 23, 2025. All AI-generated content was reviewed and verified by the development team.
 
 ### **Commit / Ticket Reference**
 
